@@ -71,6 +71,14 @@ function runtests() {
           }
           loadQUnitResults();
 
+          var times = [];
+          function timestr(time) {
+            return (
+              time < 0.0000005 ? formatTime(time * 1e9) + 'ns' :
+              time < 0.001 ? formatTime(time * 1e6) + '\u03BCs' :
+              time < 1 ? formatTime(time * 1e3) + 'ms' :
+              formatTime(time) + 's');
+          }
           function loadJSLitmusResults() {
             page.evaluate(function() {
               var rval = {
@@ -84,16 +92,19 @@ function runtests() {
               _.each(tests || [], function(test) {
                 var time = test.period;
                 if (time && !test.name.match(/calibrating (loop|function)/)) {
-                  var timestr = (
-                    time < 0.0000005 ? formatTime(time * 1e9) + 'ns' :
-                    time < 0.001 ? formatTime(time * 1e6) + '\u03BCs' :
-                    time < 1 ? formatTime(time * 1e3) + 'ms' :
-                    formatTime(time) + 's');
-                  log('<<green>>' + _.pad(timestr, 7) + ' <<blue>>' + test.name);
+                  times.push(time);
+                  log('<<green>>' + _.pad(timestr(time), 7) +
+                      ' <<blue>>' + test.name);
                 }
               });
               if (!rval.done) {
                 setTimeout(loadJSLitmusResults, 50);
+              } else {
+                var meanTime = _.reduce(times, function (memo, time) {
+                  return memo + time;
+                }, 0) / times.length;
+                log('<<green>>' + _.pad(timestr(meanTime), 7) +
+                    ' <<blue>> mean');
               }
             });
           }
