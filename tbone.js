@@ -626,7 +626,8 @@ var baseModel = Backbone.Model.extend({
          * Wake up models that depend directly on this model that have not already
          * been woken up.
          */
-        _.each(this.getModelDepends(), function (model) {
+        _.each((this.scope && this.scope.lookups) || [], function (lookup) {
+            var model = lookup.__obj__;
             if (model && !woken[uniqueId(model)]) {
                 woken[uniqueId(model)] = true;
                 model.wake(woken);
