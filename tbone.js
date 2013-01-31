@@ -460,6 +460,10 @@ function pop() {
      */
     if (dirty) {
         schedulerQueue.sort(function (a, b) {
+            /**
+             * TODO for sync models, use dependency graph in addition to priority
+             * to order execution in such a way as to avoid immediate re-execution.
+             */
             return a.priority - b.priority;
         });
         dirty = false;
@@ -872,13 +876,11 @@ var baseCollection = Backbone.Collection.extend({
 function createCollection(name, model) {
     if (TBONE_DEBUG && !isString(name)) {
         throw 'createCollection requires name parameter';
-    } else if (TBONE_DEBUG && !model || !model.prototype || !model.prototype.isModel) {
-        throw 'createCollection requires model parameter';
     }
 
     var opts = {
         name: name,
-        model: model
+        model: model || baseModel
     };
 
     var collection = collections[name] = baseCollection.extend(opts);
