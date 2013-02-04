@@ -98,7 +98,7 @@ var INFO = 3;
 /** @const */
 var VERBOSE = 4;
 
-var logLevel = {
+var logLevels = {
     type: {
 
     },
@@ -110,6 +110,14 @@ var logLevel = {
     },
     base: WARN
 };
+if (TBONE_DEBUG) {
+    tbone['watchLog'] = function (name, level) {
+        if (level == null) { level = VERBOSE; }
+        logLevels.type[name] = VERBOSE;
+        logLevels.context[name] = VERBOSE;
+        logLevels.event[name] = VERBOSE;
+    };
+}
 
 var events = [];
 
@@ -137,7 +145,7 @@ function log () {
 
 /**
  * Log an event.  The event is piped to the JS console if the level is less than or equal to the
- * matched maximum log level based on the logLevel configuration above.
+ * matched maximum log level based on the logLevels configuration above.
  * @param  {Number}                                    level   Log level: 1=error, 2=warn, 3=info, 4=verbose
  * @param  {string|Backbone.Model|Backbone.View|Scope} context What is logging this event
  * @param  {string}                                    event   Short event type string
@@ -151,9 +159,9 @@ function logconsole (level, context, event, msg, data) {
                 context.isModel ? 'model' :
                 context.isView ? 'view' :
                 context.isScope ? 'scope' : '??');
-    var threshold = Math.max(logLevel.context[name] || 0,
-                             logLevel.event[event] || 0,
-                             logLevel.type[type] || 0) || logLevel.base;
+    var threshold = Math.max(logLevels.context[name] || 0,
+                             logLevels.event[event] || 0,
+                             logLevels.type[type] || 0) || logLevels.base;
     if (event === 'lookups') {
         msg = _.reduce(msg, function(memo, map, id) {
             memo[map.__path__] = map;
