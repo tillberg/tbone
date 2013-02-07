@@ -724,6 +724,7 @@ var baseModel = Backbone.Model.extend({
                 self.baseState = baseState;
                 inflight++;
                 self.fetch({
+                    'dataType': 'text',
                     success: function () {
                         _.each(self.toJSON(), function (v, k) {
                             delete baseState[k];
