@@ -772,32 +772,6 @@ var baseModel = Backbone.Model.extend({
     },
     'calc': identity,
     'shouldFetch': function () { return true; },
-    url: function (state) {
-        var self = this;
-        if (!state) { state = this.baseState; }
-        var url = self['_url'];
-        if (url) {
-            if (isfunction(url)) {
-                url = url.call(self);
-            }
-            url = url.replace(/\{(.*?)\}/gi, function (__, key) {
-                if (key === 'params') {
-                    var params = _.extend({}, state, self.extraAjaxParams || {});
-                    _.each(params, function (v, k) {
-                        if (v == null) {
-                            delete params[k];
-                        }
-                    });
-                    return $.param(params);
-                } else {
-                    return state[key];
-                }
-            });
-        } else {
-            url = Backbone.Model.prototype.url.apply(self, arguments);
-        }
-        return url;
-    },
     'postFetch': noop
 });
 
