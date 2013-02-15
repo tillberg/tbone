@@ -1660,18 +1660,6 @@ function createView(name, base, fn, opts) {
     return views[name] = base.extend(opts);
 }
 
-_.each([baseView, baseModel, baseCollection], function (obj) {
-    _.extend(obj.prototype, {
-        /**
-         * Copy lookup and lookupText onto the Model, View, and Collection.
-         *
-         * XXX Why Views?
-         */
-        'lookup': lookup,
-        'lookupText': lookupText
-    });
-});
-
 _.each([baseModel, baseCollection], function (obj) {
     _.extend(obj.prototype, {
         /**
@@ -1679,6 +1667,13 @@ _.each([baseModel, baseCollection], function (obj) {
          * either a Model or a Collection.
          */
         'isBindable': true,
+
+        /**
+         * Copy lookup and lookupText onto the Model, View, and Collection.
+         *
+         */
+        'lookup': lookup,
+        'lookupText': lookupText,
 
         /**
          * Disable backbone-based validation; by using validation to prevent populating
