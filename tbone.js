@@ -1697,10 +1697,10 @@ _.each([baseModel, baseCollection], function (obj) {
              * been woken up.
              */
             _.each((this.scope && this.scope.lookups) || [], function (lookup) {
-                var model = lookup.__obj__;
-                if (model && !woken[uniqueId(model)]) {
-                    woken[uniqueId(model)] = true;
-                    model.wake(woken);
+                var bindable = lookup.__obj__;
+                if (bindable && !woken[uniqueId(bindable)]) {
+                    woken[uniqueId(bindable)] = true;
+                    bindable.wake(woken);
                 }
             });
         },
