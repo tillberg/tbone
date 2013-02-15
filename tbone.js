@@ -571,6 +571,7 @@ tbone['freeze'] = function () {
  */
 var baseModel = Backbone.Model.extend({
     isModel: true,
+    backboneBasePrototype: Backbone.Model.prototype,
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
@@ -610,15 +611,6 @@ var baseModel = Backbone.Model.extend({
         if (this.scope) {
             this.scope.trigger();
         }
-    },
-    /**
-     * We wrap baseModel.prototype.on in order to wake up and reset models
-     * that were previously sleeping because they did not need to be updated.
-     * This passes through execution to the original on function.
-     */
-    'on': function () {
-        this.wake({});
-        return Backbone.Model.prototype.on.apply(this, arguments);
     },
     getDependsMap: function () {
         var depends = this['depends'] || {};
@@ -827,7 +819,8 @@ function createModel(name, base, opts) {
 }
 
 var baseCollection = Backbone.Collection.extend({
-    isCollection: true
+    isCollection: true,
+    backboneBasePrototype: Backbone.Collection.prototype
 });
 
 function createCollection(name, model) {
@@ -1710,7 +1703,18 @@ _.each([baseModel, baseCollection], function (obj) {
                     model.wake(woken);
                 }
             });
+        },
+
+        /**
+         * We wrap backboneBasePrototype.on in order to wake up and reset models
+         * that were previously sleeping because they did not need to be updated.
+         * This passes through execution to the original on function.
+         */
+        'on': function () {
+            this.wake({});
+            return this.backboneBasePrototype.on.apply(this, arguments);
         }
+
     });
 });
 
