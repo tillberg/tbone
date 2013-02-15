@@ -1724,6 +1724,7 @@ var orig_T = window['T'];
 
 window['tbone'] = window['T'] = tbone;
 tbone['models'] = models;
+tbone['views'] = views;
 tbone['data'] = data;
 tbone['templates'] = templates;
 
