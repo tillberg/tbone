@@ -620,32 +620,6 @@ var baseModel = Backbone.Model.extend({
         this.wake({});
         return Backbone.Model.prototype.on.apply(this, arguments);
     },
-    /**
-     * Wake up this model as well as (recursively) any models that depend on
-     * it.  Any view that is directly or indirectly depended on by the current
-     * model may now be able to be awoken based on the newly-bound listener to
-     * this model.
-     * @param  {Object.<string, Boolean>} woken Hash map of model IDs already awoken
-     */
-    wake: function (woken) {
-        // Wake up this model if it was sleeping
-        if (this.sleeping) {
-            this.trigger('wake');
-            this.sleeping = false;
-            this.reset();
-        }
-        /**
-         * Wake up models that depend directly on this model that have not already
-         * been woken up.
-         */
-        _.each((this.scope && this.scope.lookups) || [], function (lookup) {
-            var model = lookup.__obj__;
-            if (model && !woken[uniqueId(model)]) {
-                woken[uniqueId(model)] = true;
-                model.wake(woken);
-            }
-        });
-    },
     getDependsMap: function () {
         var depends = this['depends'] || {};
         return isfunction (depends) ? depends.call(this) : depends;
@@ -1714,7 +1688,34 @@ _.each([baseModel, baseCollection], function (obj) {
          * By overriding _validate, we can still use isValid and validate, but Backbone
          * will no longer prevent set() calls from succeeding with invalid data.
          */
-        '_validate': function () { return true; }
+        '_validate': function () { return true; },
+
+        /**
+         * Wake up this model as well as (recursively) any models that depend on
+         * it.  Any view that is directly or indirectly depended on by the current
+         * model may now be able to be awoken based on the newly-bound listener to
+         * this model.
+         * @param  {Object.<string, Boolean>} woken Hash map of model IDs already awoken
+         */
+        wake: function (woken) {
+            // Wake up this model if it was sleeping
+            if (this.sleeping) {
+                this.trigger('wake');
+                this.sleeping = false;
+                this.reset();
+            }
+            /**
+             * Wake up models that depend directly on this model that have not already
+             * been woken up.
+             */
+            _.each((this.scope && this.scope.lookups) || [], function (lookup) {
+                var model = lookup.__obj__;
+                if (model && !woken[uniqueId(model)]) {
+                    woken[uniqueId(model)] = true;
+                    model.wake(woken);
+                }
+            });
+        }
     });
 });
 
