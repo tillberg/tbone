@@ -32,13 +32,13 @@ and model stays in sync by design and without unnecessary work.
 
 **set** tbone.set(object, value)
 
-Sets a **object** (i.e. an attribute in a model to a specified value.
+Sets a **object** (i.e. an attribute in a model) to a specified value.
 
 ```javascript
 tbone.set('stapler.color', 'red');
-=&gt; sets stapler color attribute to red...
+> sets stapler color attribute to red...
 tbone.set('counter.value', 15);
-=&gt; sets counter value attribute to 15...</pre>
+> sets counter value attribute to 15...</pre>
 ```
 
 **lookup** tbone.lookup(object)
@@ -47,9 +47,9 @@ Returns a specified **object**.
 
 ```javascript
 tbone.set('stapler.color');
-=&gt; returns 'red'...
+> returns 'red'...
 tbone.set('counter.value');
-=&gt; returns 15...</pre>
+> returns 15...</pre>
 ```
 
 **createModel** tbone.createModel(name, baseModel, [options])
