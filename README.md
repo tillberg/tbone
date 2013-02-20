@@ -61,7 +61,7 @@ the template and view to keep in sync with its source data.
 tbone.set('stapler.color', 'red');
 ```
 
-[Try it out on JSFiddle](http://jsfiddle.net/dantillberg/dFbpE/)
+[Try it out on JSFiddle](http://jsfiddle.net/notfunk/2Y8HX/)
 
 ## License
 
