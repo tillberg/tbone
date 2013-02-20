@@ -36,9 +36,9 @@ Sets a **object** (i.e. an attribute in a model) to a specified value.
 
 ```javascript
 tbone.set('stapler.color', 'red');
-> sets stapler color attribute to red...
+=> sets stapler color attribute to red...
 tbone.set('counter.value', 15);
-> sets counter value attribute to 15...</pre>
+=> sets counter value attribute to 15...
 ```
 
 **lookup** tbone.lookup(object)
@@ -47,9 +47,9 @@ Returns a specified **object**.
 
 ```javascript
 tbone.set('stapler.color');
-> returns 'red'...
+=> returns 'red'...
 tbone.set('counter.value');
-> returns 15...</pre>
+=> returns 15...
 ```
 
 **createModel** tbone.createModel(name, baseModel, [options])
