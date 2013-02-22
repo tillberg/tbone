@@ -52,48 +52,80 @@ tbone.set('counter.value');
 => returns 15...
 ```
 
-**createModel** tbone.createModel(name, [baseModel], [options])
+**createModel** tbone.createModel(name, [baseModel or function], [options])
 
-Creates your very own Tbone **Model**. You can us chaining to both create and
+Creates your very own Tbone **Model**. You can use chaining to both create and
 instantiate the **Model** with the `singleton()` method.
 
 ```javascript
 tbone.createModel('tweet');
-=> creates a model named tweet.
+=> creates a model for a tweet.
 tbone.createModel('post').singleton();
-=> create and instantiates a model named post.
+=> create and instantiates a model for a blog post.
 ```
 
 **createView** tbone.createView(name, baseView, function, [options])
 
-What it does!
+Creates a Tbone **View**, inheriting from another **View** (or the default **View** if
+`baseView` is not specified. Please note that `this` will be scoped to this **View**,
+thus you can access view specific elements via `this.$`.
 
 ```javascript
-tbone...
+tbone.createView('widget', function () {
+    this.$('span').text('42');
+    this.$('a[href]').click(function () {
+        tbone.set('selected.widget', $(this).attr('id'));
+        return false;
+    })
+});
+=> creates a view named widget and attaches a span and anchor to it.
 ```
 
-**createCollection** tbone.createCollection(arg1, arg2, ...)
+**createCollection** tbone.createCollection(name, model)
 
-What it does!
+Creates a TBone **Collection** of the specified `model`. You can use chaining to
+both create and instantiate the **Collection** with the `singleton()` method.
 
 ```javascript
-tbone...
+tbone.createCollection('tweets', tweet);
+=> creates a collection of tweets.
+tbone.createCollection('posts', post).singleton();
+=> creates and instantiates a collection of blog posts.
 ```
 
-**render** tbone.render(arg1, arg2, ...)
+**autorun** tbone.autorun(function, context, priority, name, onExecuteCb, onExecuteContext, detached)
 
-What it does!
+Wrap a function call with automatic binding for any model properties accessed
+during the function's execution.
+
+Models and views update automatically by wrapping their reset functions with this.
+
+Additionally, this can be used within postRender callbacks to section off a smaller
+block of code to repeat when its own referenced properties are updated, without
+needing to re-render the entire view.
+
 
 ```javascript
-tbone...
+tbone.autorun(...)
+```
+
+**render** tbone.render(elements, [parent])
+
+Render an array of HTML elements into **Views**.  This reads the TBone attribute
+and generates a **View** for each element accordingly.
+
+```javascript
+tbone.render(jQuery('[tbone]'));
+=> render all elements that contain a tbone attribute.
 ```
 
 **data** tbone.data
 
-What it does!
+Object that contains all instances of Tbone **Models**.
 
 ```javascript
-tbone...
+tbone.data
+=> returns a javascript object all TBone model instances
 ```
 
 ## Models
@@ -104,6 +136,29 @@ What it does!
 
 ```javascript
 tbone...
+```
+
+**calc** model.calc()
+
+Method (that is encouraged to override) that executes everytime a model
+dependency changes.
+
+```javascript
+tbone.set('timer', {
+    calc: function () {
+        // Dependency
+        var count = tbone.lookup('counter.value') || 0;
+
+        var rval = {};
+
+        // Calculate seconds and minutes.
+        rval.seconds = count % 60;
+        rval.minutes = Math.floor(count / 60);
+
+        return rval;
+    }
+}).singleton();
+=> overrides the calc method on the timer model.
 ```
 
 ## Views
