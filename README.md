@@ -37,6 +37,7 @@ Sets a **object** (i.e. an attribute in a model) to a specified value.
 ```javascript
 tbone.set('stapler.color', 'red');
 => sets stapler color attribute to red...
+
 tbone.set('counter.value', 15);
 => sets counter value attribute to 15...
 ```
@@ -48,25 +49,27 @@ Returns a specified **object**.
 ```javascript
 tbone.set('stapler.color');
 => returns 'red'...
+
 tbone.set('counter.value');
 => returns 15...
 ```
 
 **createModel** tbone.createModel(name, [baseModel or function], [options])
 
-Creates your very own Tbone **Model**. You can use chaining to both create and
+Creates your very own TBone **Model**. You can use chaining to both create and
 instantiate the **Model** with the `singleton()` method.
 
 ```javascript
 tbone.createModel('tweet');
 => creates a model for a tweet.
+
 tbone.createModel('post').singleton();
 => create and instantiates a model for a blog post.
 ```
 
 **createView** tbone.createView(name, baseView, function, [options])
 
-Creates a Tbone **View**, inheriting from another **View** (or the default **View** if
+Creates a TBone **View**, inheriting from another **View** (or the default **View** if
 `baseView` is not specified. Please note that `this` will be scoped to this **View**,
 thus you can access view specific elements via `this.$`.
 
@@ -89,6 +92,7 @@ both create and instantiate the **Collection** with the `singleton()` method.
 ```javascript
 tbone.createCollection('tweets', tweet);
 => creates a collection of tweets.
+
 tbone.createCollection('posts', post).singleton();
 => creates and instantiates a collection of blog posts.
 ```
@@ -121,7 +125,7 @@ tbone.render(jQuery('[tbone]'));
 
 **data** tbone.data
 
-Object that contains all instances of Tbone **Models**.
+Object that contains all instances of TBone **Models**.
 
 ```javascript
 tbone.data
@@ -140,8 +144,7 @@ tbone...
 
 **calc** model.calc()
 
-Method (that is encouraged to override) that executes everytime a model
-dependency changes.
+Overridable method that executes everytime a model dependency changes.
 
 ```javascript
 tbone.set('timer', {
@@ -158,7 +161,8 @@ tbone.set('timer', {
         return rval;
     }
 }).singleton();
-=> overrides the calc method on the timer model.
+=> overrides the calc method on the timer object
+=> executes each time the counter model changes
 ```
 
 ## Views
