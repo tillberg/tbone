@@ -1387,7 +1387,7 @@ var baseView = Backbone.View.extend({
                 }
 
                 var $old = $('<div>').append(this.$el.children());
-                var newHtml = renderTemplate(self.name, self.root);
+                var newHtml = renderTemplate(self.templateId, self.root);
                 log(INFO, self, 'newhtml', newHtml);
                 self.$el.html(newHtml);
 
