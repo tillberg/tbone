@@ -175,7 +175,8 @@ function logconsole (level, context, event, msg, data) {
          */
         var templated = isString(msg) ? _.template(msg, data || {}) : '';
         var includeColon = !!templated || !!msg;
-        var message = type + ' ' + name + ' ' + event + (includeColon ? ': ' : '');
+        var frame = type === name ? type : (type + ' ' + name);
+        var message = frame + ' / ' + event + (includeColon ? ': ' : '');
         var logfn = console[(level === ERROR ? 'error' : level === WARN ? 'warn' : 'log')];
         logfn.call(console, message, templated || msg || '');
     }
