@@ -932,8 +932,10 @@ function lookup(flag, query, value) {
     var propAfterRecentLookup;
     var id;
     var arg;
+    var foundBindable;
     if (_data['isBindable']) {
         id = uniqueId(_data);
+        foundBindable = true;
         myRecentLookup = (recentLookups && recentLookups[id]) || {
             '__obj__': _data
         };
@@ -944,6 +946,7 @@ function lookup(flag, query, value) {
     while (!!(arg = args.shift()) && arg !== '__self__') {
         name_parts.push(arg);
         if (_data['isBindable']) {
+            foundBindable = true;
             if (_data.isModel) {
                 _data = _data.get(arg);
             } else if (_data.isCollection) {
@@ -966,6 +969,7 @@ function lookup(flag, query, value) {
              */
             break;
         } else if (_data['isBindable']) {
+            foundBindable = true;
             id = uniqueId(_data);
             myRecentLookup = (recentLookups && recentLookups[id]) || {
                 '__obj__': _data,
@@ -976,6 +980,17 @@ function lookup(flag, query, value) {
             }
             propAfterRecentLookup = null;
         }
+    }
+    /**
+     * If we haven't found a model / collection in the process of looking something up,
+     * log an error.  A common mistake could be to attempt to read values before models
+     * are initialized.
+     **/
+    if (TBONE_DEBUG && !isSet && !foundBindable) {
+        log(ERROR, 'lookup', 'no bindable found',
+            'No model/collection found while looking up "<%=query%>".', {
+            query: query
+        });
     }
     if (_data) {
         if (isSet) {
