@@ -685,7 +685,12 @@ var baseModel = Backbone.Model.extend({
         if (self.shouldFetch(baseState)) {
             var url = self.url(baseState);
             var lastFetchedUrl = self.fetchedUrl;
-            if (expirationSeconds || url !== lastFetchedUrl) {
+            /**
+             * If a defined URL function returns null, it will prevent fetching.
+             * This can be used e.g. to prevent loading until all required
+             * parameters are set.
+             **/
+            if (url != null && (expirationSeconds || url !== lastFetchedUrl)) {
                 self.fetchedUrl = url;
                 self.clear();
                 self.baseState = baseState;
