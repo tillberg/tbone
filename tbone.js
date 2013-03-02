@@ -580,7 +580,7 @@ var baseModel = Backbone.Model.extend({
     initialize: function () {
         var self = this;
         uniqueId(self);
-        var isAsync = self.enableSleep = self.sleeping = self.isAsync();
+        var isAsync = self.sleeping = self.isAsync();
         var priority = isAsync ? BASE_PRIORITY_MODEL_ASYNC : BASE_PRIORITY_MODEL_SYNC;
         /**
          * Queue the autorun of update.  We want this to happen after the current JS module
@@ -614,8 +614,8 @@ var baseModel = Backbone.Model.extend({
             this.scope.trigger();
         }
     },
-    shouldSleep: function () {
-        return this['enableSleep'] && !hasViewListener(this);
+    'isVisible': function () {
+        return hasViewListener(this);
     },
     getDepends: function () {
         var self = this;
@@ -648,18 +648,11 @@ var baseModel = Backbone.Model.extend({
         // When sleeping is enabled for a model (true by default on ajax models, that model
         // will not update until there is some currently-rendered view that depends upon it,
         // either directly or through a chain of other models)
-        if (self.shouldSleep()) {
-            // Since we're all done until there's an active view that depends on this model:
-            log(INFO, self, 'sleep');
-            self.sleeping = true;
-        } else {
-            self.sleeping = false;
-            if (state !== null) {
-                if (self.isAsync()) {
-                    self.updateAsync(state);
-                } else {
-                    self.updateSync(state);
-                }
+        if (state !== null) {
+            if (self.isAsync()) {
+                self.updateAsync(state);
+            } else {
+                self.updateSync(state);
             }
         }
     },
@@ -678,52 +671,59 @@ var baseModel = Backbone.Model.extend({
                 }, expirationSeconds * 1000);
             }
         }
-        if (self.shouldFetch(baseState)) {
-            var url = self.url(baseState);
-            var lastFetchedUrl = self.fetchedUrl;
+
+        var url = self.url(baseState);
+        var lastFetchedUrl = self.fetchedUrl;
+        self.sleeping = !this['isVisible']();
+        if (self.sleeping) {
+            /**
+             * Regardless of whether url is non-null, this model goes to sleep
+             * if there's no view listener waiting for data (directly or through
+             * a chain of other models) from this model.
+             **/
+            log(INFO, self, 'sleep');
+            self.sleeping = true;
+        } else if (url != null && (expirationSeconds || url !== lastFetchedUrl)) {
             /**
              * If a defined URL function returns null, it will prevent fetching.
              * This can be used e.g. to prevent loading until all required
              * parameters are set.
              **/
-            if (url != null && (expirationSeconds || url !== lastFetchedUrl)) {
-                self.fetchedUrl = url;
-                self.clear();
-                self.baseState = baseState;
-                inflight++;
-                self.fetch({
-                    'dataType': 'text',
-                    success: function () {
-                        _.each(self.toJSON(), function (v, k) {
-                            delete baseState[k];
+            self.fetchedUrl = url;
+            self.clear();
+            inflight++;
+            self.fetch({
+                'dataType': 'text',
+                success: function () {
+                    _.each(self.toJSON(), function (v, k) {
+                        delete baseState[k];
+                    });
+                    self.set(baseState);
+                    // XXX postFetch is deprecated in favor of the fetch event:
+                    self['postFetch']();
+                    self.trigger('fetch');
+                    log(INFO, self, 'updated', self.toJSON());
+                    complete();
+                },
+                error: function () {
+                    complete();
+                },
+                'beforeSend': function (xhr) {
+                    // If we have an active XHR in flight, we should abort
+                    // it because we don't want that anymore.
+                    if (self.__xhr) {
+                        log(WARN, self, 'abort',
+                            'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
+                            'oldurl': lastFetchedUrl,
+                            'newurl': url
                         });
-                        self.set(baseState);
-                        // XXX postFetch is deprecated in favor of the fetch event:
-                        self['postFetch']();
-                        self.trigger('fetch');
-                        log(INFO, self, 'updated', self.toJSON());
-                        complete();
-                    },
-                    error: function () {
-                        complete();
-                    },
-                    'beforeSend': function (xhr) {
-                        // If we have an active XHR in flight, we should abort
-                        // it because we don't want that anymore.
-                        if (self.__xhr) {
-                            log(WARN, self, 'abort',
-                                'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
-                                'oldurl': lastFetchedUrl,
-                                'newurl': url
-                            });
-                            self.__xhr.abort();
-                        }
-                        self.__xhr = xhr;
-                        xhr['__backbone__'] = true;
-                    },
-                    url: url
-                });
-            }
+                        self.__xhr.abort();
+                    }
+                    self.__xhr = xhr;
+                    xhr['__backbone__'] = true;
+                },
+                url: url
+            });
         }
     },
     updateSync: function (state) {
@@ -738,7 +738,6 @@ var baseModel = Backbone.Model.extend({
         log(INFO, self, 'updated', self.toJSON());
     },
     'calc': identity,
-    'shouldFetch': function () { return true; },
     'postFetch': noop
 });
 
@@ -782,15 +781,6 @@ function createModel(name, base, opts) {
 
     var modelPrototype = model.prototype;
     _.extend(model, /** @lends {model} */ {
-        /**
-         * Enable sleep for this model.  If enabled, this model will not update unless a
-         * dependency chain from a view to this model exists.
-         * @return {function(new:Backbone.Model)}
-         */
-        'enableSleep': function () {
-            modelPrototype['enableSleep'] = true;
-            return model;
-        },
         /**
          * Create and return an instance of this model using the model name as the instance name.
          * @return {Backbone.Model}
