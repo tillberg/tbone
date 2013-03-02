@@ -589,7 +589,8 @@ var baseModel = Backbone.Model.extend({
          */
         queueExec({
             execute: function () {
-                self.scope = autorun(self.update, self, priority, 'model_' + self.name, self.onScopeExecute, self);
+                self.scope = autorun(self.update, self, priority, 'model_' + self.name,
+                                     self.onScopeExecute, self);
             },
             priority: priority + PRIORITY_INIT_DELTA
         });
@@ -714,10 +715,9 @@ var baseModel = Backbone.Model.extend({
                     'beforeSend': function (xhr) {
                         // If we have an active XHR in flight, we should abort
                         // it because we don't want that anymore.
-                        // XXX this should only apply to nullipotent requests.
                         if (self.__xhr) {
                             log(WARN, self, 'abort',
-                                'aborting obsolete ajax request. old url: <%=oldurl%>, new url: <%=newurl%>', {
+                                'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
                                 'oldurl': lastFetchedUrl,
                                 'newurl': url
                             });
@@ -1350,7 +1350,8 @@ var baseView = Backbone.View.extend({
         uniqueId(self);
         _.extend(self, opts);
         self.priority = self.parentView ? self.parentView.priority - 1 : BASE_PRIORITY_VIEW;
-        self.scope = autorun(self.render, self, self.priority, 'view_' + self.name, self.onScopeExecute, self, true);
+        self.scope = autorun(self.render, self, self.priority, 'view_' + self.name,
+                             self.onScopeExecute, self, true);
     },
 
     onScopeExecute: function (scope) {
@@ -1402,7 +1403,8 @@ var baseView = Backbone.View.extend({
                     activeElementSelector = 'input';
                     activeElementIndex = _.indexOf(self.$(activeElementSelector), activeElement);
                     // XXX for IE compatibility, this might work:
-                    // http://the-stickman.com/web-development/javascript/finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
+                    // http://the-stickman.com/web-development/javascript/ ...
+                    // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
                     selectionStart = activeElement.selectionStart;
                     selectionEnd = activeElement.selectionEnd;
                 }
@@ -1515,6 +1517,13 @@ var baseView = Backbone.View.extend({
 });
 
 /**
+ * Use to find key/value pairs in tbone attributes on render.
+ * @type {RegExp}
+ * @const
+ */
+var rgxTBoneAttribute = /[^\w.]*([\w.]+)[^\w.]+([\w.]+)/g;
+
+/**
  * tbone.render
  *
  * Render an array of HTML elements into Views.  This reads the tbone attribute generates a View
@@ -1550,7 +1559,7 @@ function render($els, parent, subViews) {
              * a new View.
              */
             var props = {};
-            ($this.attr('tbone') || '').replace(/[^\w.]*([\w.]+)[^\w.]+([\w.]+)/g, function(__, prop, value) {
+            ($this.attr('tbone') || '').replace(rgxTBoneAttribute, function(__, prop, value) {
                 props[prop] = value;
             });
             var inlineTemplateId = props['inline'];
@@ -1558,7 +1567,11 @@ function render($els, parent, subViews) {
                 /**
                  * XXX what's the best way to get the original html back?
                  */
-                addTemplate(inlineTemplateId, $this.html().replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+                var origTemplateHtml = $this.html()
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&amp;/g, '&');
+                addTemplate(inlineTemplateId, origTemplateHtml);
             }
             var templateId = inlineTemplateId || props['tmpl'];
             var viewId = props['view'];
