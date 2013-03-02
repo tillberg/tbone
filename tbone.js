@@ -617,46 +617,15 @@ var baseModel = Backbone.Model.extend({
     'isVisible': function () {
         return hasViewListener(this);
     },
-    getDepends: function () {
-        var self = this;
-        var state = {};
-        var depends = (isfunction(self['depends']) ? self['depends']() : self['depends']) || {};
-        for (var key in depends) {
-            var params = depends[key];
-            if (params.push) {
-                // XXX Legacy support, array instead of tuple-ish
-                params = (params[2] ? '' : 'req ') + params[0] + (params[1] ? '.' + params[1] : '');
-            }
-            var parts = (/(req )?(.+)/).exec(params);
-            // Do a tbone lookup of the referenced query
-            var value = lookup(parts[2]);
-            // If the value is null-ish and required, return null to prevent update.
-            if (value == null && parts[1]) {
-                return null;
-            }
-            if (key === '*') {
-                _.extend(state, value);
-            } else {
-                state[key] = value;
-            }
-        }
-        return state;
-    },
     update: function () {
         var self = this;
-        var state = self.getDepends();
-        // When sleeping is enabled for a model (true by default on ajax models, that model
-        // will not update until there is some currently-rendered view that depends upon it,
-        // either directly or through a chain of other models)
-        if (state !== null) {
-            if (self.isAsync()) {
-                self.updateAsync(state);
-            } else {
-                self.updateSync(state);
-            }
+        if (self.isAsync()) {
+            self.updateAsync();
+        } else {
+            self.updateSync();
         }
     },
-    updateAsync: function (baseState) {
+    updateAsync: function () {
         var self = this;
         var expirationSeconds = self['expirationSeconds'];
         function complete() {
@@ -672,7 +641,7 @@ var baseModel = Backbone.Model.extend({
             }
         }
 
-        var url = self.url(baseState);
+        var url = self.url();
         var lastFetchedUrl = self.fetchedUrl;
         self.sleeping = !this['isVisible']();
         if (self.sleeping) {
@@ -695,11 +664,6 @@ var baseModel = Backbone.Model.extend({
             self.fetch({
                 'dataType': 'text',
                 success: function () {
-                    _.each(self.toJSON(), function (v, k) {
-                        delete baseState[k];
-                    });
-                    self.set(baseState);
-                    // XXX postFetch is deprecated in favor of the fetch event:
                     self['postFetch']();
                     self.trigger('fetch');
                     log(INFO, self, 'updated', self.toJSON());
@@ -726,10 +690,10 @@ var baseModel = Backbone.Model.extend({
             });
         }
     },
-    updateSync: function (state) {
+    updateSync: function () {
         var self = this;
-        // call this.calc, which should return the new state (synchronously)
-        var newParams = self['calc'](state);
+        // this.state returns the new state, synchronously
+        var newParams = self['state']();
         if (newParams === null) {
             log(VERBOSE, self, 'update cancelled');
             return;
@@ -737,14 +701,14 @@ var baseModel = Backbone.Model.extend({
         lookup.call(self, '__self__', newParams);
         log(INFO, self, 'updated', self.toJSON());
     },
-    'calc': identity,
+    'state': identity,
     'postFetch': noop
 });
 
 /**
  * Create a new model type.
  * @param  {string}                   name Model name
- * @param  {Backbone.Model|Function=} base Parent model -- or calc function of simple sync model
+ * @param  {Backbone.Model|Function=} base Parent model -- or state function of simple sync model
  * @param  {Object.<string, Object>=} opts Properties to override (optional)
  * @return {Backbone.Model}
  */
@@ -764,11 +728,11 @@ function createModel(name, base, opts) {
         base = baseModel;
 
     /**
-     * If the second parameter is a function, use it as the calc function of a simple sync model.
+     * If the second parameter is a function, use it as the state function of a simple sync model.
      */
     } else if (!base['__super__']) {
         opts = {
-            'calc': base
+            'state': base
         };
         base = baseModel;
     }
