@@ -614,30 +614,32 @@ var baseModel = Backbone.Model.extend({
             this.scope.trigger();
         }
     },
-    getDependsMap: function () {
-        var depends = this['depends'] || {};
-        return isfunction (depends) ? depends.call(this) : depends;
-    },
     shouldSleep: function () {
         return this['enableSleep'] && !hasViewListener(this);
     },
     getDepends: function () {
+        var self = this;
         var state = {};
-        var depsReady = _.map(this.getDependsMap(), function (params, key) {
-            var model_name = params[0];
-            var prop = params[1];
-            var isOptional = params[2];
-            var value = lookup(model_name + (prop ? '.' + prop : ''));
+        var depends = (isfunction(self['depends']) ? self['depends']() : self['depends']) || {};
+        for (var key in depends) {
+            var params = depends[key];
+            if (params.push) {
+                // XXX Legacy support, array instead of tuple-ish
+                params = (params[2] ? '' : 'req ') + params[0] + (params[1] ? '.' + params[1] : '');
+            }
+            var parts = (/(req )?(.+)/).exec(params);
+            // Do a tbone lookup of the referenced query
+            var value = lookup(parts[2]);
+            // If the value is null-ish and required, return null to prevent update.
+            if (value == null && parts[1]) {
+                return null;
+            }
             if (key === '*') {
                 _.extend(state, value);
             } else {
                 state[key] = value;
             }
-            return isOptional || value != null;
-        });
-        // XXX this is awkward - this function really returns a tuple of
-        // (allDepsReady, state), but that's not JS-friendly.
-        this.readyToUpdate = _.all(depsReady);
+        }
         return state;
     },
     update: function () {
@@ -652,7 +654,7 @@ var baseModel = Backbone.Model.extend({
             self.sleeping = true;
         } else {
             self.sleeping = false;
-            if (self.readyToUpdate) {
+            if (state !== null) {
                 if (self.isAsync()) {
                     self.updateAsync(state);
                 } else {
