@@ -618,13 +618,6 @@ var baseModel = Backbone.Model.extend({
         var depends = this['depends'] || {};
         return isfunction (depends) ? depends.call(this) : depends;
     },
-    getModelDepends: function () {
-        var self = this;
-        var depends = self.getDependsMap();
-        return _.map(_.uniq(_.pluck(depends, 0)), function (model_name) {
-            return data[model_name];
-        });
-    },
     shouldSleep: function () {
         return this['enableSleep'] && !hasViewListener(this);
     },
