@@ -1359,7 +1359,7 @@ var baseView = Backbone.View.extend({
                 }
 
                 var $old = $('<div>').append(this.$el.children());
-                var newHtml = renderTemplate(self.templateId, self.root);
+                var newHtml = renderTemplate(self.templateId, self.root());
                 log(INFO, self, 'newhtml', newHtml);
                 self.$el.html(newHtml);
 
@@ -1456,8 +1456,37 @@ var baseView = Backbone.View.extend({
      */
     'destroyDOM': function ($el) { },
 
+    /**
+     * If a root attribute was specified, use that as the root object for this view's
+     * render, both in templating automatically as well as available via this.root in
+     * `ready` and `postRender` callbacks.
+     */
+    root: function () {
+        var self = this;
+        if (self.rootMemoized == null) {
+            self.rootMemoized = self.rootStr && lookup(DONT_GET_DATA, self.rootStr) || tbone;
+        }
+        return self.rootMemoized;
+    },
+
+    /**
+     * Perform a safe lookup on the view's root, if any.  If there's no root, returns null.
+     **/
+    // This should be rewritten to memoize the rootStr part of view lookups.
+    // This will need to work around the existing warning feature in the lookup
+    // function for cases where the root is actually a property of a model.
+    // Sublookups from there don't reference a model, and while this is all right
+    // (because the lookup of rootStr has bound the view already to that model),
+    // there could be some subtleties about how that connection is made and passed
+    // around... and this would be a great thing to implement alongside passing
+    // *data* to subviews through template references, e.g. ${id(data)}.
+    'lookup': function (query) {
+        query = (this.rootStr ? this.rootStr + '.' : '') + query;
+        return lookup(query);
+    },
+
     'parentRoot': function () {
-        return this.parentView && this.parentView.root;
+        return this.parentView && this.parentView.root();
     },
 
     'parent': function () {
@@ -1543,14 +1572,6 @@ function render($els, parent, subViews) {
             $this.addClass(name);
 
             /**
-             * If a tb-root attribute was specified, use that as the root object for this view's
-             * render, both in templating automatically as well as available via this.root in
-             * `ready` and `postRender` callbacks.
-             * @type {String}
-             */
-            var root = rootStr && lookup(DONT_GET_DATA, rootStr) || tbone;
-
-            /**
              * Find the corresponding view matching the name (`viewId` or `templateId`) to the
              * name passed to `createView.`  If there is no view matching that name, then use
              * the default view.  You can set the default view using `tbone.defaultView().`
@@ -1564,7 +1585,7 @@ function render($els, parent, subViews) {
                 'el': el,
                 templateId: templateId,
                 parentView: parent,
-                root: root
+                rootStr: rootStr
             });
         }
     });
