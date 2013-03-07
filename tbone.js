@@ -197,6 +197,7 @@ if (TBONE_DEBUG) {
  */
 function getListeners(self) {
     var listeners = [];
+    // Older backbone:
     _.each(_.values(self['_callbacks'] || {}), function (ll) {
         var curr = ll.next;
         while (true) {
@@ -206,6 +207,12 @@ function getListeners(self) {
             } else {
                 break;
             }
+        }
+    });
+    // Newer backbone:
+    _.each(_.flatten(_.values(self['_events'] || {})), function (ev) {
+        if (ev.context) {
+            listeners.push(ev.context);
         }
     });
     return _.uniq(listeners);
