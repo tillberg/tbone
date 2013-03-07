@@ -897,7 +897,7 @@ function lookup(flag, query, value) {
             recentLookups[id] = myRecentLookup;
         }
     }
-    while (!!(arg = args.shift()) && arg !== '__self__') {
+    while ((arg = args.shift()) != null && arg !== '__self__') {
         name_parts.push(arg);
         if (_data['isBindable']) {
             foundBindable = true;
