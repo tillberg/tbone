@@ -536,18 +536,31 @@ function processQueue () {
          */
         delete scopesQueued[uniqueId(scope)];
 
-        var scopeExecTime = timer();
+        var scopeExecTime;
+        if (TBONE_DEBUG) {
+            scopeExecTime = timer();
+        }
 
         /**
          * Execute the scope, and in turn, the wrapped function.
          */
         scope.execute();
 
-        log(VERBOSE, 'scheduler', 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
-            'priority': scope.priority,
-            'name': scope.name,
-            'duration': scopeExecTime()
-        });
+        if (TBONE_DEBUG) {
+            var executionTimeMs = scopeExecTime();
+            log(VERBOSE, 'scheduler', 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                'priority': scope.priority,
+                'name': scope.name,
+                'duration': executionTimeMs
+            });
+            if (executionTimeMs > 10) {
+                log(VERBOSE, 'scheduler', 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                    'priority': scope.priority,
+                    'name': scope.name,
+                    'duration': executionTimeMs
+                });
+            }
+        }
     }
     log(VERBOSE, 'scheduler', 'processQueue', 'ran for <%=duration%>ms', {
         'duration': queueProcessTime()
