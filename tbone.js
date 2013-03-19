@@ -779,12 +779,7 @@ function createModel(name, base, opts) {
         'make': function (instanceName) {
             var instance = new model();
             if (instanceName) {
-                var nameParts = instanceName.split('.');
-                var _data = data;
-                _.each(nameParts.slice(0, nameParts.length - 1), function (part) {
-                    _data = _data[part] = _data[part] || {};
-                });
-                _data[nameParts[nameParts.length - 1]] = instance;
+                lookup(instanceName, instance);
             }
             return instance;
         }
@@ -819,12 +814,7 @@ function createCollection(name, model) {
         'make': function (instanceName) {
             var instance = new collection();
             if (instanceName) {
-                var nameParts = instanceName.split('.');
-                var _data = data;
-                _.each(nameParts.slice(0, nameParts.length - 1), function (part) {
-                    _data = _data[part] = _data[part] || {};
-                });
-                _data[nameParts[nameParts.length - 1]] = instance;
+                lookup(instanceName, instance);
             }
             return instance;
         }
