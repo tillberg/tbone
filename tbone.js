@@ -6,6 +6,10 @@ var tbone = function (arg0, arg1, arg2) {
     if (arg0) {
         if (typeof arg0 === 'function') {
             return autorun(arg0, arg1, arg2);
+        } else if (typeof arg1 === 'function') {
+            return autorun(function () {
+                T(arg0, arg1());
+            });
         } else {
             return lookup.apply(this, arguments);
         }

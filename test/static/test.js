@@ -203,6 +203,17 @@ test('tbone.set', function () {
     equal(baseprop, 8);
 });
 
+test('set w/ function', function () {
+    T('first', 'sally');
+    T('last', 'rogers');
+    T('fullname', function () { return T('first') + ' ' + T('last'); });
+    T.drain();
+    equal(T('fullname'), 'sally rogers');
+    T('last', 'smith');
+    T.drain();
+    equal(T('fullname'), 'sally smith');
+});
+
 function arrRender(arr) {
     return _.map(arr, function (n) { return n + ''; }).join('  ');
 }
