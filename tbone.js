@@ -900,6 +900,7 @@ function lookup(flag, query, value) {
      * If this function was called with a bindable context (i.e. a Model or Collection),
      * then use that as the root data object instead of the global tbone.data.
      */
+    var last_data;
     var _data = (!this || !this['isBindable']) ? data : this;
     var name_parts = [];
     var myRecentLookup = {};
@@ -919,6 +920,7 @@ function lookup(flag, query, value) {
     }
     while ((arg = args.shift()) != null && arg !== '__self__') {
         name_parts.push(arg);
+        last_data = _data;
         if (_data['isBindable']) {
             foundBindable = true;
             if (_data.isModel) {
@@ -935,13 +937,26 @@ function lookup(flag, query, value) {
             _data = _data[arg];
         }
         if (_data == null) {
-            /**
-             * This is not right to do in the case of a deep set where the structure
-             * is not created yet.  We might want to implicitly do a mkdir -p to support
-             * this, e.g. T('some.deep.random.property.to.set', value)
-             * -> { some: { deep: { random: { property: { to: { set: value } } } } } }
-             */
-            break;
+            if (isSet) {
+                /**
+                 * When doing an implicit mkdir -p while setting a deep-nested property
+                 * for the first time, we peek at the next arg and create either an array
+                 * for a numeric index and an object for anything else.
+                 */
+                _data = rgxNumber.exec(args[0]) ? [] : {};
+                if (last_data.isModel) {
+                    last_data.set(arg, _data);
+                } else if (last_data.isCollection) {
+                    // XXX Maybe you just shouldn't do this?
+                    log(ERROR, 'lookup', 'implicit deep nesting error',
+                        "Don't implicitly set subproperties of collections.");
+                    break;
+                } else {
+                    last_data[arg] = _data;
+                }
+            } else {
+                break;
+            }
         } else if (_data['isBindable']) {
             foundBindable = true;
             id = uniqueId(_data);
