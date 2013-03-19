@@ -175,8 +175,8 @@ test('tbone.set', function () {
     equal(subprop, 5);
 
     T('thing', { count: 6 });
-    equal(T.data.thing.name, 'passive');
-    equal(T.data.thing.get('count'), 6);
+    equal(T.data.toJSON().thing.name, 'passive');
+    equal(T.data.toJSON().thing.get('count'), 6);
 
     T('thing', { other: 4 });
     equal(T('thing.other'), 4);
@@ -191,6 +191,16 @@ test('tbone.set', function () {
     equal(T('morethings.0.number'), 6);
     equal(T('morethings.0.number', 100), undefined);
     equal(T('morethings.0.number'), 100);
+
+    T('baseprop', 5);
+    var baseprop;
+    T(function () {
+        baseprop = T('baseprop');
+    });
+    equal(baseprop, 5);
+    T('baseprop', 8);
+    T.drain();
+    equal(baseprop, 8);
 });
 
 function arrRender(arr) {

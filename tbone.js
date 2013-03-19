@@ -14,7 +14,6 @@ var tbone = function (arg0, arg1, arg2) {
      * Does anything make sense to do with no arguments?
      */
 };
-var data = {};
 var models = {};
 var collections = {};
 var templates = {};
@@ -53,7 +52,7 @@ var PRIORITY_INIT_DELTA = 5000;
 
 function identity(x) { return x; }
 /** @const */
-var noop = identity;
+function noop () { return null; }
 
 function isfunction (x) {
     return typeof x === 'function';
@@ -721,7 +720,7 @@ var baseModel = Backbone.Model.extend({
         lookup.call(self, '__self__', newParams);
         log(INFO, self, 'updated', self.toJSON());
     },
-    'state': identity,
+    'state': noop,
     'postFetch': noop
 });
 
@@ -1747,6 +1746,8 @@ _.each([baseModel, baseCollection], function (obj) {
     });
 });
 
+var data = new baseModel();
+
 var orig_tbone = window['tbone'];
 var orig_T = window['T'];
 
@@ -1755,6 +1756,7 @@ tbone['models'] = models;
 tbone['views'] = views;
 tbone['collections'] = collections;
 tbone['data'] = data;
+tbone['_data'] = data.attributes; // XXX don't use this
 tbone['templates'] = templates;
 
 tbone['autorun'] = tbone['set'] = tbone['lookup'] = tbone;
