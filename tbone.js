@@ -221,7 +221,6 @@ function getListeners(self) {
     return _.uniq(listeners);
 }
 
-//
 /**
  * Returns true if there is a view that is listening (directly or indirectly)
  * to this model.  Useful for determining whether the current model should
@@ -588,14 +587,15 @@ tbone['freeze'] = function () {
     unfrozen = false;
 };
 
+
+Backbone.Model.prototype.isModel = true;
+
 /**
  * baseModel
  * @constructor
  * @extends Backbone.Model
  */
 var baseModel = Backbone.Model.extend({
-    isModel: true,
-    backboneBasePrototype: Backbone.Model.prototype,
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
@@ -791,10 +791,8 @@ function createModel(name, base, opts) {
     return model;
 }
 
-var baseCollection = Backbone.Collection.extend({
-    isCollection: true,
-    backboneBasePrototype: Backbone.Collection.prototype
-});
+Backbone.Collection.prototype.isCollection = true;
+var baseCollection = Backbone.Collection;
 
 function createCollection(name, model) {
     if (TBONE_DEBUG && !isString(name)) {
@@ -1508,9 +1506,14 @@ var baseView = Backbone.View.extend({
     // there could be some subtleties about how that connection is made and passed
     // around... and this would be a great thing to implement alongside passing
     // *data* to subviews through template references, e.g. ${id(data)}.
-    'lookup': function (query) {
+    'query': function (query) {
         query = (this.rootStr ? this.rootStr + '.' : '') + query;
         return lookup(query);
+    },
+
+    // deprecated
+    'lookup': function (query) {
+        return this['query'](query);
     },
 
     'parentRoot': function () {
@@ -1685,8 +1688,8 @@ function createView(name, base, fn, opts) {
     return views[name] = base.extend(opts);
 }
 
-_.each([baseModel, baseCollection], function (obj) {
-    _.extend(obj.prototype, {
+_.each([Backbone.Model.prototype, Backbone.Collection.prototype], function (proto) {
+    _.extend(proto, {
         /**
          * isBindable is just a convenience used to identify whether an object is
          * either a Model or a Collection.
@@ -1694,21 +1697,16 @@ _.each([baseModel, baseCollection], function (obj) {
         'isBindable': true,
 
         /**
-         * Copy lookup and lookupText onto the Model, View, and Collection.
+         * Copy query and text onto the Model, View, and Collection.
          *
          */
-        'lookup': lookup,
-        'lookupText': lookupText,
+        'query': lookup,
+        'text': lookupText,
 
-        /**
-         * Disable backbone-based validation; by using validation to prevent populating
-         * form input data to models, backbone validation is at odds with the TBone
-         * concept that all data in the UI should be backed by model data.
-         *
-         * By overriding _validate, we can still use isValid and validate, but Backbone
-         * will no longer prevent set() calls from succeeding with invalid data.
-         */
-        '_validate': function () { return true; },
+        // deprecated
+        'lookup': lookup,
+        // deprecated
+        'lookupText': lookupText,
 
         /**
          * Wake up this model as well as (recursively) any models that depend on
@@ -1735,22 +1733,36 @@ _.each([baseModel, baseCollection], function (obj) {
                     bindable.wake(woken);
                 }
             });
-        },
-
-        /**
-         * We wrap backboneBasePrototype.on in order to wake up and reset models
-         * that were previously sleeping because they did not need to be updated.
-         * This passes through execution to the original on function.
-         */
-        'on': function () {
-            this.wake({});
-            return this.backboneBasePrototype.on.apply(this, arguments);
         }
+    });
 
+    /**
+     * We wrap proto.on in order to wake up and reset models
+     * that were previously sleeping because they did not need to be updated.
+     * This passes through execution to the original on function.
+     */
+    var originalOn = proto.on;
+    proto['on'] = function () {
+        this.wake({});
+        return originalOn.apply(this, arguments);
+    };
+});
+
+_.each([baseModel, baseCollection], function (obj) {
+    _.extend(obj.prototype, {
+        /**
+         * Disable backbone-based validation; by using validation to prevent populating
+         * form input data to models, backbone validation is at odds with the TBone
+         * concept that all data in the UI should be backed by model data.
+         *
+         * By overriding _validate, we can still use isValid and validate, but Backbone
+         * will no longer prevent set() calls from succeeding with invalid data.
+         */
+        '_validate': function () { return true; }
     });
 });
 
-var data = new baseModel();
+var data = new Backbone.Model();
 
 var orig_tbone = window['tbone'];
 var orig_T = window['T'];
