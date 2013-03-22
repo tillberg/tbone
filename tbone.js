@@ -894,6 +894,7 @@ function lookup(flag, query, value) {
     var last_data;
     var _data = (!this || !this['isBindable']) ? data : this;
     var name_parts = [];
+    var myRootLookup;
     var myRecentLookup = {};
     var propAfterRecentLookup;
     var id;
@@ -902,12 +903,9 @@ function lookup(flag, query, value) {
     if (_data['isBindable']) {
         id = uniqueId(_data);
         foundBindable = true;
-        myRecentLookup = (recentLookups && recentLookups[id]) || {
+        myRootLookup = myRecentLookup = (recentLookups && recentLookups[id]) || {
             '__obj__': _data
         };
-        if (recentLookups) {
-            recentLookups[id] = myRecentLookup;
-        }
     }
     while ((arg = args.shift()) != null && arg !== '__self__') {
         name_parts.push(arg);
@@ -961,6 +959,7 @@ function lookup(flag, query, value) {
             propAfterRecentLookup = null;
         }
     }
+
     /**
      * If we haven't found a model / collection in the process of looking something up,
      * log an error.  A common mistake could be to attempt to read values before models
@@ -972,6 +971,15 @@ function lookup(flag, query, value) {
             query: query
         });
     }
+
+    /**
+     * Only include the root lookup if there were no others.
+     * XXX This is a good target for future optimization/improvement.
+     **/
+    if (recentLookups && myRootLookup && myRecentLookup === myRootLookup) {
+        recentLookups[id] = myRootLookup;
+    }
+
     if (_data) {
         if (isSet) {
             var currProp = (
