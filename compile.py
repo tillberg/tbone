@@ -33,6 +33,9 @@ def read(name):
 sources = [
     'header',
     'tbone',
+    'template',
+    'view',
+    'export',
     'footer'
 ]
 
