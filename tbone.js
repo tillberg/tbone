@@ -1176,9 +1176,11 @@ function withLookupListeners(str, textOp, closureVariables) {
                  * Patch the reference to use lookup (or lookupText).
                  */
                 return [
-                    'root.lookup',
+                    'tbone.lookup',
                     textOp ? 'Text' : '',
-                    '(' + ITERATE_OVER_MODELS + ', "',
+                    '(',
+                    ITERATE_OVER_MODELS,
+                    ', rootStr + "',
                     expr,
                     '")'
                 ].join('');
@@ -1304,7 +1306,7 @@ function initTemplate(string) {
      * parameter.  On render, we'll pass either a model/collection or tbone itself as the root.
      * @type {Function}
      */
-    var fn = _.template(parsed, null, { 'variable': 'root' });
+    var fn = _.template(parsed, null, { 'variable': 'rootStr' });
     /**
      * For debugging purposes, save a copy of the parsed template for reference.
      * @type {string}
@@ -1313,7 +1315,7 @@ function initTemplate(string) {
     return fn;
 }
 
-function renderTemplate(id, root) {
+function renderTemplate(id, rootStr) {
     var template = templates[id];
     if (!template) {
         error('Could not find template ' + id);
@@ -1322,7 +1324,7 @@ function renderTemplate(id, root) {
     if (typeof template === 'string') {
         template = templates[id] = initTemplate(template);
     }
-    return template(root);
+    return template(rootStr ? rootStr + '.' : '');
 }
 
 var baseView = Backbone.View.extend({
@@ -1393,7 +1395,7 @@ var baseView = Backbone.View.extend({
                 }
 
                 var $old = $('<div>').append(this.$el.children());
-                var newHtml = renderTemplate(self.templateId, self.root());
+                var newHtml = renderTemplate(self.templateId, self.rootStr);
                 log(INFO, self, 'newhtml', newHtml);
                 self.$el.html(newHtml);
 
