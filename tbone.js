@@ -1,4 +1,5 @@
 (function () {
+
 /** @const {boolean} */
 var TBONE_DEBUG = window['TBONE_DEBUG'];
 
@@ -721,7 +722,7 @@ var baseModel = Backbone.Model.extend({
             log(VERBOSE, self, 'update cancelled');
             return;
         }
-        lookup.call(self, '__self__', newParams);
+        lookup.call(self, QUERY_SELF, newParams);
         log(INFO, self, 'updated', self.toJSON());
     },
     'state': noop,
@@ -849,6 +850,14 @@ var ITERATE_OVER_MODELS = 2;
  */
 var EXTEND_ON_SET = 3;
 
+/**
+ * If you want to select the root, you can either pass __self__ or just an empty
+ * string; __self__ is converted to an empty string and this "flag" is used to
+ * check for whether we are selecting either.
+ * @const
+ */
+var QUERY_SELF = '';
+
 function lookup(flag, query, value) {
     var isSet;
     var dontGetData = flag === DONT_GET_DATA;
@@ -874,6 +883,10 @@ function lookup(flag, query, value) {
         isSet = true;
     }
 
+    /**
+     * Remove a trailing dot and __self__ references, if any, from the query.
+     **/
+    query = (query || '').replace(/\.?(__self__)?\.?$/, '');
     var args = query.split('.');
 
     var setprop;
@@ -907,7 +920,7 @@ function lookup(flag, query, value) {
             '__obj__': _data
         };
     }
-    while ((arg = args.shift()) != null && arg !== '__self__') {
+    while ((arg = args.shift()) != null) {
         name_parts.push(arg);
         last_data = _data;
         if (_data['isBindable']) {
@@ -983,7 +996,7 @@ function lookup(flag, query, value) {
     if (_data) {
         if (isSet) {
             var currProp = (
-                query === '__self__' ? _data : // only useful if _data is a model
+                query === QUERY_SELF ? _data : // only useful if _data is a model
                 _data.isModel ? _data.get(setprop) :
                 _data.isCollection ? _data.at(setprop) :
                 _data[setprop]);
@@ -1517,7 +1530,7 @@ var baseView = Backbone.View.extend({
     // around... and this would be a great thing to implement alongside passing
     // *data* to subviews through template references, e.g. ${id(data)}.
     'query': function (query) {
-        query = (this.rootStr ? this.rootStr + '.' : '') + query;
+        query = (this.rootStr ? this.rootStr + '.' : '') + (query || '');
         return lookup(query);
     },
 
