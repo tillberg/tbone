@@ -182,10 +182,6 @@ test('tbone.set', function () {
     equal(T('thing.other'), 4);
     equal(T('thing.count'), undefined);
 
-    T.extend('thing', { more: 'props' });
-    equal(T('thing.other'), 4);
-    equal(T('thing.more'), 'props');
-
     var morethings = thingsType.make('morethings');
     morethings.add({ number: 6 });
     equal(T('morethings.0.number'), 6);

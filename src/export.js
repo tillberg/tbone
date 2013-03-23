@@ -89,7 +89,6 @@ tbone['templates'] = templates;
 tbone['autorun'] = tbone['set'] = tbone['lookup'] = tbone;
 tbone['lookupText'] = lookupText;
 tbone['toggle'] = toggle;
-tbone['extend'] = extend;
 
 tbone['createModel'] = createModel;
 tbone['createCollection'] = createCollection;

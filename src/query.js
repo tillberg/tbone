@@ -17,13 +17,6 @@ var DONT_GET_DATA = 1;
 var ITERATE_OVER_MODELS = 2;
 
 /**
- * "Extend on set" - instead of replacing an entire object or model's values on
- * set, extend that object/model instead.
- * @const
- */
-var EXTEND_ON_SET = 3;
-
-/**
  * If you want to select the root, you can either pass __self__ or just an empty
  * string; __self__ is converted to an empty string and this "flag" is used to
  * check for whether we are selecting either.
@@ -35,8 +28,7 @@ function lookup(flag, query, value) {
     var isSet;
     var dontGetData = flag === DONT_GET_DATA;
     var iterateOverModels = flag === ITERATE_OVER_MODELS;
-    var extendOnSet = flag === EXTEND_ON_SET;
-    if (!dontGetData && !iterateOverModels && !extendOnSet) {
+    if (!dontGetData && !iterateOverModels) {
         /**
          * If no flag provided, shift the query and value over.  We do it this way instead
          * of having flag last so that we can type-check flag and discern optional flags
@@ -52,8 +44,6 @@ function lookup(flag, query, value) {
         if (arguments.length === 2) {
             isSet = true;
         }
-    } else if (extendOnSet) {
-        isSet = true;
     }
 
     /**
@@ -181,15 +171,12 @@ function lookup(flag, query, value) {
                  */
                 if (value) {
                     /**
-                     * Unless extendOnSet is set, remove any properties from the model that
-                     * are not present in the value we're setting it to.  Extend-semantics
-                     * are made available to the user via tbone.extend.
+                     * Remove any properties from the model that are not present in the
+                     * value we're setting it to.
                      */
-                    if (!extendOnSet) {
-                        for (var k in currProp.toJSON()) {
-                            if (value[k] === undefined) {
-                                currProp.unset(k);
-                            }
+                    for (var k in currProp.toJSON()) {
+                        if (value[k] === undefined) {
+                            currProp.unset(k);
                         }
                     }
                     currProp.set(value);
@@ -246,8 +233,4 @@ function lookupText() {
 
 function toggle(model_and_key) {
     lookup(model_and_key, !lookup(model_and_key));
-}
-
-function extend(prop, value) {
-    return lookup.call(this, EXTEND_ON_SET, prop, value);
 }
