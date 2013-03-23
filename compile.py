@@ -44,7 +44,7 @@ cmd = [
     "--externs",
     "externs/jquery.js",
     "--externs",
-    "externs/underscore-1.3.3.js",
+    "externs/underscore-1.4.4.js",
     "--externs",
     "externs/backbone-0.9.2.js",
     "--js",

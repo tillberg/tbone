@@ -14,11 +14,57 @@ function increment() {
 }
 increment();
 
-tbone.addTemplate('box', $('#tmpl_box').html());
-$('#grid').append(_.map(_.range(100), function () {
-    return '<div tbone="tmpl box root boxProps"></div>';
-}).join(''));
-tbone.render($('[tbone]'));
+_.each($('script[type="text/tbone-tmpl"]'), function (el) {
+    var name = $(el).attr('name');
+    tbone.addTemplate(name, $(el).html());
+});
+
+var mode = 1;
+if (mode === 0) {
+    // Use only templates for dynamic CSS
+    $('#grid').append(_.map(_.range(100), function () {
+        return '<div tbone="tmpl box root boxProps"></div>';
+    }).join(''));
+    tbone.render($('[tbone]'));
+} else if (mode === 1) {
+    // No template refreshes; use view w/T-function instead
+    $('#grid').append(_.map(_.range(100), function () {
+        return '<div class="box" tbone="tmpl box2 root boxProps"></div>';
+    }).join(''));
+    tbone.createView('box2', function () {
+        var self = this;
+        var $inner = this.$el.children();
+        T(function () {
+            var props = self.query();
+            $inner.css({
+                top: props.top,
+                left: props.left,
+                background: 'rgb(0,0,' + props.color + ')'
+            });
+            $inner.text(props.content);
+        });
+    });
+    tbone.render($('[tbone]'));
+} else {
+    // Use single T-function but still set CSS for each element individually
+    $('#grid').append(_.map(_.range(100), function () {
+        return '<div class="box" tbone="tmpl box2"></div>';
+    }).join(''));
+    tbone.render($('[tbone]'));
+    var $inners = $('.box-inner');
+    T(function () {
+        var props = T('boxProps');
+        $inners.each(function () {
+            var $inner = $(this);
+            $inner.css({
+                top: props.top,
+                left: props.left,
+                background: 'rgb(0,0,' + props.color + ')'
+            });
+            $inner.text(props.content);
+        });
+    });
+}
 
 
 var renders = 0;
