@@ -1,4 +1,3 @@
-(function () {
 
 /** @const {boolean} */
 var TBONE_DEBUG = window['TBONE_DEBUG'];
@@ -1822,4 +1821,3 @@ if (TBONE_DEBUG) {
     tbone['hasViewListener'] = hasViewListener;
 }
 
-}());

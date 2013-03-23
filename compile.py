@@ -26,11 +26,22 @@ debug = os.environ.get('TBONE_DEBUG', False)
 mode = 'debug' if debug else 'release'
 minflag = '' if debug else '.min'
 
-with open('tbone.js', 'r') as f:
-    raw = f.read()
-parsed = raw.replace('var TBONE_DEBUG = window[\'TBONE_DEBUG\'];', 'var TBONE_DEBUG = %s;' % ('true' if debug else 'false'))
+def read(name):
+    with open('src/%s.js' % (name,), 'r') as f:
+        return f.read()
+
+sources = [
+    'header',
+    'tbone',
+    'footer'
+]
+
+all = '\n'.join([read(name) for name in sources])
+
+all = all.replace('var TBONE_DEBUG = window[\'TBONE_DEBUG\'];', 'var TBONE_DEBUG = %s;' % ('true' if debug else 'false'))
+
 with open('build/tbone.%s.js' % mode, 'w') as f:
-    f.write(parsed)
+    f.write(all)
 
 cmd = [
     "java",

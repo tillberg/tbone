@@ -20,11 +20,12 @@ var tasks = [
   },
   {
     name: 'jshint',
-    watch: /tbone\/tbone.js/,
+    watch: /src\/.+.js/,
     exec: function() {
       info('JSHinting...');
       var cmd = [
-        'autorun/node_modules/jshint/bin/hint --config .jshintrc tbone.js'
+        'autorun/node_modules/jshint/bin/hint --config .jshintrc src/backbone.js',
+        'autorun/node_modules/jshint/bin/hint --config .jshintrc src/tbone.js'
         // 'gjslint tbone.js'
       ].join(';');
       exec('sh', ['-c', cmd], { cwd: './', pipe: true }, function(err) {
