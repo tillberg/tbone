@@ -33,6 +33,10 @@ def read(name):
 sources = [
     'header',
     'tbone',
+    'scheduler',
+    'model',
+    'collection',
+    'query',
     'template',
     'view',
     'export',
