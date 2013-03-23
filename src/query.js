@@ -25,10 +25,11 @@ var ITERATE_OVER_MODELS = 2;
 var QUERY_SELF = '';
 
 function lookup(flag, query, value) {
+    var self = this;
     var isSet;
     var dontGetData = flag === DONT_GET_DATA;
     var iterateOverModels = flag === ITERATE_OVER_MODELS;
-    if (!dontGetData && !iterateOverModels) {
+    if (typeof flag === 'string') {
         /**
          * If no flag provided, shift the query and value over.  We do it this way instead
          * of having flag last so that we can type-check flag and discern optional flags
@@ -36,7 +37,7 @@ function lookup(flag, query, value) {
          */
         value = query;
         query = flag;
-        flag = null;
+        flag = 0;
         /**
          * Use arguments.length to switch to set mode in order to properly support
          * setting undefined.
@@ -68,39 +69,19 @@ function lookup(flag, query, value) {
      * then use that as the root data object instead of the global tbone.data.
      */
     var last_data;
-    var _data = (!this || !this['isBindable']) ? data : this;
+    var _data = self.isCollection ? self['models'] : self['attributes'];
     var name_parts = [];
-    var myRootLookup;
     var myRecentLookup = {};
-    var propAfterRecentLookup;
     var id;
     var arg;
-    var foundBindable;
-    if (_data['isBindable']) {
-        id = uniqueId(_data);
-        foundBindable = true;
-        myRootLookup = myRecentLookup = (recentLookups && recentLookups[id]) || {
-            '__obj__': _data
-        };
-    }
+    var doSubLookup;
+
     while ((arg = args.shift()) != null) {
         name_parts.push(arg);
         last_data = _data;
-        if (_data['isBindable']) {
-            foundBindable = true;
-            if (_data.isModel) {
-                _data = _data.get(arg);
-            } else if (_data.isCollection) {
-                // XXX should we support .get() for collections?  e.g. IDs starting with #?
-                myRecentLookup[arg] = _data = _data.at(arg);
-            }
-            if (!propAfterRecentLookup) {
-                propAfterRecentLookup = arg;
-                myRecentLookup[arg] = _data;
-            }
-        } else {
-            _data = _data[arg];
-        }
+
+        _data = _data[arg];
+
         if (_data == null) {
             if (isSet) {
                 /**
@@ -109,51 +90,31 @@ function lookup(flag, query, value) {
                  * for a numeric index and an object for anything else.
                  */
                 _data = rgxNumber.exec(args[0]) ? [] : {};
-                if (last_data.isModel) {
-                    last_data.set(arg, _data);
-                } else if (last_data.isCollection) {
-                    // XXX Maybe you just shouldn't do this?
-                    log(ERROR, 'lookup', 'implicit deep nesting error',
-                        "Don't implicitly set subproperties of collections.");
-                    break;
-                } else {
-                    last_data[arg] = _data;
-                }
+                // Set the property via query so as to fire change events appropriately
+                self['query'](name_parts.join('.'), _data);
             } else {
+                // Couldn't even get to the level of the value we're trying to look up.
+                // Concat the rest of args onto name_parts so that we record the full
+                // path in the event binding.
+                name_parts = name_parts.concat(args);
                 break;
             }
         } else if (_data['isBindable']) {
-            foundBindable = true;
-            id = uniqueId(_data);
-            myRecentLookup = (recentLookups && recentLookups[id]) || {
-                '__obj__': _data,
-                '__path__': name_parts.join('.') // XXX a model could exist at two paths]
-            };
-            if (recentLookups) {
-                recentLookups[id] = myRecentLookup;
-            }
-            propAfterRecentLookup = null;
+            doSubLookup = true; // <-- To avoid duplicating the recentLookups code here
+            break;
         }
     }
 
-    /**
-     * If we haven't found a model / collection in the process of looking something up,
-     * log an error.  A common mistake could be to attempt to read values before models
-     * are initialized.
-     **/
-    if (TBONE_DEBUG && !isSet && !foundBindable) {
-        log(ERROR, 'lookup', 'no bindable found',
-            'No model/collection found while looking up "<%=query%>".', {
-            query: query
-        });
+    if (!isSet && recentLookups) {
+        id = uniqueId(self);
+        myRecentLookup = recentLookups[id] = (recentLookups && recentLookups[id]) || {
+            '__obj__': self
+        };
+        myRecentLookup[name_parts.join('.')] = _data;
     }
 
-    /**
-     * Only include the root lookup if there were no others.
-     * XXX This is a good target for future optimization/improvement.
-     **/
-    if (recentLookups && myRootLookup && myRecentLookup === myRootLookup) {
-        recentLookups[id] = myRootLookup;
+    if (doSubLookup) {
+        return isSet ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
     }
 
     if (_data) {
