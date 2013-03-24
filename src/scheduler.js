@@ -309,13 +309,13 @@ function processQueue () {
  * This is useful both for testing and MAYBE also for optimizing responsiveness by
  * draining at the end of a keyboard / mouse event handler.
  */
-tbone['drain'] = function () {
+function drain () {
     if (processQueueTimer) {
         clearTimeout(processQueueTimer);
     }
     processQueue();
-};
+}
 
-tbone['freeze'] = function () {
+function freeze () {
     unfrozen = false;
-};
+}

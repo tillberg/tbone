@@ -67,9 +67,9 @@ _.each(('break case catch continue debugger default delete do else finally for f
     neverLookup[word] = true;
 });
 
-tbone['dontPatch'] = function (namespace) {
+function dontPatch (namespace) {
     neverLookup[namespace] = true;
-};
+}
 
 /**
  * Adds listeners for model value lookups to a template string

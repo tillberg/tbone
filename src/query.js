@@ -177,14 +177,14 @@ function lookup(flag, query, value) {
             }
             if (changed) {
                 var callbacks = evs[QUERY_SELF] || [];
-                for (var i = 0; i < evs[k].length; i++) {
-                    callbacks[i].callback.call(callsbacks[i].context);
+                for (var i = 0; i < callbacks.length; i++) {
+                    callbacks[i].callback.call(callbacks[i].context);
                 }
             }
             return changed;
         };
-        diff(events, _data, curr);
-        return undefined;
+        diff(events, _data, value);
+        return value;
     } else if (_data) {
         if (!iterateOverModels && self.isCollection) {
             /**
@@ -203,5 +203,5 @@ function lookupText() {
 }
 
 function toggle(model_and_key) {
-    lookup(model_and_key, !lookup(model_and_key));
+    lookup.call(this, model_and_key, !lookup.call(this, model_and_key));
 }

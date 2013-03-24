@@ -1,86 +1,77 @@
 
-Backbone.Model.prototype.isModel = true;
-
-_.extend(Backbone.Model.prototype, {
-    set: function(key, val, options) {
-        var attr, attrs, unset, changes, silent, changing, prev, current;
-        if (key == null) return this;
-
-        // Handle both `"key", value` and `{key: value}` -style arguments.
-        if (typeof key === 'object') {
-            attrs = key;
-            options = val;
-        } else {
-            (attrs = {})[key] = val;
-        }
-
-        if (!options) options = {};
-
-        // Run validation.
-        if (!this._validate(attrs, options)) return false;
-
-        // Extract attributes and options.
-        unset           = options.unset;
-        silent          = options.silent;
-        changes         = [];
-        changing        = this._changing;
-        this._changing  = true;
-
-        if (!changing) {
-            this._previousAttributes = _.clone(this.attributes);
-            this.changed = {};
-        }
-        current = this.attributes, prev = this._previousAttributes;
-
-        // Check for changes of `id`.
-        if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
-
-        // For each `set` attribute, update or delete the current value.
-        for (attr in attrs) {
-            val = attrs[attr];
-            if (!_.isEqual(current[attr], val)) changes.push(attr);
-            if (!_.isEqual(prev[attr], val)) {
-                this.changed[attr] = val;
-            } else {
-                delete this.changed[attr];
-            }
-            if (unset) {
-                delete current[attr];
-            } else {
-                current[attr] = val;
-            }
-        }
-
-        // Trigger all relevant attribute changes.
-        if (!silent) {
-            if (changes.length) this._pending = true;
-            for (var i = 0, l = changes.length; i < l; i++) {
-                this.trigger('change:' + changes[i], this, current[changes[i]], options);
-            }
-        }
-
-        // You might be wondering why there's a `while` loop here. Changes can
-        // be recursively nested within `"change"` events.
-        if (changing) return this;
-        if (!silent) {
-            while (this._pending) {
-                this._pending = false;
-                this.trigger('change', this, options);
-            }
-        }
-        this._pending = false;
-        this._changing = false;
-        return this;
-    }
-
-});
-
 /**
  * baseModel
  * @constructor
  * @extends Backbone.Model
  */
-var baseModel = Backbone.Model.extend({
+var baseModel = {
+    isModel: true,
+    make: function () {
+        var instance = function (arg0, arg1, arg2) {
+            if (arg0) {
+                if (typeof arg0 === 'function') {
+                    return autorun(arg0, arg1, arg2);
+                } else if (typeof arg1 === 'function' && !arg1['isBindable']) {
+                    return autorun(function () {
+                        T(arg0, arg1());
+                    });
+                } else {
+                    return instance['query'].apply(instance, arguments);
+                }
+            }
+        };
+        _.extend(instance, this);
+        instance.construct();
+        return instance;
+    },
+    construct: function () {
+        this._events = {};
+        this.attributes = {};
+    },
+    extend: function (subclass) {
+        return _.extend({}, subclass, this);
+    },
+    on: function (name, callback, context) {
+        var parts = name.split(/\W+/);
+        var events = this._events;
+        var arg;
+
+        while ((arg = parts.shift()) != null) {
+            if (!events[arg]) {
+                events[arg] = {};
+            }
+            events = events[arg];
+        }
+        var callbacks = events[''];
+        if (!callbacks) {
+            callbacks = events[''] = [];
+        }
+        callbacks.push({ callback: callback, context: context });
+    },
+    off: function (name, callback, context) {
+        // XXX name & callback not supported.
+        // XXX doesn't clean up when callbacks list goes to zero length
+        var stack = [ this._events ];
+        var next, callbacks, k;
+
+        while (!!(next = stack.pop())) {
+            for (k in next) {
+                if (k === '') {
+                    var newCallbacks = [];
+                    callbacks = next[''];
+                    for (var i = 0; i < next[k].length; i++) {
+                        if (callbacks[i].context !== context) {
+                            newCallbacks.push(callbacks[i]);
+                        }
+                    }
+                    next[''] = newCallbacks;
+                } else {
+                    stack.push(next[k]);
+                }
+            }
+        }
+    },
+
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
@@ -211,67 +202,4 @@ var baseModel = Backbone.Model.extend({
     },
     'state': noop,
     'postFetch': noop
-});
-
-/**
- * Create a new model type.
- * @param  {string}                   name Model name
- * @param  {Backbone.Model|Function=} base Parent model -- or state function of simple sync model
- * @param  {Object.<string, Object>=} opts Properties to override (optional)
- * @return {Backbone.Model}
- */
-function createModel(name, base, opts) {
-    if (TBONE_DEBUG && !isString(name)) {
-        throw 'createModel requires name parameter';
-    }
-    /**
-     * If only a name is provided, this is a passive model.  Disable autorun so that this model
-     * will only be updated by set() calls.  This is useful in building simple dynamic data
-     * sources for other models.
-     */
-    if (!base) {
-        opts = {
-            initialize: noop
-        };
-        base = baseModel;
-
-    /**
-     * If the second parameter is a function, use it as the state function of a simple sync model.
-     */
-    } else if (!base['__super__']) {
-        opts = {
-            'state': base
-        };
-        base = baseModel;
-    }
-
-    opts = _.extend({
-        name: name
-    }, opts || {});
-
-    var model = models[name] = base.extend(opts);
-
-    var modelPrototype = model.prototype;
-    _.extend(model, /** @lends {model} */ {
-        /**
-         * Create and return an instance of this model using the model name as the instance name.
-         * @return {Backbone.Model}
-         */
-        'singleton': function () {
-            return this['make'](name);
-        },
-        /**
-         * Create and return an instance of this model at tbone.data[instanceName].
-         * @return {Backbone.Model}
-         */
-        'make': function (instanceName) {
-            var instance = new model();
-            if (instanceName) {
-                lookup(instanceName, instance);
-            }
-            return instance;
-        }
-    });
-
-    return model;
-}
+};

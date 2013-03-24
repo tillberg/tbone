@@ -1,5 +1,5 @@
 
-_.each([Backbone.Model.prototype, Backbone.Collection.prototype], function (proto) {
+_.each([baseModel], function (proto) {
     _.extend(proto, {
         /**
          * isBindable is just a convenience used to identify whether an object is
@@ -14,10 +14,11 @@ _.each([Backbone.Model.prototype, Backbone.Collection.prototype], function (prot
         'query': lookup,
         'text': lookupText,
 
-        // deprecated
+        // deprecated?
         'lookup': lookup,
-        // deprecated
         'lookupText': lookupText,
+        'set': lookup,
+        'get': lookup,
 
         /**
          * Wake up this model as well as (recursively) any models that depend on
@@ -59,8 +60,8 @@ _.each([Backbone.Model.prototype, Backbone.Collection.prototype], function (prot
     };
 });
 
-_.each([baseModel, baseCollection], function (obj) {
-    _.extend(obj.prototype, {
+// _.each([baseModel, baseCollection], function (obj) {
+//     _.extend(obj.prototype, {
         /**
          * Disable backbone-based validation; by using validation to prevent populating
          * form input data to models, backbone validation is at odds with the TBone
@@ -69,11 +70,11 @@ _.each([baseModel, baseCollection], function (obj) {
          * By overriding _validate, we can still use isValid and validate, but Backbone
          * will no longer prevent set() calls from succeeding with invalid data.
          */
-        '_validate': function () { return true; }
-    });
-});
+//         '_validate': function () { return true; }
+//     });
+// });
 
-var data = new Backbone.Model();
+var tbone = baseModel.make();
 
 var orig_tbone = window['tbone'];
 var orig_T = window['T'];
@@ -82,20 +83,24 @@ window['tbone'] = window['T'] = tbone;
 tbone['models'] = models;
 tbone['views'] = views;
 tbone['collections'] = collections;
-tbone['data'] = data;
-tbone['_data'] = data.attributes; // XXX don't use this
+tbone['data'] = tbone;
+tbone['_data'] = tbone.attributes; // XXX don't use this
 tbone['templates'] = templates;
 
-tbone['autorun'] = tbone['set'] = tbone['lookup'] = tbone;
+tbone['autorun'] = tbone['lookup'] = tbone;
 tbone['lookupText'] = lookupText;
 tbone['toggle'] = toggle;
 
-tbone['createModel'] = createModel;
 tbone['createCollection'] = createCollection;
 tbone['createView'] = createView;
 tbone['defaultView'] = __defaultView;
 tbone['addTemplate'] = addTemplate;
+tbone['dontPatch'] = dontPatch;
 tbone['render'] = render;
+
+tbone['isReady'] = isReady;
+tbone['drain'] = drain;
+tbone['freeze'] = freeze;
 
 tbone['noConflict'] = function () {
     window['T'] = orig_T;
@@ -105,6 +110,9 @@ tbone['noConflict'] = function () {
 models['base'] = baseModel;
 
 if (TBONE_DEBUG) {
+    tbone['watchLog'] = watchLog;
     tbone['getListeners'] = getListeners;
     tbone['hasViewListener'] = hasViewListener;
+    tbone['onLog'] = onLog;
+    onLog(logconsole);
 }

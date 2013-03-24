@@ -2,22 +2,6 @@
 /** @const {boolean} */
 var TBONE_DEBUG = window['TBONE_DEBUG'];
 
-var tbone = function (arg0, arg1, arg2) {
-    if (arg0) {
-        if (typeof arg0 === 'function') {
-            return autorun(arg0, arg1, arg2);
-        } else if (typeof arg1 === 'function') {
-            return autorun(function () {
-                T(arg0, arg1());
-            });
-        } else {
-            return lookup.apply(this, arguments);
-        }
-    }
-    /**
-     * Does anything make sense to do with no arguments?
-     */
-};
 var models = {};
 var collections = {};
 var templates = {};
@@ -113,13 +97,12 @@ var logLevels = {
     },
     base: WARN
 };
-if (TBONE_DEBUG) {
-    tbone['watchLog'] = function (name, level) {
-        if (level == null) { level = VERBOSE; }
-        logLevels.type[name] = VERBOSE;
-        logLevels.context[name] = VERBOSE;
-        logLevels.event[name] = VERBOSE;
-    };
+
+function watchLog (name, level) {
+    if (level == null) { level = VERBOSE; }
+    logLevels.type[name] = VERBOSE;
+    logLevels.context[name] = VERBOSE;
+    logLevels.event[name] = VERBOSE;
 }
 
 var events = [];
@@ -132,9 +115,9 @@ var viewRenders = 0;
  */
 var inflight = 0;
 
-tbone['isReady'] = function () {
+function isReady () {
     return !inflight && !schedulerQueue.length;
-};
+}
 
 var logCallbacks = [];
 
@@ -187,10 +170,6 @@ function logconsole (level, context, event, msg, data) {
 
 function onLog (cb) {
     logCallbacks.push(cb);
-}
-if (TBONE_DEBUG) {
-    tbone['onLog'] = onLog;
-    onLog(logconsole);
 }
 
 /**
