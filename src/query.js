@@ -127,30 +127,63 @@ function lookup(flag, query, value) {
             last_data[setprop] = value;
         }
 
-        var stack = [{ prev: _data, curr: value, evs: events }];
-        var next, prev, curr, evs, callbacks, k;
-
-        while (!!(next = stack.pop())) {
-            prev = next.prev || {};
-            curr = next.curr || {};
-            evs = next.evs;
+        var diff = function (evs, curr, prev, exhaustive) {
+            evs = evs || {};
+            curr = curr || {};
+            prev = prev || {};
+            var changed = false;
+            var k;
             for (k in evs) {
-                if (k === '') {
+                if (k === QUERY_SELF) {
                     if (prev !== curr) {
-                        callbacks = evs[''];
-                        for (var i = 0; i < evs[k].length; i++) {
-                            callbacks[i].callback.call(callsbacks[i].context);
+                        // If prev and curr are both "object" types (but not null),
+                        // then we need to search recursively for "real" changes.
+                        // We want to avoid firing change events when the user sets
+                        // something to a deep copy of itself.
+                        if (typeof prev === 'object' && typeof curr === 'object' &&
+                            prev !== null && curr !== null) {
+                            exhaustive = true;
+                        } else {
+                            changed = true;
                         }
                     }
                 } else {
-                    stack.push({
-                        prev: prev[k],
-                        curr: curr[k],
-                        evs: evs[k]
-                    });
+                    changed = changed || diff(evs[k], curr[k], prev[k]);
                 }
             }
-        }
+            if (exhaustive && !changed) {
+                // If exhaustive specified, and we haven't yet found a change, search
+                // through all keys until we find one (note that this could duplicate
+                // some searching done while searching the event tree)
+                // This may not be super-efficient to call diff all the time.
+                var searched = {};
+                for (k in curr) {
+                    searched[k] = true;
+                    if (diff(evs[k], curr[k], prev[k], true)) {
+                        changed = true;
+                        break;
+                    }
+                }
+                if (!changed) {
+                    for (k in prev) {
+                        if (!searched[k]) {
+                            if (diff(evs[k], curr[k], prev[k], true)) {
+                                changed = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (changed) {
+                var callbacks = evs[QUERY_SELF] || [];
+                for (var i = 0; i < evs[k].length; i++) {
+                    callbacks[i].callback.call(callsbacks[i].context);
+                }
+            }
+            return changed;
+        };
+        diff(events, _data, curr);
         return undefined;
     } else if (_data) {
         if (!iterateOverModels && self.isCollection) {
