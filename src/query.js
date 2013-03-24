@@ -61,7 +61,7 @@ function lookup(flag, query, value) {
          * for later.
          * @type {string}
          */
-        setprop = args.pop();
+        setprop = args[args.length - 1];
     }
 
     /**
@@ -69,35 +69,36 @@ function lookup(flag, query, value) {
      * then use that as the root data object instead of the global tbone.data.
      */
     var last_data;
-    var _data = self.isCollection ? self['models'] : self['attributes'];
+    var _data = self.attributes;
     var name_parts = [];
     var myRecentLookup = {};
     var id;
     var arg;
     var doSubLookup;
+    var events = isSet && self._events['change'];
 
     while ((arg = args.shift()) != null) {
         name_parts.push(arg);
         last_data = _data;
 
         _data = _data[arg];
+        events = events && events[arg];
 
         if (_data == null) {
-            if (isSet) {
-                /**
-                 * When doing an implicit mkdir -p while setting a deep-nested property
-                 * for the first time, we peek at the next arg and create either an array
-                 * for a numeric index and an object for anything else.
-                 */
-                _data = rgxNumber.exec(args[0]) ? [] : {};
-                // Set the property via query so as to fire change events appropriately
-                self['query'](name_parts.join('.'), _data);
-            } else {
+            if (!isSet) {
                 // Couldn't even get to the level of the value we're trying to look up.
                 // Concat the rest of args onto name_parts so that we record the full
                 // path in the event binding.
                 name_parts = name_parts.concat(args);
                 break;
+            } else if (args.length) {
+                /**
+                 * When doing an implicit mkdir -p while setting a deep-nested property
+                 * for the first time, we peek at the next arg and create either an array
+                 * for a numeric index and an object for anything else.  We set the
+                 * property via query() so as to fire change events appropriately.
+                 */
+                self['query'](name_parts.join('.'), _data = rgxNumber.exec(args[0]) ? [] : {});
             }
         } else if (_data['isBindable']) {
             doSubLookup = true; // <-- To avoid duplicating the recentLookups code here
@@ -113,75 +114,51 @@ function lookup(flag, query, value) {
         myRecentLookup[name_parts.join('.')] = _data;
     }
 
-    if (doSubLookup) {
+    // Skip the sub-query if DONT_GET_DATA is set there are no more args
+    if (doSubLookup && (!dontGetData || args.length)) {
         return isSet ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
     }
 
-    if (_data) {
-        if (isSet) {
-            var currProp = (
-                query === QUERY_SELF ? _data : // only useful if _data is a model
-                _data.isModel ? _data.get(setprop) :
-                _data.isCollection ? _data.at(setprop) :
-                _data[setprop]);
+    if (isSet) {
+        if (last_data == null) {
+            // Set top-level of model/collection
+            self.attributes = value;
+        } else {
+            last_data[setprop] = value;
+        }
 
-            if (currProp && currProp.isModel) {
-                /**
-                 * When setting to an entire model, we use different semantics; we want the
-                 * values provided to be set to the model, not replace the model.
-                 */
-                if (value) {
-                    /**
-                     * Remove any properties from the model that are not present in the
-                     * value we're setting it to.
-                     */
-                    for (var k in currProp.toJSON()) {
-                        if (value[k] === undefined) {
-                            currProp.unset(k);
+        var stack = [{ prev: _data, curr: value, evs: events }];
+        var next, prev, curr, evs, callbacks, k;
+
+        while (!!(next = stack.pop())) {
+            prev = next.prev || {};
+            curr = next.curr || {};
+            evs = next.evs;
+            for (k in evs) {
+                if (k === '') {
+                    if (prev !== curr) {
+                        callbacks = evs[''];
+                        for (var i = 0; i < evs[k].length; i++) {
+                            callbacks[i].callback.call(callsbacks[i].context);
                         }
                     }
-                    currProp.set(value);
                 } else {
-                    currProp.clear();
-                }
-            } else if (currProp !== value) {
-                if (_data.isModel) {
-                    /**
-                     * Set the value to the top-level model property.  Common case.
-                     */
-                    _data.set(setprop, value);
-                } else if (_data.isCollection) {
-                    // XXX What makes sense to do here?
-                } else if (_data[setprop] !== value) {
-                    /**
-                     * Set the value to a property on a regular JS object.
-                     */
-                    _data[setprop] = value;
-
-                    /**
-                     * If we're setting a nested property of a model (or collection?), then
-                     * trigger a change event for the top-level property.
-                     */
-                    if (propAfterRecentLookup) {
-                        myRecentLookup['__obj__'].trigger('change:' + propAfterRecentLookup);
-                    }
+                    stack.push({
+                        prev: prev[k],
+                        curr: curr[k],
+                        evs: evs[k]
+                    });
                 }
             }
-            return undefined;
-        } else if (iterateOverModels && _data.isCollection) {
+        }
+        return undefined;
+    } else if (_data) {
+        if (!iterateOverModels && self.isCollection) {
             /**
-             * If iterateOverModels is set and _data is a collection, return a list of models
-             * instead of either the collection or a list of model data.  This is useful in
-             * iterating over models while still being able to bind to models individually.
+             * If iterateOverModels is not set and _data is a collection, return the
+             * raw data of each model in a list.  XXX is this ideal?  or too magical?
              */
-            myRecentLookup['*'] = _data = _data.models;
-        } else if (!dontGetData && _data['isBindable']) {
-            /**
-             * Unless dontGetData is specified, convert the model/collection to its data.
-             * This is often what you want to do when getting data from a model, and this
-             * is what is presented to the user via tbone/lookup.
-             */
-            myRecentLookup['*'] = _data = _data.toJSON();
+            _data = _.map(_data, function (d) { return d['query'](); });
         }
     }
     return _data;
