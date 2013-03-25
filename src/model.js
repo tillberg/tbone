@@ -38,6 +38,9 @@ var baseModel = {
         var arg;
 
         while ((arg = parts.shift()) != null) {
+            if (arg === '') {
+                continue;
+            }
             if (!events[arg]) {
                 events[arg] = {};
             }

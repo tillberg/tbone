@@ -61,19 +61,12 @@ _.extend(Scope.prototype,
 
             _.each(recentLookups, function (propMap) {
                 var obj = propMap['__obj__'];
-                if (obj.isCollection) {
-                    /**
-                     * This is not as efficient as it could be.
-                     */
-                    obj.on('add remove reset', self.trigger, self);
+                if (propMap['*']) {
+                    obj.on('change', self.trigger, self);
                 } else {
-                    if (propMap['*']) {
-                        obj.on('change', self.trigger, self);
-                    } else {
-                        for (var prop in propMap) {
-                            if (prop !== '__obj__' && prop !== '__path__') {
-                                obj.on('change:' + prop, self.trigger, self);
-                            }
+                    for (var prop in propMap) {
+                        if (prop !== '__obj__' && prop !== '__path__') {
+                            obj.on('change:' + prop, self.trigger, self);
                         }
                     }
                 }

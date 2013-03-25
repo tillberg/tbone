@@ -75,6 +75,7 @@ function lookup(flag, query, value) {
     var id;
     var arg;
     var doSubLookup;
+    var parentCallbacks = [];
     var events = isSet && self._events['change'];
 
     while ((arg = args.shift()) != null) {
@@ -87,13 +88,19 @@ function lookup(flag, query, value) {
         last_data = _data;
 
         _data = _data[arg];
-        events = events && events[arg];
+        if (events) {
+            parentCallbacks = parentCallbacks.concat(events[QUERY_SELF] || []);
+            events = events[arg];
+        }
 
         if (_data == null && !isSet) {
             // Couldn't even get to the level of the value we're trying to look up.
             // Concat the rest of args onto name_parts so that we record the full
             // path in the event binding.
             name_parts = name_parts.concat(args);
+            break;
+        } else if (_data && _data['isBindable']) {
+            doSubLookup = true; // <-- To avoid duplicating the recentLookups code here
             break;
         } else if (isSet && (_data === null || typeof _data !== 'object') && args.length) {
             /**
@@ -111,9 +118,6 @@ function lookup(flag, query, value) {
                     });
             }
             self['query'](name_parts.join('.'), _data = rgxNumber.exec(args[0]) ? [] : {});
-        } else if (_data && _data['isBindable']) {
-            doSubLookup = true; // <-- To avoid duplicating the recentLookups code here
-            break;
         }
     }
 
@@ -168,19 +172,27 @@ function lookup(flag, query, value) {
                 // some searching done while searching the event tree)
                 // This may not be super-efficient to call diff all the time.
                 var searched = {};
-                for (k in curr) {
-                    searched[k] = true;
-                    if (diff(evs[k], curr[k], prev[k], true)) {
-                        changed = true;
-                        break;
+                if (prev !== curr &&
+                    !(typeof prev === 'object' && typeof curr === 'object' &&
+                      prev !== null && curr !== null)) {
+                    // The root objects have changed; no need to look further in our
+                    // exhaustive search
+                    changed = true;
+                } else {
+                    for (k in curr) {
+                        searched[k] = true;
+                        if (diff(evs[k], curr[k], prev[k], true)) {
+                            changed = true;
+                            break;
+                        }
                     }
-                }
-                if (!changed) {
-                    for (k in prev) {
-                        if (!searched[k]) {
-                            if (diff(evs[k], curr[k], prev[k], true)) {
-                                changed = true;
-                                break;
+                    if (!changed) {
+                        for (k in prev) {
+                            if (!searched[k]) {
+                                if (diff(evs[k], curr[k], prev[k], true)) {
+                                    changed = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -194,7 +206,18 @@ function lookup(flag, query, value) {
             }
             return changed;
         };
-        diff(events, _data, value);
+        if (parentCallbacks.length) {
+            // If there are any changes at all, then we need to fire one or more
+            // callbacks for things we searched for.  Note that "parent" only includes
+            // things from this model; change events don't bubble out to parent models.
+            if (diff(events, _data, value, true)) {
+                for (var i = 0; i < parentCallbacks.length; i++) {
+                    parentCallbacks[i].callback.call(parentCallbacks[i].context);
+                }
+            }
+        } else {
+            diff(events, _data, value);
+        }
         return value;
     } else if (_data) {
         if (!iterateOverModels && self.isCollection) {

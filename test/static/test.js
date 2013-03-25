@@ -124,9 +124,10 @@ test('tbone.lookup', function () {
     equal(tbone.lookup('things.3.number'), 42);
 
     /**
+     * XXX should this be the case?
      * model.toJSON() does not return the same object on successive calls.
      */
-    notEqual(T('lights'), T('lights'));
+    // notEqual(T('lights'), T('lights'));
 
     /**
      * T.lookup <===> T(string)
@@ -215,29 +216,31 @@ function numbersRender(arr) {
     return _.map(arr, function (n) { return '[' + n + ']'; }).join('    ');
 }
 
-// test('collection binding', function () {
-//     var things2 = thingsType.make('things2');
-//     things2.add({ number: 2 });
-//     var $el = tmpl('numbers2', 'things2');
-//     equal($el.text(), arrRender([2]));
-//     things2.add({ number: 3 });
-//     drain();
-//     equal($el.text(), arrRender([2, 3]));
-//     things2.reset();
-//     equal($el.text(), arrRender([2, 3]));
-//     drain();
-//     equal($el.text(), arrRender([]));
+test('collection binding', function () {
+    var things2 = T('things2', thingsType.make());
+    things2.add({ number: 2 });
+    var $el = tmpl('numbers2', 'things2');
+    equal($el.text(), arrRender([2]));
+    things2.add({ number: 3 });
+    drain();
+    equal($el.text(), arrRender([2, 3]));
+    // XXX should this keep the reset name from Backbone and reset be changed to
+    // something else?
+    things2.clear();
+    equal($el.text(), arrRender([2, 3]));
+    drain();
+    equal($el.text(), arrRender([]));
 
-//     // model inside collection
-//     var things4 = thingsType.make('things4');
-//     things4.add({ number: 2 });
-//     var $el = tmpl(templates.numbers.replace(/things/g, 'things4'));
-//     equal($el.text(), numbersRender([2]));
-//     set('things4.0.number', 5);
-//     equal($el.text(), numbersRender([2]));
-//     drain();
-//     equal($el.text(), numbersRender([5]));
-// });
+    // model inside collection
+    var things4 = T('things4', thingsType.make());
+    things4.add({ number: 2 });
+    var $el = tmpl(templates.numbers.replace(/things/g, 'things4'));
+    equal($el.text(), numbersRender([2]));
+    T('things4.0.number', 5);
+    equal($el.text(), numbersRender([2]));
+    drain();
+    equal($el.text(), numbersRender([5]));
+});
 
 T('val', function() {
     return {
@@ -368,18 +371,18 @@ test('template parsing of _.each', function () {
 
 });
 
-// test('template render with tb-root', function () {
-//     equal(text('number', 'things.3'), '[42]');
-//     equal(text('numbers2', 'things'), arrRender([2, 3, 7, 42]));
-//     var thingsroot = thingsType.make('thingsroot');
-//     thingsroot.add({ number: 10 });
-//     thingsroot.add({ number: 20 });
-//     var $el = tmpl('numbers2', 'thingsroot');
-//     equal($el.text(), arrRender([10, 20]));
-//     T('thingsroot.0.number', 11);
-//     T.drain();
-//     equal($el.text(), arrRender([11, 20]));
-// });
+test('template render with tb-root', function () {
+    equal(text('number', 'things.3'), '[42]');
+    equal(text('numbers2', 'things'), arrRender([2, 3, 7, 42]));
+    var thingsroot = T('thingsroot', thingsType.make());
+    thingsroot.add({ number: 10 });
+    thingsroot.add({ number: 20 });
+    var $el = tmpl('numbers2', 'thingsroot');
+    equal($el.text(), arrRender([10, 20]));
+    T('thingsroot.0.number', 11);
+    T.drain();
+    equal($el.text(), arrRender([11, 20]));
+});
 
 var counter_counter;
 createView('counter', function() {
@@ -396,17 +399,17 @@ test('ready called once per view render', function () {
     equal($el.find('.counter-1').length, 1);
     equal(counter_counter, 1);
 
-    // counter_counter = 0;
-    // var things5 = thingsType.make('things5');
-    // things5.add({ number: 2 });
-    // things5.add({ number: 3 });
-    // $el = tmpl('countercoll', 'things5');
-    // equal(counter_counter, 2);
-    // equal($el.find('.counter-1').length, 2);
+    counter_counter = 0;
+    var things5 = T('things5', thingsType.make());
+    things5.add({ number: 2 });
+    things5.add({ number: 3 });
+    $el = tmpl('countercoll', 'things5');
+    equal(counter_counter, 2);
+    equal($el.find('.counter-1').length, 2);
 
-    // counter_counter = 0;
-    // things5.add({ number: 4 });
-    // T.drain();
-    // equal(counter_counter, 1); // only the { number: 4 } model needs to be rendered anew
-    // equal($el.find('.counter-1').length, 3);
+    counter_counter = 0;
+    things5.add({ number: 4 });
+    T.drain();
+    equal(counter_counter, 1); // only the { number: 4 } model needs to be rendered anew
+    equal($el.find('.counter-1').length, 3);
 });
