@@ -6,7 +6,7 @@
  */
 var baseModel = {
     isModel: true,
-    make: function () {
+    make: function (opts) {
         var instance = function (arg0, arg1, arg2) {
             if (arg0) {
                 if (typeof arg0 === 'function') {
@@ -21,17 +21,13 @@ var baseModel = {
             }
         };
         _.extend(instance, this);
-        instance.construct();
+        instance['initialize'](opts);
         return instance;
     },
-    construct: function () {
-        this._events = {};
-        this.attributes = {};
-    },
-    extend: function (subclass) {
+    'extend': function (subclass) {
         return _.extend({}, subclass, this);
     },
-    on: function (name, callback, context) {
+    'on': function (name, callback, context) {
         var parts = name.split(/\W+/);
         var events = this._events;
         var arg;
@@ -48,7 +44,7 @@ var baseModel = {
         }
         callbacks.push({ callback: callback, context: context });
     },
-    off: function (name, callback, context) {
+    'off': function (name, callback, context) {
         // XXX name & callback not supported.
         // XXX doesn't clean up when callbacks list goes to zero length
         var stack = [ this._events ];
@@ -72,12 +68,18 @@ var baseModel = {
         }
     },
 
+    _initialize: function () {
+        this._events = {};
+        this.attributes = {};
+    },
+
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
      */
-    initialize: function () {
+    'initialize': function () {
         var self = this;
+        self._initialize();
         uniqueId(self);
         var isAsync = self.sleeping = self.isAsync();
         var priority = isAsync ? BASE_PRIORITY_MODEL_ASYNC : BASE_PRIORITY_MODEL_SYNC;

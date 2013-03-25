@@ -84,23 +84,29 @@ function lookup(flag, query, value) {
         _data = _data[arg];
         events = events && events[arg];
 
-        if (_data == null) {
-            if (!isSet) {
-                // Couldn't even get to the level of the value we're trying to look up.
-                // Concat the rest of args onto name_parts so that we record the full
-                // path in the event binding.
-                name_parts = name_parts.concat(args);
-                break;
-            } else if (args.length) {
-                /**
-                 * When doing an implicit mkdir -p while setting a deep-nested property
-                 * for the first time, we peek at the next arg and create either an array
-                 * for a numeric index and an object for anything else.  We set the
-                 * property via query() so as to fire change events appropriately.
-                 */
-                self['query'](name_parts.join('.'), _data = rgxNumber.exec(args[0]) ? [] : {});
+        if (_data == null && !isSet) {
+            // Couldn't even get to the level of the value we're trying to look up.
+            // Concat the rest of args onto name_parts so that we record the full
+            // path in the event binding.
+            name_parts = name_parts.concat(args);
+            break;
+        } else if (isSet && (_data === null || typeof _data !== 'object') && args.length) {
+            /**
+             * When doing an implicit mkdir -p while setting a deep-nested property
+             * for the first time, we peek at the next arg and create either an array
+             * for a numeric index and an object for anything else.  We set the
+             * property via query() so as to fire change events appropriately.
+             */
+            if (_data != null) {
+                log(WARN, this, 'mkdir', 'while writing <%=query%>, had to overwrite ' +
+                    'primitive value <%=primitive%> at <%=partial%>', {
+                        query: query,
+                        primitive: _data,
+                        partial: name_parts.join('.')
+                    });
             }
-        } else if (_data['isBindable']) {
+            self['query'](name_parts.join('.'), _data = rgxNumber.exec(args[0]) ? [] : {});
+        } else if (_data && _data['isBindable']) {
             doSubLookup = true; // <-- To avoid duplicating the recentLookups code here
             break;
         }

@@ -74,7 +74,7 @@ if error:
     print >> sys.stderr, error
 else:
     output.write("//@ sourceMappingURL=tbone%s.js.map\n" % minflag)
-    output.write("(function(){'use strict';")
+    output.write("(function(){")
     output.write(out)
     output.write("}());")
     output.close()

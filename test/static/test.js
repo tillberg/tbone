@@ -2,7 +2,6 @@ _.each(templates, function(template, id) {
     tbone.addTemplate(id, template);
 });
 
-var createCollection = tbone.createCollection;
 var createView = tbone.createView;
 var autorun = tbone.autorun;
 var render = tbone.render;

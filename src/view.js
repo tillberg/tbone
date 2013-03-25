@@ -1,11 +1,28 @@
 
-var baseView = Backbone.View.extend({
+var baseView = {
+    make: function (opts) {
+        var instance = function () {
+            // XXX Is there any use in this?
+        };
+        _.extend(instance, this);
+        instance['initialize'](opts);
+        return instance;
+    },
+    'extend': function (subclass) {
+        return _.extend({}, subclass, this);
+    },
+
+    '$': function(selector) {
+        return this['$el'].find(selector);
+    },
+
     isView: true,
 
-    initialize: function (opts) {
+    'initialize': function (opts) {
         var self = this;
         uniqueId(self);
         _.extend(self, opts);
+        self['$el'] = $(self['el']);
         self.priority = self.parentView ? self.parentView.priority - 1 : BASE_PRIORITY_VIEW;
         self.scope = autorun(self.render, self, self.priority, 'view_' + self.name,
                              self.onScopeExecute, self, true);
@@ -205,7 +222,7 @@ var baseView = Backbone.View.extend({
     'parent': function () {
         return this.parentView;
     }
-});
+};
 
 /**
  * Use to find key/value pairs in tbone attributes on render.
@@ -290,9 +307,9 @@ function render($els, parent, subViews) {
              * the default view.  You can set the default view using `tbone.defaultView().`
              * @type {function(new:Backbone.View, Object)}
              */
-            var MyView = views[name] || defaultView;
+            var myView = views[name] || defaultView;
 
-            return new MyView({
+            return myView.make({
                 name: name,
                 origOuterHTML: outerHTML,
                 'el': el,
@@ -360,7 +377,7 @@ function createView(name, base, fn, opts) {
     }
     opts = arg || {};
     opts.name = name;
-    var baseReady = base.prototype['ready'];
+    var baseReady = base['ready'];
     if (fn) {
         opts['ready'] = baseReady === noop ? fn : function () {
             baseReady.call(this);
