@@ -26,6 +26,7 @@ var baseModel = {
             }
         };
         _.extend(instance, this);
+        instance.construct(opts);
         instance['initialize'](opts);
         return instance;
     },
@@ -81,13 +82,29 @@ var baseModel = {
             }
         }
     },
-
-    _initialize: function (opts) {
-        this._events = {};
-        this.attributes = {};
-        if (opts) {
-            this['query']('', opts);
+    'trigger': function (name) {
+        var self = this;
+        var events = self._events;
+        var parts = name.split(/\W+/);
+        var arg;
+        while ((arg = parts.shift()) != null) {
+            if (arg === '') {
+                continue;
+            }
+            if (!events[arg]) {
+                events[arg] = {};
+            }
+            events = events[arg];
         }
+        var callbacks = events[QUERY_SELF] || [];
+        for (var i = 0; i < callbacks.length; i++) {
+            callbacks[i].callback.call(callbacks[i].context);
+        }
+    },
+
+    construct: function (opts) {
+        this._events = {};
+        this['query']('', opts);
     },
 
     /**
@@ -96,7 +113,6 @@ var baseModel = {
      */
     'initialize': function (opts) {
         var self = this;
-        self._initialize(opts);
         uniqueId(self);
         var isAsync = self.sleeping = self.isAsync();
         var priority = isAsync ? BASE_PRIORITY_MODEL_ASYNC : BASE_PRIORITY_MODEL_SYNC;
@@ -123,6 +139,34 @@ var baseModel = {
     'set': lookup,
     'get': lookup,
 
+    'find': function (obj) {
+        function recurse(o) {
+            if (o === obj) {
+                return [];
+            }
+            if (o !== null && typeof o === 'object') {
+                var result;
+                if (o.push) {
+                    for (var i = 0; i < o.length; i++) {
+                        if (!!(result = recurse(o[i]))) {
+                            result.unshift(k);
+                            return result;
+                        }
+                    }
+                } else {
+                    for (var k in o) {
+                        if (!!(result = recurse(o[k]))) {
+                            result.unshift(k);
+                            return result;
+                        }
+                    }
+                }
+            }
+        }
+        var result = recurse(this.attributes);
+        return result ? result.join('.') : null;
+    },
+
     /**
      * Wake up this model as well as (recursively) any models that depend on
      * it.  Any view that is directly or indirectly depended on by the current
@@ -133,7 +177,7 @@ var baseModel = {
     wake: function (woken) {
         // Wake up this model if it was sleeping
         if (this.sleeping) {
-            // this.trigger('wake');
+            this.trigger('wake');
             this.sleeping = false;
             this.reset();
         }
@@ -228,7 +272,7 @@ var baseModel = {
                 success: function (resp) {
                     self['query'](QUERY_SELF, self.parse(resp));
                     self['postFetch']();
-                    // self.trigger('fetch');
+                    self.trigger('fetch');
                     log(INFO, self, 'updated', self.toJSON());
                     complete();
                 },
@@ -259,7 +303,7 @@ var baseModel = {
         var newParams = self['state']();
         if (newParams !== null) {
             self['query'](QUERY_SELF, newParams);
-            log(WARN, self, 'updated', self.toJSON());
+            log(VERBOSE, self, 'updated', self.toJSON());
         }
     },
     'state': noop,

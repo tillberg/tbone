@@ -207,7 +207,7 @@ var baseView = {
     // *data* to subviews through template references, e.g. ${id(data)}.
     'query': function (query) {
         query = (this.rootStr ? this.rootStr + '.' : '') + (query || '');
-        return lookup(query);
+        return tbone(query);
     },
 
     // deprecated

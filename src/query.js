@@ -137,12 +137,18 @@ function lookup(flag, query, value) {
     if (isSet) {
         if (last_data == null) {
             // Set top-level of model/collection
-            self.attributes = value;
+            self.attributes = value != null ? value : (self.isCollection ? [] : {});
         } else {
             last_data[setprop] = value;
         }
 
-        var diff = function (evs, curr, prev, exhaustive) {
+        // XXX how to handle objects with cycles?
+        var MAX_RECURSION_DEPTH = 5;
+
+        var diff = function (evs, curr, prev, exhaustive, depth) {
+            if (depth > MAX_RECURSION_DEPTH) {
+                return false;
+            }
             evs = evs || {};
             curr = curr || {};
             prev = prev || {};
@@ -163,7 +169,7 @@ function lookup(flag, query, value) {
                         }
                     }
                 } else {
-                    changed = changed || diff(evs[k], curr[k], prev[k]);
+                    changed = changed || diff(evs[k], curr[k], prev[k], false, depth + 1);
                 }
             }
             if (exhaustive && !changed) {
@@ -181,7 +187,7 @@ function lookup(flag, query, value) {
                 } else {
                     for (k in curr) {
                         searched[k] = true;
-                        if (diff(evs[k], curr[k], prev[k], true)) {
+                        if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
                             changed = true;
                             break;
                         }
@@ -189,7 +195,7 @@ function lookup(flag, query, value) {
                     if (!changed) {
                         for (k in prev) {
                             if (!searched[k]) {
-                                if (diff(evs[k], curr[k], prev[k], true)) {
+                                if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
                                     changed = true;
                                     break;
                                 }
@@ -210,13 +216,13 @@ function lookup(flag, query, value) {
             // If there are any changes at all, then we need to fire one or more
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
-            if (diff(events, _data, value, true)) {
+            if (diff(events, _data, value, true, 0)) {
                 for (var i = 0; i < parentCallbacks.length; i++) {
                     parentCallbacks[i].callback.call(parentCallbacks[i].context);
                 }
             }
         } else {
-            diff(events, _data, value);
+            diff(events, _data, value, false, 0);
         }
         return value;
     } else if (_data) {

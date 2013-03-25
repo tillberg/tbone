@@ -62,9 +62,11 @@ if (global.Backbone) {
         };
     });
 
+    var bbModel = tbone['models']['backbone'] = Backbone.Model.extend({});
+    var bbCollection = tbone['collections']['backbone'] = Backbone.Collection.extend({});
     // Should TBone provide an alternate base Backbone model/collection
-    // _.each([Backbone.Model, Backbone.Collection], function (obj) {
-    //     _.extend(obj.prototype, {
+    _.each([bbModel, bbCollection], function (obj) {
+        _.extend(obj.prototype, {
             /**
              * Disable backbone-based validation; by using validation to prevent populating
              * form input data to models, backbone validation is at odds with the TBone
@@ -73,7 +75,7 @@ if (global.Backbone) {
              * By overriding _validate, we can still use isValid and validate, but Backbone
              * will no longer prevent set() calls from succeeding with invalid data.
              */
-    //         '_validate': function () { return true; }
-    //     });
-    // });
+            '_validate': function () { return true; }
+        });
+    });
 }
