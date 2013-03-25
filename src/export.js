@@ -1,65 +1,4 @@
 
-_.each([baseModel], function (proto) {
-    _.extend(proto, {
-        /**
-         * isBindable is just a convenience used to identify whether an object is
-         * either a Model or a Collection.
-         */
-        'isBindable': true,
-
-        /**
-         * Copy query and text onto the Model, View, and Collection.
-         *
-         */
-        'query': lookup,
-        'text': lookupText,
-
-        // deprecated?
-        'lookup': lookup,
-        'lookupText': lookupText,
-        'set': lookup,
-        'get': lookup,
-
-        /**
-         * Wake up this model as well as (recursively) any models that depend on
-         * it.  Any view that is directly or indirectly depended on by the current
-         * model may now be able to be awoken based on the newly-bound listener to
-         * this model.
-         * @param  {Object.<string, Boolean>} woken Hash map of model IDs already awoken
-         */
-        wake: function (woken) {
-            // Wake up this model if it was sleeping
-            if (this.sleeping) {
-                this.trigger('wake');
-                this.sleeping = false;
-                this.reset();
-            }
-            /**
-             * Wake up models that depend directly on this model that have not already
-             * been woken up.
-             */
-            _.each((this.scope && this.scope.lookups) || [], function (lookup) {
-                var bindable = lookup.__obj__;
-                if (bindable && !woken[uniqueId(bindable)]) {
-                    woken[uniqueId(bindable)] = true;
-                    bindable.wake(woken);
-                }
-            });
-        }
-    });
-
-    /**
-     * We wrap proto.on in order to wake up and reset models
-     * that were previously sleeping because they did not need to be updated.
-     * This passes through execution to the original on function.
-     */
-    var originalOn = proto.on;
-    proto['on'] = function () {
-        this.wake({});
-        return originalOn.apply(this, arguments);
-    };
-});
-
 // _.each([baseModel, baseCollection], function (obj) {
 //     _.extend(obj.prototype, {
         /**
@@ -82,6 +21,7 @@ var orig_T = window['T'];
 window['tbone'] = window['T'] = tbone;
 tbone['models'] = models;
 tbone['views'] = views;
+tbone['collections'] = collections;
 tbone['data'] = tbone;
 tbone['_data'] = tbone.attributes; // XXX don't use this
 tbone['templates'] = templates;
@@ -106,6 +46,7 @@ tbone['noConflict'] = function () {
 };
 
 models['base'] = baseModel;
+collections['base'] = baseCollection;
 
 if (TBONE_DEBUG) {
     tbone['watchLog'] = watchLog;

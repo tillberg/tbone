@@ -108,12 +108,12 @@ test('create model instance', function () {
 });
 
 
-// var thingsType = createCollection('things', tbone.models.base);
-// var things = thingsType.make('things');
-// things.add({ number: 2 });
-// things.add({ number: 3 });
-// things.add({ number: 7 });
-// things.add({ number: 42 });
+var thingsType = tbone.collections.base.make();
+var things = T('things', thingsType.make());
+things.add({ number: 2 });
+things.add({ number: 3 });
+things.add({ number: 7 });
+things.add({ number: 42 });
 
 test('tbone.lookup', function () {
     equal(tbone.lookup('lights').count, 4);
@@ -179,12 +179,11 @@ test('tbone.set', function () {
     equal(T('thing.other'), 4);
     equal(T('thing.count'), undefined);
 
-    // XXX re-enable with collections
-    // var morethings = thingsType.make('morethings');
-    // morethings.add({ number: 6 });
-    // equal(T('morethings.0.number'), 6);
-    // equal(T('morethings.0.number', 100), undefined);
-    // equal(T('morethings.0.number'), 100);
+    var morethings = T('morethings', thingsType.make());
+    morethings.add({ number: 6 });
+    equal(T('morethings.0.number'), 6);
+    equal(T('morethings.0.number', 100), 100);
+    equal(T('morethings.0.number'), 100);
 
     T('baseprop', 5);
     var baseprop;

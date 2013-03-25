@@ -5,6 +5,11 @@
  * @extends Backbone.Model
  */
 var baseModel = {
+    /**
+     * isBindable is just a convenience used to identify whether an object is
+     * either a Model or a Collection.
+     */
+    'isBindable': true,
     isModel: true,
     make: function (opts) {
         var instance = function (arg0, arg1, arg2) {
@@ -25,7 +30,7 @@ var baseModel = {
         return instance;
     },
     'extend': function (subclass) {
-        return _.extend({}, subclass, this);
+        return _.extend({}, this, subclass);
     },
     'on': function (name, callback, context) {
         var parts = name.split(/\W+/);
@@ -43,6 +48,12 @@ var baseModel = {
             callbacks = events[''] = [];
         }
         callbacks.push({ callback: callback, context: context });
+
+        /**
+         * Wake up and reset this and other models that may be sleeping because
+         * they did not need to be updated.
+         */
+        this.wake({});
     },
     'off': function (name, callback, context) {
         // XXX name & callback not supported.
@@ -68,18 +79,21 @@ var baseModel = {
         }
     },
 
-    _initialize: function () {
+    _initialize: function (opts) {
         this._events = {};
         this.attributes = {};
+        if (opts) {
+            this['query']('', opts);
+        }
     },
 
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
      */
-    'initialize': function () {
+    'initialize': function (opts) {
         var self = this;
-        self._initialize();
+        self._initialize(opts);
         uniqueId(self);
         var isAsync = self.sleeping = self.isAsync();
         var priority = isAsync ? BASE_PRIORITY_MODEL_ASYNC : BASE_PRIORITY_MODEL_SYNC;
@@ -96,6 +110,43 @@ var baseModel = {
             priority: priority + PRIORITY_INIT_DELTA
         });
     },
+
+    'query': lookup,
+    'text': lookupText,
+
+    // deprecated?
+    'lookup': lookup,
+    'lookupText': lookupText,
+    'set': lookup,
+    'get': lookup,
+
+    /**
+     * Wake up this model as well as (recursively) any models that depend on
+     * it.  Any view that is directly or indirectly depended on by the current
+     * model may now be able to be awoken based on the newly-bound listener to
+     * this model.
+     * @param  {Object.<string, Boolean>} woken Hash map of model IDs already awoken
+     */
+    wake: function (woken) {
+        // Wake up this model if it was sleeping
+        if (this.sleeping) {
+            this.trigger('wake');
+            this.sleeping = false;
+            this.reset();
+        }
+        /**
+         * Wake up models that depend directly on this model that have not already
+         * been woken up.
+         */
+        _.each((this.scope && this.scope.lookups) || [], function (lookup) {
+            var bindable = lookup.__obj__;
+            if (bindable && !woken[uniqueId(bindable)]) {
+                woken[uniqueId(bindable)] = true;
+                bindable.wake(woken);
+            }
+        });
+    },
+
     /**
      * Indicates whether this function should use the asynchronous or
      * synchronous logic.

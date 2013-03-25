@@ -3,6 +3,7 @@
 var TBONE_DEBUG = window['TBONE_DEBUG'];
 
 var models = {};
+var collections = {};
 var templates = {};
 var views = {};
 

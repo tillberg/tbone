@@ -9,7 +9,7 @@ var baseView = {
         return instance;
     },
     'extend': function (subclass) {
-        return _.extend({}, subclass, this);
+        return _.extend({}, this, subclass);
     },
 
     '$': function(selector) {
