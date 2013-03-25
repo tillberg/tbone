@@ -30,7 +30,7 @@ var baseModel = {
         return instance;
     },
     'extend': function (subclass) {
-        return _.extend({}, this, subclass);
+        return _.extend({}, this, typeof subclass === 'function' ? { state: subclass } : subclass);
     },
     'on': function (name, callback, context) {
         var parts = name.split(/\W+/);
@@ -147,6 +147,10 @@ var baseModel = {
         });
     },
 
+    toJSON: function () {
+      return _.clone(this.attributes);
+    },
+
     /**
      * Indicates whether this function should use the asynchronous or
      * synchronous logic.
@@ -246,12 +250,10 @@ var baseModel = {
         var self = this;
         // this.state returns the new state, synchronously
         var newParams = self['state']();
-        if (newParams === null) {
-            log(VERBOSE, self, 'update cancelled');
-            return;
+        if (newParams !== null) {
+            self['query'](QUERY_SELF, newParams);
+            log(WARN, self, 'updated', self.toJSON());
         }
-        lookup.call(self, QUERY_SELF, newParams);
-        log(INFO, self, 'updated', self.toJSON());
     },
     'state': noop,
     'postFetch': noop

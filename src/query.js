@@ -50,7 +50,7 @@ function lookup(flag, query, value) {
     /**
      * Remove a trailing dot and __self__ references, if any, from the query.
      **/
-    query = (query || '').replace(/\.?(__self__)?\.?$/, '');
+    query = (query || '').replace('__self__', '');
     var args = query.split('.');
 
     var setprop;
@@ -78,6 +78,11 @@ function lookup(flag, query, value) {
     var events = isSet && self._events['change'];
 
     while ((arg = args.shift()) != null) {
+        // Ignore empty string arguments.
+        if (arg === QUERY_SELF) {
+            continue;
+        }
+
         name_parts.push(arg);
         last_data = _data;
 
