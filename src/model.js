@@ -133,7 +133,7 @@ var baseModel = {
     wake: function (woken) {
         // Wake up this model if it was sleeping
         if (this.sleeping) {
-            this.trigger('wake');
+            // this.trigger('wake');
             this.sleeping = false;
             this.reset();
         }
@@ -164,6 +164,9 @@ var baseModel = {
     },
     onScopeExecute: function (scope) {
         log(INFO, this, 'lookups', scope.lookups);
+    },
+    'clear': function () {
+        self['query']('', {});
     },
     /**
      * Triggers scope re-execution.
@@ -220,11 +223,12 @@ var baseModel = {
             self.fetchedUrl = url;
             self.clear();
             inflight++;
-            self.fetch({
+            sync('read', self, {
                 'dataType': 'text',
-                success: function () {
+                success: function (resp) {
+                    self['query'](QUERY_SELF, self.parse(resp));
                     self['postFetch']();
-                    self.trigger('fetch');
+                    // self.trigger('fetch');
                     log(INFO, self, 'updated', self.toJSON());
                     complete();
                 },

@@ -1,18 +1,4 @@
 
-// _.each([baseModel, baseCollection], function (obj) {
-//     _.extend(obj.prototype, {
-        /**
-         * Disable backbone-based validation; by using validation to prevent populating
-         * form input data to models, backbone validation is at odds with the TBone
-         * concept that all data in the UI should be backed by model data.
-         *
-         * By overriding _validate, we can still use isValid and validate, but Backbone
-         * will no longer prevent set() calls from succeeding with invalid data.
-         */
-//         '_validate': function () { return true; }
-//     });
-// });
-
 var tbone = baseModel.make();
 
 var orig_tbone = window['tbone'];

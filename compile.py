@@ -34,6 +34,7 @@ sources = [
     'header',
     'tbone',
     'scheduler',
+    'sync',
     'query',
     'model',
     'collection',
