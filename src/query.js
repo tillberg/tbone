@@ -144,6 +144,7 @@ function lookup(flag, query, value) {
 
         // XXX how to handle objects with cycles?
         var MAX_RECURSION_DEPTH = 5;
+        var callsRemaining = 2000;
 
         var diff = function (evs, curr, prev, exhaustive, depth) {
             if (depth > MAX_RECURSION_DEPTH) {
@@ -153,8 +154,11 @@ function lookup(flag, query, value) {
             curr = curr || {};
             prev = prev || {};
             var changed = false;
-            var k;
+            var k, n;
             for (k in evs) {
+                if (callsRemaining-- < 0) {
+                    return false;
+                }
                 if (k === QUERY_SELF) {
                     if (prev !== curr) {
                         // If prev and curr are both "object" types (but not null),
@@ -186,6 +190,9 @@ function lookup(flag, query, value) {
                     changed = true;
                 } else {
                     for (k in curr) {
+                        if (callsRemaining-- < 0) {
+                            return false;
+                        }
                         searched[k] = true;
                         if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
                             changed = true;
@@ -194,6 +201,9 @@ function lookup(flag, query, value) {
                     }
                     if (!changed) {
                         for (k in prev) {
+                            if (callsRemaining-- < 0) {
+                                return false;
+                            }
                             if (!searched[k]) {
                                 if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
                                     changed = true;
@@ -206,8 +216,11 @@ function lookup(flag, query, value) {
             }
             if (changed) {
                 var callbacks = evs[QUERY_SELF] || [];
-                for (var i = 0; i < callbacks.length; i++) {
-                    callbacks[i].callback.call(callbacks[i].context);
+                for (n = 0; n < callbacks.length; n++) {
+                    if (callsRemaining-- < 0) {
+                        return false;
+                    }
+                    callbacks[n].callback.call(callbacks[n].context);
                 }
             }
             return changed;
@@ -225,14 +238,12 @@ function lookup(flag, query, value) {
             diff(events, _data, value, false, 0);
         }
         return value;
-    } else if (_data) {
-        if (!iterateOverModels && self.isCollection) {
-            /**
-             * If iterateOverModels is not set and _data is a collection, return the
-             * raw data of each model in a list.  XXX is this ideal?  or too magical?
-             */
-            _data = _.map(_data, function (d) { return d['query'](); });
-        }
+    } else if (!iterateOverModels && self.isCollection && query === '') {
+        /**
+         * If iterateOverModels is not set and _data is a collection, return the
+         * raw data of each model in a list.  XXX is this ideal?  or too magical?
+         */
+        _data = _.map(_data, function (d) { return d['query'](); });
     }
     return _data;
 }

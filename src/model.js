@@ -13,16 +13,14 @@ var baseModel = {
     isModel: true,
     make: function (opts) {
         var instance = function (arg0, arg1, arg2) {
-            if (arg0) {
-                if (typeof arg0 === 'function') {
-                    return autorun(arg0, arg1, arg2);
-                } else if (typeof arg1 === 'function' && !arg1['isBindable']) {
-                    return autorun(function () {
-                        T(arg0, arg1());
-                    });
-                } else {
-                    return instance['query'].apply(instance, arguments);
-                }
+            if (typeof arg0 === 'function') {
+                return autorun(arg0, arg1, arg2);
+            } else if (typeof arg1 === 'function' && !arg1['isBindable']) {
+                return autorun(function () {
+                    T(arg0, arg1());
+                });
+            } else {
+                return instance['query'].apply(instance, arguments);
             }
         };
         _.extend(instance, this);
@@ -123,7 +121,8 @@ var baseModel = {
          */
         queueExec({
             execute: function () {
-                self.scope = autorun(self.update, self, priority, 'model_' + self.name,
+                self.path = tbone.find(self);
+                self.scope = autorun(self.update, self, priority, 'model_' + self.path,
                                      self.onScopeExecute, self);
             },
             priority: priority + PRIORITY_INIT_DELTA
@@ -140,7 +139,15 @@ var baseModel = {
     'get': lookup,
 
     'find': function (obj) {
-        function recurse(o) {
+        var _debug = false;
+        function recurse(o, depth) {
+            if (_debug) {
+                console.log(depth, o);
+            }
+            if (depth > 40) {
+                _debug = true;
+                return null;
+            }
             if (o === obj) {
                 return [];
             }
@@ -148,14 +155,14 @@ var baseModel = {
                 var result;
                 if (o.push) {
                     for (var i = 0; i < o.length; i++) {
-                        if (!!(result = recurse(o[i]))) {
+                        if (!!(result = recurse(o[i], depth + 1))) {
                             result.unshift(k);
                             return result;
                         }
                     }
                 } else {
                     for (var k in o) {
-                        if (!!(result = recurse(o[k]))) {
+                        if (!!(result = recurse(o[k], depth + 1))) {
                             result.unshift(k);
                             return result;
                         }
@@ -163,7 +170,7 @@ var baseModel = {
                 }
             }
         }
-        var result = recurse(this.attributes);
+        var result = recurse(this.attributes, 0);
         return result ? result.join('.') : null;
     },
 
@@ -210,7 +217,7 @@ var baseModel = {
         log(INFO, this, 'lookups', scope.lookups);
     },
     'clear': function () {
-        self['query']('', {});
+        this['query']('', {});
     },
     /**
      * Triggers scope re-execution.

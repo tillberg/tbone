@@ -197,6 +197,27 @@ function getListeners(self) {
             listeners.push(ev.context);
         }
     });
+    // TBone-native:
+    if (self.isBindable && isfunction(self)) {
+        var stack = [ self['_events'] ];
+        var next, callbacks, k;
+
+        while (!!(next = stack.pop())) {
+            for (k in next) {
+                if (k === '') {
+                    callbacks = next[''];
+                    for (var i = 0; i < next[''].length; i++) {
+                        if (callbacks[i].context) {
+                            listeners.push(callbacks[i].context);
+                        }
+                    }
+                } else {
+                    stack.push(next[k]);
+                }
+            }
+        }
+    }
+
     return _.uniq(listeners);
 }
 

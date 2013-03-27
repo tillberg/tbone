@@ -258,7 +258,8 @@ function processQueue () {
     processQueueTimer = null;
     var queueProcessTime = timer();
     var scope;
-    while (unfrozen && !!(scope = pop())) {
+    var remaining = 10;
+    while (unfrozen && (remaining-- > 0) && !!(scope = pop())) {
         /**
          * Update the scopesQueued map so that this Scope may be requeued.
          */

@@ -41,6 +41,7 @@ sources = [
     'template',
     'view',
     'export',
+    'backbone',
     'footer'
 ]
 
