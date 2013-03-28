@@ -1,3 +1,4 @@
+
 T('boxProps', function () {
     var count = T('count');
     return {
@@ -19,16 +20,18 @@ _.each($('script[type="text/tbone-tmpl"]'), function (el) {
     tbone.addTemplate(name, $(el).html());
 });
 
+var N = 100;
+
 var mode = 1;
 if (mode === 0) {
     // Use only templates for dynamic CSS
-    $('#grid').append(_.map(_.range(100), function () {
+    $('#grid').append(_.map(_.range(N), function () {
         return '<div tbone="tmpl box root boxProps"></div>';
     }).join(''));
     tbone.render($('[tbone]'));
 } else if (mode === 1) {
     // No template refreshes; use view w/T-function instead
-    $('#grid').append(_.map(_.range(100), function () {
+    $('#grid').append(_.map(_.range(N), function () {
         return '<div class="box" tbone="tmpl box2 root boxProps"></div>';
     }).join(''));
     tbone.createView('box2', function () {
@@ -47,7 +50,7 @@ if (mode === 0) {
     tbone.render($('[tbone]'));
 } else {
     // Use single T-function but still set CSS for each element individually
-    $('#grid').append(_.map(_.range(100), function () {
+    $('#grid').append(_.map(_.range(N), function () {
         return '<div class="box" tbone="tmpl box2"></div>';
     }).join(''));
     tbone.render($('[tbone]'));
@@ -92,10 +95,6 @@ var fpsTimer = function () {
     setTimeout(fpsTimer, 100);
 };
 fpsTimer();
-
-T(function () {
-    $('#fps').text(T('fps'));
-});
 
 tbone.onLog(function (level, context, event, msg, data) {
     if (event === 'processQueue') {

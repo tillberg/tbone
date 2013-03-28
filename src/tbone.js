@@ -6,6 +6,7 @@ var models = {};
 var collections = {};
 var templates = {};
 var views = {};
+var recentLookups;
 
 /**
  * Scheduling priority constants
@@ -140,7 +141,7 @@ function log () {
  * @param  {Object=}                                   data    Relevant data
  */
 function logconsole (level, context, event, msg, data) {
-    var name = isString(context) ? context : context.name;
+    var name = isString(context) ? context : context.Name;
     var type = (isString(context) ? context :
                 context.isModel ? 'model' :
                 context.isView ? 'view' :

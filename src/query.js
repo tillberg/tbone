@@ -1,4 +1,3 @@
-var recentLookups;
 
 /**
  * "Don't Get Data" - Special flag for lookup to return the model/collection instead

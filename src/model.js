@@ -121,8 +121,8 @@ var baseModel = {
          */
         queueExec({
             execute: function () {
-                self.path = tbone.find(self);
-                self.scope = autorun(self.update, self, priority, 'model_' + self.path,
+                // self.path = tbone.find(self);
+                self.scope = autorun(self.update, self, priority, 'model_' + self.Name,
                                      self.onScopeExecute, self);
             },
             priority: priority + PRIORITY_INIT_DELTA
@@ -139,14 +139,9 @@ var baseModel = {
     'get': lookup,
 
     'find': function (obj) {
-        var _debug = false;
         function recurse(o, depth) {
-            if (_debug) {
-                console.log(depth, o);
-            }
-            if (depth > 40) {
-                _debug = true;
-                return null;
+            if (depth > 10) {
+                return [];
             }
             if (o === obj) {
                 return [];

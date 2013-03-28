@@ -49,7 +49,7 @@ if (window.Backbone) {
         var name_parts = [];
         var myRecentLookup = {};
         var firstprop = args[0] || '';
-        var firstdata = _data[firstprop];
+        var firstdata = query ? _data[firstprop] : _data;
         var id;
         var arg;
         var doSubLookup;
@@ -164,7 +164,7 @@ if (window.Backbone) {
              */
             queueExec({
                 execute: function () {
-                    self.scope = autorun(self.update, self, priority, 'model_' + self.name,
+                    self.scope = autorun(self.update, self, priority, 'model_' + self.Name,
                                          self.onScopeExecute, self);
                 },
                 priority: priority + PRIORITY_INIT_DELTA
@@ -340,8 +340,8 @@ if (window.Backbone) {
         };
     });
 
-    var bbModel = tbone['models']['bbbase'] = bbbaseModel;
-    var bbCollection = tbone['collections']['bbbase'] = Backbone.Collection.extend({
+    var bbModel = models['bbbase'] = bbbaseModel;
+    var bbCollection = collections['bbbase'] = Backbone.Collection.extend({
         isCollection: true
     });
 

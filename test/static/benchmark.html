@@ -41,7 +41,8 @@
   </style>
 </head>
 <body>
-  <div id="fps"></div>
+  <div tbone="inline fps"> fps: <%-fps%> </div>
+  <div tbone="inline count"> count: <%-count%> </div>
   <div id="grid"></div>
   <script type="text/tbone-tmpl" name="box">
     <div class="box-inner" id="box-<%= number %>" style="top: <%= top %>px; left: <%= left %>px; background: rgb(0,0,<%= color %>);">

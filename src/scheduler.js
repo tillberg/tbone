@@ -61,7 +61,7 @@ _.extend(Scope.prototype,
 
             _.each(recentLookups, function (propMap) {
                 var obj = propMap['__obj__'];
-                if (propMap['*']) {
+                if (propMap['']) {
                     obj.on('change', self.trigger, self);
                 } else {
                     for (var prop in propMap) {
@@ -72,9 +72,7 @@ _.extend(Scope.prototype,
                 }
             });
 
-            // This is intended primarily for diagnostics.  onExecute may either be a
-            // function, or an array with a function and a context to use for the
-            // function call.  In either case, this Scope is passed as the only argument.
+            // This is intended primarily for diagnostics.
             if (self.onExecuteCb) {
                 self.onExecuteCb.call(self.onExecuteContext, this);
             }
@@ -258,7 +256,7 @@ function processQueue () {
     processQueueTimer = null;
     var queueProcessTime = timer();
     var scope;
-    var remaining = 10;
+    var remaining = 100;
     while (unfrozen && (remaining-- > 0) && !!(scope = pop())) {
         /**
          * Update the scopesQueued map so that this Scope may be requeued.
