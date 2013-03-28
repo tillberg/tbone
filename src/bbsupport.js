@@ -133,6 +133,7 @@ if (window.Backbone) {
                     if (firstprop) {
                         this.trigger('change:' + firstprop);
                     }
+                    this.trigger('change');
                 }
                 return _data;
             } else if (!iterateOverModels && this.isCollection && query === '') {

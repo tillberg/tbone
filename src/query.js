@@ -142,22 +142,22 @@ function lookup(flag, query, value) {
         }
 
         // XXX how to handle objects with cycles?
-        var MAX_RECURSION_DEPTH = 5;
-        var callsRemaining = 2000;
+        var MAX_RECURSION_DEPTH = 10;
+        var callsRemaining = 20000;
 
         var diff = function (evs, curr, prev, exhaustive, depth) {
-            if (depth > MAX_RECURSION_DEPTH) {
-                return false;
-            }
+            // if (depth > MAX_RECURSION_DEPTH) {
+            //     return false;
+            // }
             evs = evs || {};
             curr = curr || {};
             prev = prev || {};
             var changed = false;
             var k, n;
             for (k in evs) {
-                if (callsRemaining-- < 0) {
-                    return false;
-                }
+                // if (callsRemaining-- < 0) {
+                //     return false;
+                // }
                 if (k === QUERY_SELF) {
                     if (prev !== curr) {
                         // If prev and curr are both "object" types (but not null),
@@ -189,9 +189,9 @@ function lookup(flag, query, value) {
                     changed = true;
                 } else {
                     for (k in curr) {
-                        if (callsRemaining-- < 0) {
-                            return false;
-                        }
+                        // if (callsRemaining-- < 0) {
+                        //     return false;
+                        // }
                         searched[k] = true;
                         if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
                             changed = true;
@@ -200,9 +200,9 @@ function lookup(flag, query, value) {
                     }
                     if (!changed) {
                         for (k in prev) {
-                            if (callsRemaining-- < 0) {
-                                return false;
-                            }
+                            // if (callsRemaining-- < 0) {
+                            //     return false;
+                            // }
                             if (!searched[k]) {
                                 if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
                                     changed = true;
@@ -216,9 +216,9 @@ function lookup(flag, query, value) {
             if (changed) {
                 var callbacks = evs[QUERY_SELF] || [];
                 for (n = 0; n < callbacks.length; n++) {
-                    if (callsRemaining-- < 0) {
-                        return false;
-                    }
+                    // if (callsRemaining-- < 0) {
+                    //     return false;
+                    // }
                     callbacks[n].callback.call(callbacks[n].context);
                 }
             }

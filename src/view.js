@@ -24,7 +24,7 @@ var baseView = {
         _.extend(self, opts);
         self['$el'] = $(self['el']);
         self.priority = self.parentView ? self.parentView.priority - 1 : BASE_PRIORITY_VIEW;
-        self.scope = autorun(self.render, self, self.priority, 'view_' + self.name,
+        self.scope = autorun(self.render, self, self.priority, 'view_' + self.Name,
                              self.onScopeExecute, self, true);
     },
 
@@ -39,7 +39,7 @@ var baseView = {
      */
     destroy: function (destroyRoot) {
         var self = this;
-        log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot.name);
+        log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot.Name);
         self.destroyed = true;
         self.scope.destroy();
         _.each(self.subViews || [], function (view) {
@@ -310,7 +310,7 @@ function render($els, parent, subViews) {
             var myView = views[name] || defaultView;
 
             return myView.make({
-                name: name,
+                Name: name,
                 origOuterHTML: outerHTML,
                 'el': el,
                 templateId: templateId,
@@ -376,7 +376,7 @@ function createView(name, base, fn, opts) {
         fn = null;
     }
     opts = arg || {};
-    opts.name = name;
+    opts.Name = name;
     var baseReady = base['ready'];
     if (fn) {
         opts['ready'] = baseReady === noop ? fn : function () {
