@@ -41,7 +41,7 @@ sources = [
     'template',
     'view',
     'export',
-    'backbone',
+    'bbsupport',
     'footer'
 ]
 
