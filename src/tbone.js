@@ -231,10 +231,8 @@ function getListeners(self) {
  * @return {Boolean}
  */
 function hasViewListener(self) {
-    var todo = [];
-    var usedModels = {};
-    todo.push(self);
-    usedModels[self.name] = true;
+    var todo = [ self ];
+    var usedModels = [ self ];
     while (todo.length) {
         var next = todo.pop();
         var listeners = getListeners(next);
@@ -255,10 +253,9 @@ function hasViewListener(self) {
                 // listener could also have been a scope with a context that was neither
                 // a model nor a view.
                 if (listener.isModel) {
-                    var name = listener['name'];
-                    if (name && !usedModels[listener.name]) {
+                    if (usedModels.indexOf(listener) === -1) {
                         todo.push(listener);
-                        usedModels[name] = true;
+                        usedModels.push(listener);
                     }
                 }
             }
