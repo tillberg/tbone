@@ -23,6 +23,7 @@ var baseView = {
         uniqueId(self);
         _.extend(self, opts);
         self['$el'] = $(self['el']);
+        self['$el'].data('view', self);
         self.priority = self.parentView ? self.parentView.priority - 1 : BASE_PRIORITY_VIEW;
         self.scope = autorun(self.render, self, self.priority, 'view_' + self.Name,
                              self.onScopeExecute, self, true);
