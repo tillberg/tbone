@@ -3,27 +3,27 @@
     function addModelTests(name, base, supports) {
         test(name + ' basic', function () {
             var me = base.make();
-            T('bb1', me);
-            T('bb1.prop', 42);
-            equal(T('bb1.prop'), 42);
+            T('me', me);
+            T('me.prop', 42);
+            equal(T('me.prop'), 42);
             equal(me.query('prop'), 42);
             equal(me.get('prop'), 42);
-            T('bb1', { other: 7 });
-            equal(T('bb1.prop'), undefined);
+            T('me', { seven: 7 });
+            equal(T('me.prop'), undefined);
             equal(me.query('prop'), undefined);
-            equal(T('bb1.other'), 7);
+            equal(T('me.seven'), 7);
             var other;
             var count1 = 0;
             var count2 = 0;
             T(function () {
-                other = T('bb2.other');
+                other = T('me.other');
                 count1++;
             });
             T(function () {
-                T('bb2.other2');
+                T('me.other2');
                 count2++;
             });
-            T('bb2.other', 10);
+            T('me.other', 10);
             equal(count1, 1);
             equal(count2, 1);
             equal(other, undefined);
@@ -35,23 +35,23 @@
 
         test(name + ' subprop', function () {
             var me = base.make();
-            T('bb2', me);
-            T('bb2.sub.prop', 42);
-            equal(T('bb2.sub.prop'), 42);
+            T('me', me);
+            T('me.sub.prop', 42);
+            equal(T('me.sub.prop'), 42);
             equal(me.query('sub.prop'), 42);
             equal(me.get('sub').prop, 42);
             var other;
             var count1 = 0;
             var count2 = 0;
             T(function () {
-                other = T('bb2.sub2.prop2');
+                other = T('me.sub2.prop2');
                 count1++;
             });
             T(function () {
-                T('bb2.sub2.prop3');
+                T('me.sub2.prop3');
                 count2++;
             })
-            T('bb2.sub2.prop2', 12);
+            T('me.sub2.prop2', 12);
             equal(count1, 1);
             equal(count2, 1);
             equal(other, undefined);
