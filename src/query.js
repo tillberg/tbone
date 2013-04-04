@@ -99,7 +99,10 @@ function lookup(flag, query, value) {
             name_parts = name_parts.concat(args);
             break;
         } else if (_data && _data['isBindable']) {
-            doSubLookup = true; // <-- To avoid duplicating the recentLookups code here
+            // To avoid duplicating the recentLookups code here, we set a flag and do
+            // the sub-lookup after recording lookups
+            doSubLookup = args.length ||
+                ((!isSet || (value && !value['isBindable'])) && !dontGetData);
             break;
         } else if (isSet && (_data === null || typeof _data !== 'object') && args.length) {
             /**
@@ -129,7 +132,7 @@ function lookup(flag, query, value) {
     }
 
     // Skip the sub-query if DONT_GET_DATA is set there are no more args
-    if (doSubLookup && (!dontGetData || args.length)) {
+    if (doSubLookup) {
         return isSet ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
     }
 
