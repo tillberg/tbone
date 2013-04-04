@@ -12,24 +12,23 @@ var baseModel = {
     'isBindable': true,
     isModel: true,
     make: function (opts) {
+        var self = this;
         var instance = function (arg0, arg1, arg2) {
             if (typeof arg0 === 'function') {
                 return autorun(arg0, arg1, arg2);
             } else if (typeof arg1 === 'function' && !arg1['isBindable']) {
-                return autorun(function () {
-                    T(arg0, arg1());
-                });
+                return instance['query'](arg0, self.extend(arg1).make());
             } else {
                 return instance['query'].apply(instance, arguments);
             }
         };
-        _.extend(instance, this);
+        _.extend(instance, self);
         instance.construct(opts);
         instance['initialize'](opts);
         return instance;
     },
     'extend': function (subclass) {
-        return _.extend({}, this, typeof subclass === 'function' ? { state: subclass } : subclass);
+        return _.extend({}, this, typeof subclass === 'function' ? { 'state': subclass } : subclass);
     },
     'on': function (name, callback, context) {
         var parts = name.split(/\W+/);
@@ -119,14 +118,8 @@ var baseModel = {
          * is loaded but before anything else gets updated.  We can't do that with setTimeout
          * or _.defer because that could possibly fire after processQueue.
          */
-        queueExec({
-            execute: function () {
-                // self.path = tbone.find(self);
-                self.scope = autorun(self.update, self, priority, 'model_' + self.Name,
-                                     self.onScopeExecute, self);
-            },
-            priority: priority + PRIORITY_INIT_DELTA
-        });
+        self.scope = autorun(self.update, self, priority, 'model_' + self.Name,
+                             self.onScopeExecute, self);
     },
 
     'query': lookup,

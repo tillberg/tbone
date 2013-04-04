@@ -96,14 +96,10 @@ test('autorun', function () {
 
 test('create model instance', function () {
     T('echo', echo.make());
-    equal(tbone.lookup('echo.echo'), undefined);
-    drain();
     equal(tbone.lookup('echo.echo'), 4);
 
     // non-top-level
     T('group.echo', echo.make());
-    equal(tbone.lookup('group.echo.echo'), undefined);
-    drain();
     equal(tbone.lookup('group.echo.echo'), 4);
 });
 

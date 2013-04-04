@@ -62,13 +62,41 @@
             equal(count2, supports.deepBinding ? 1 : 2);
             equal(other, 12);
         });
+
+        if (supports.nonObjectRoot) {
+            test(name + ' non-object root', function () {
+                var me = base.make();
+                T('me', me);
+                me.query('', 42);
+                equal(me.query(''), 42);
+                equal(T('me'), 42);
+                // Subproperties are no longer supported (this is a JS
+                // restriction, more or less)
+                T('me.prop', 7);
+                equal(T('me.prop'), undefined);
+            });
+        }
+
+        if (supports.invocable) {
+            test(name + ' invocation', function () {
+                var me = base.make();
+                me('prop', 42);
+                equal(me('prop'), 42);
+                me('week', function () { return 7; });
+                equal(me('week'), 7);
+            });
+        }
     }
 
     addModelTests('backbone', tbone.models.bbbase, {
-        deepBinding: false
+        deepBinding: false,
+        nonObjectRoot: false,
+        invocable: false
     });
 
     addModelTests('tbone', tbone.models.base, {
-        deepBinding: true
+        deepBinding: true,
+        nonObjectRoot: true,
+        invocable: true
     });
 }());
