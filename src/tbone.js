@@ -51,6 +51,11 @@ function isString(x) {
     return typeof x === 'string';
 }
 
+var objectToString = Object.prototype.toString;
+function isArray(x) {
+    return objectToString.call(x) === '[object Array]';
+}
+
 /**
  * Returns a function that returns the elapsed time.
  * @return {function(): Number} Function that returns elapsed time.

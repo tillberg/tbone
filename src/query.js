@@ -145,22 +145,14 @@ function lookup(flag, query, value) {
         }
 
         // XXX how to handle objects with cycles?
-        var MAX_RECURSION_DEPTH = 10;
-        var callsRemaining = 20000;
 
-        var diff = function (evs, curr, prev, exhaustive, depth) {
-            // if (depth > MAX_RECURSION_DEPTH) {
-            //     return false;
-            // }
+        var diff = function (evs, curr, prev, exhaustive) {
             evs = evs || {};
             curr = curr || {};
             prev = prev || {};
             var changed = false;
-            var k, n;
+            var k, i, n;
             for (k in evs) {
-                // if (callsRemaining-- < 0) {
-                //     return false;
-                // }
                 if (k === QUERY_SELF) {
                     if (prev !== curr) {
                         // If prev and curr are both "object" types (but not null),
@@ -175,7 +167,7 @@ function lookup(flag, query, value) {
                         }
                     }
                 } else {
-                    changed = changed || diff(evs[k], curr[k], prev[k], false, depth + 1);
+                    changed = changed || diff(evs[k], curr[k], prev[k], false);
                 }
             }
             if (exhaustive && !changed) {
@@ -183,37 +175,42 @@ function lookup(flag, query, value) {
                 // through all keys until we find one (note that this could duplicate
                 // some searching done while searching the event tree)
                 // This may not be super-efficient to call diff all the time.
-                var searched = {};
-                if (prev !== curr &&
-                    !(typeof prev === 'object' && typeof curr === 'object' &&
-                      prev !== null && curr !== null)) {
-                    // The root objects have changed; no need to look further in our
-                    // exhaustive search
-                    changed = true;
-                } else {
-                    for (k in curr) {
-                        // if (callsRemaining-- < 0) {
-                        //     return false;
-                        // }
-                        searched[k] = true;
-                        if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
-                            changed = true;
-                            break;
-                        }
-                    }
-                    if (!changed) {
-                        for (k in prev) {
-                            // if (callsRemaining-- < 0) {
-                            //     return false;
-                            // }
-                            if (!searched[k]) {
-                                if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
-                                    changed = true;
-                                    break;
+                if (typeof prev === 'object' && typeof curr === 'object' &&
+                    prev !== null && curr !== null) {
+                    // prev and curr are both objects/arrays
+                    // search through them recursively for any differences
+                    var searched = {};
+                    var objs = [prev, curr];
+                    for (i = 0; i < 2 && !changed; i++) {
+                        var obj = objs[i];
+                        if (isArray(obj)) {
+                            for (k = 0; k < obj.length; k++) {
+                                if (!searched[k]) {
+                                    searched[k] = true;
+                                    if (diff(evs[k], curr[k], prev[k], true)) {
+                                        changed = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            for (k in obj) {
+                                if (!searched[k]) {
+                                    searched[k] = true;
+                                    if (diff(evs[k], curr[k], prev[k], true)) {
+                                        changed = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
+                } else if (prev !== curr) {
+                    // prev and curr are primitives (i.e. not arrays/objects)
+                    // and they are different.  thus, we've found a change and
+                    // will pass this outward so that we know to fire all
+                    // parent callbacks
+                    changed = true;
                 }
             }
             if (changed) {
@@ -231,13 +228,13 @@ function lookup(flag, query, value) {
             // If there are any changes at all, then we need to fire one or more
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
-            if (diff(events, _data, value, true, 0)) {
+            if (diff(events, _data, value, true)) {
                 for (var i = 0; i < parentCallbacks.length; i++) {
                     parentCallbacks[i].callback.call(parentCallbacks[i].context);
                 }
             }
         } else {
-            diff(events, _data, value, false, 0);
+            diff(events, _data, value, false);
         }
         return value;
     } else if (!iterateOverModels && self.isCollection && query === '') {
