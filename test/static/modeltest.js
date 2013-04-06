@@ -67,6 +67,24 @@
             equal(other, 12);
         });
 
+        test(name + ' text lookup', function () {
+            var me = base.make();
+            T('me', me);
+            me.query('name', { first: 'sally', last: 'smith' });
+            me.query('answer', 42);
+            me.query('question', parseFloat('not a number'));
+            me.query('nullified', null);
+            var now = new Date();
+            me.query('now', now);
+            equal(me.text('name'), '');
+            equal(me.text('name.first'), 'sally');
+            equal(me.text('answer'), '42');
+            equal(me.text('question'), '');
+            equal(me.text('notexists'), '');
+            equal(me.text('nullified'), '');
+            equal(me.text('now'), now.toString());
+        });
+
         test(name + ' parent detects subprop changes', function () {
             var me = base.make();
             T('me', me);

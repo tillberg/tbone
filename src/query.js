@@ -249,7 +249,8 @@ function lookup(flag, query, value) {
 
 function lookupText(flag, query) {
     var value = query == null ? this['query'](flag) : this['query'](flag, query);
-    return value == null || isNaN(value) ? '' : value;
+    return (isString(value) || isRealNumber(value) || _.isDate(value)) && value != null ?
+        value + '' : '';
 }
 
 function toggle(model_and_key) {
