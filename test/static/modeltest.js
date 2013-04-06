@@ -138,6 +138,27 @@
             }());
         });
 
+        if (supports.deepBinding) {
+            test(name + ' deep comparison on tree change', function () {
+                var me = base.make();
+                T('me', me);
+                (function () {
+                    var fired = 0;
+                    T('me.name', { first: 'sally', last: 'smith' });
+                    T(function () {
+                        T('me.name');
+                        fired++;
+                    });
+                    T('me.name', { first: 'sally', last: 'smith' });
+                    T.drain();
+                    equal(fired, 1);
+                    T('me.name', { first: 'sally', last: 'rogers' });
+                    T.drain();
+                    equal(fired, 2);
+                }());
+            });
+        }
+
         if (supports.nonObjectRoot) {
             test(name + ' non-object root', function () {
                 var me = base.make();
