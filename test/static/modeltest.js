@@ -67,6 +67,77 @@
             equal(other, 12);
         });
 
+        test(name + ' parent detects subprop changes', function () {
+            var me = base.make();
+            T('me', me);
+            (function () {
+                var fired = 0;
+                T(function () {
+                    T('me');
+                    fired++;
+                });
+                T('me.age', 7);
+                T.drain();
+                equal(fired, 2);
+            }());
+            (function () {
+                var fired = 0;
+                T(function () {
+                    T('me.name');
+                    fired++;
+                });
+                T('me.name.first', 'sally');
+                T.drain();
+                equal(fired, 2);
+            }());
+            (function () {
+                var fired = 0;
+                T(function () {
+                    T('me');
+                    T('me.age');
+                    T('me.name');
+                    fired++;
+                });
+                T('me.age', 6);
+                T('me.name.last', 'smith');
+                T.drain();
+                equal(fired, 2);
+            }());
+        });
+
+        test(name + ' shallow comparison on tree change', function () {
+            var me = base.make();
+            T('me', me);
+            (function () {
+                var fired = 0;
+                T('me.age', 7);
+                T(function () {
+                    T('me');
+                    fired++;
+                });
+                T('me', { age: 7 });
+                T.drain();
+                equal(fired, 1);
+                T('me', { age: 8 });
+                T.drain();
+                equal(fired, 2);
+            }());
+            (function () {
+                var fired = 0;
+                T('me.age', 7);
+                T(function () {
+                    T('me.age');
+                    fired++;
+                });
+                T('me', { age: 7 });
+                T.drain();
+                equal(fired, 1);
+                T('me', { age: 8 });
+                T.drain();
+                equal(fired, 2);
+            }());
+        });
+
         if (supports.nonObjectRoot) {
             test(name + ' non-object root', function () {
                 var me = base.make();
