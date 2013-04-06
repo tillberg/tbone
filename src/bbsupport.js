@@ -358,10 +358,5 @@ if (window['Backbone']) {
              */
             '_validate': function () { return true; }
         });
-
-        // XXX This won't work with extending models
-        obj.make = function (opts) {
-            return new this(opts);
-        };
     });
 }

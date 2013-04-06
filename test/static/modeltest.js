@@ -1,5 +1,9 @@
 (function () {
 
+    tbone.models.bbbase.make = function (opts) {
+        return new this(opts);
+    };
+
     function addModelTests(name, base, supports) {
         test(name + ' basic', function () {
             var me = base.make();
