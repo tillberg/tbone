@@ -250,9 +250,9 @@ function lookup(flag, query, value) {
     return _data;
 }
 
-function lookupText() {
-    var value = lookup.apply(this, arguments);
-    return value != null ? value : '';
+function lookupText(flag, query) {
+    var value = query == null ? this['query'](flag) : this['query'](flag, query);
+    return value == null || isNaN(value) ? '' : value;
 }
 
 function toggle(model_and_key) {
