@@ -33,6 +33,7 @@ tbone['noConflict'] = function () {
 
 models['base'] = baseModel;
 collections['base'] = baseCollection;
+views['base'] = baseView;
 
 if (TBONE_DEBUG) {
     tbone['watchLog'] = watchLog;
@@ -40,4 +41,8 @@ if (TBONE_DEBUG) {
     tbone['hasViewListener'] = hasViewListener;
     tbone['onLog'] = onLog;
     onLog(logconsole);
+}
+
+if (window['dispatchEvent'] && window['CustomEvent']) {
+    dispatchEvent(new CustomEvent('tbone_loaded'));
 }
