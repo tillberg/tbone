@@ -246,6 +246,27 @@
         });
     }
 
+    // Ideally, it would be nice for tbone to gracefully not do crazy things
+    // and/or spin CPU endlessly when you start putting non-simple objects
+    // into a model.  Maybe some parts of it should even work, though I'm
+    // not sure this should be permitted at all.
+    // test(name + ' w/ DOM element property', function () {
+    //     var me = base.make();
+    //     T('me', me);
+    //     var fired = 0;
+    //     var el = document.createElement('div');
+    //     T(function () {
+    //         T('me.el');
+    //         fired++;
+    //     });
+    //     T('me.el', el);
+    //     T.drain();
+    //     equal(fired, 2);
+    //     T('me.el', el);
+    //     T.drain();
+    //     equal(fired, 2);
+    // });
+
     addModelTests('backbone', tbone.models.bbbase, {
         deepBinding: false,
         nonObjectRoot: false,
