@@ -256,8 +256,8 @@ function processQueue () {
     processQueueTimer = null;
     var queueProcessTime = timer();
     var scope;
-    var remaining = 100;
-    while (unfrozen && (remaining-- > 0) && !!(scope = pop())) {
+    var remaining = 1000;
+    while (unfrozen && --remaining && !!(scope = pop())) {
         /**
          * Update the scopesQueued map so that this Scope may be requeued.
          */
@@ -288,6 +288,9 @@ function processQueue () {
                 });
             }
         }
+    }
+    if (!remaining) {
+        log(ERROR, 'scheduler', 'processQueue', 'exceeded max processQueue iterations');
     }
     log(VERBOSE, 'scheduler', 'processQueue', 'ran for <%=duration%>ms', {
         'duration': queueProcessTime()
