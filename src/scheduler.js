@@ -57,7 +57,22 @@ _.extend(Scope.prototype,
             // This function must be synchronous.  Anything that is looked up using
             // tbone.lookup before this function returns (that is not inside a subscope)
             // will get bound below.
-            self.fn.call(self.context);
+            if (TBONE_DEBUG) {
+                self.fn.call(self.context);
+            } else {
+                try {
+                    self.fn.call(self.context);
+                } catch (ex) {
+                    /**
+                     * This could be improved.  For one, we don't want to bind
+                     * to the length of the errors list.  Though that's really
+                     * because collections need an add/push/append method.
+                     * But also, how do we want to output errors?
+                     */
+                    var errorNumber = tbone('__errors__.' + self.name + '.length') || 0;
+                    tbone('__errors__.' + self.name + '.' + errorNumber, (ex && ex.stack || ex) + '');
+                }
+            }
 
             _.each(recentLookups, function (propMap) {
                 var obj = propMap['__obj__'];
