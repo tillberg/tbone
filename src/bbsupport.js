@@ -101,54 +101,52 @@ if (window['Backbone']) {
             return isSet ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
         }
 
-        if (_data) {
-            if (isSet) {
-                if (last_data == null) {
-                    // Set top-level of model/collection
-                    /**
-                     * When setting to an entire model, we use different semantics; we want the
-                     * values provided to be set to the model, not replace the model.
-                     */
-                    if (this.isCollection) {
-                        this.reset(value != null ? value : []);
-                    } else {
-                        if (value) {
-                            /**
-                             * Remove any properties from the model that are not present in the
-                             * value we're setting it to.
-                             */
-                            for (var k in this.toJSON()) {
-                                if (value[k] === undefined) {
-                                    this.unset(k);
-                                }
-                            }
-                            this.set(value);
-                        } else {
-                            this.clear();
-                        }
-                    }
-                } else if (last_data[setprop] !== value) {
-                    /**
-                     * Set the value to a property on a regular JS object.
-                     */
-                    last_data[setprop] = value;
-                    /**
-                     * If we're setting a nested property of a model (or collection?), then
-                     * trigger a change event for the top-level property.
-                     */
-                    if (firstprop) {
-                        this.trigger('change:' + firstprop);
-                    }
-                    this.trigger('change');
-                }
-                return _data;
-            } else if (!iterateOverModels && this.isCollection && query === '') {
+        if (isSet) {
+            if (last_data == null) {
+                // Set top-level of model/collection
                 /**
-                 * If iterateOverModels is not set and _data is a collection, return the
-                 * raw data of each model in a list.  XXX is this ideal?  or too magical?
+                 * When setting to an entire model, we use different semantics; we want the
+                 * values provided to be set to the model, not replace the model.
                  */
-                _data = _.map(_data, function (d) { return d['query'](); });
+                if (this.isCollection) {
+                    this.reset(value != null ? value : []);
+                } else {
+                    if (value) {
+                        /**
+                         * Remove any properties from the model that are not present in the
+                         * value we're setting it to.
+                         */
+                        for (var k in this.toJSON()) {
+                            if (value[k] === undefined) {
+                                this.unset(k);
+                            }
+                        }
+                        this.set(value);
+                    } else {
+                        this.clear();
+                    }
+                }
+            } else if (last_data[setprop] !== value) {
+                /**
+                 * Set the value to a property on a regular JS object.
+                 */
+                last_data[setprop] = value;
+                /**
+                 * If we're setting a nested property of a model (or collection?), then
+                 * trigger a change event for the top-level property.
+                 */
+                if (firstprop) {
+                    this.trigger('change:' + firstprop);
+                }
+                this.trigger('change');
             }
+            return _data;
+        } else if (_data && !iterateOverModels && this.isCollection && query === '') {
+            /**
+             * If iterateOverModels is not set and _data is a collection, return the
+             * raw data of each model in a list.  XXX is this ideal?  or too magical?
+             */
+            _data = _.map(_data, function (d) { return d['query'](); });
         }
         return _data;
     };

@@ -219,6 +219,31 @@
                 equal(me.query('prop'), true);
             });
         }
+
+        test(name + ' overwrite falsy value', function () {
+            var me = base.make();
+            me.query('prop', false);
+            strictEqual(me.query('prop'), false);
+            me.query('prop', true);
+            strictEqual(me.query('prop'), true);
+
+            me.query('prop', '');
+            strictEqual(me.query('prop'), '');
+            me.query('prop', 'hello');
+            strictEqual(me.query('prop'), 'hello');
+
+            me.query('prop', null);
+            strictEqual(me.query('prop'), null);
+            me.query('prop', 42);
+            strictEqual(me.query('prop'), 42);
+
+            me.query('prop', 0);
+            strictEqual(me.query('prop'), 0);
+            me.query('prop', undefined);
+            strictEqual(me.query('prop'), undefined);
+            me.query('prop', 'awesome');
+            strictEqual(me.query('prop'), 'awesome');
+        });
     }
 
     addModelTests('backbone', tbone.models.bbbase, {
