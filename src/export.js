@@ -13,8 +13,6 @@ tbone['_data'] = tbone.attributes; // XXX don't use this
 tbone['templates'] = templates;
 
 tbone['autorun'] = tbone['lookup'] = tbone;
-tbone['lookupText'] = lookupText;
-tbone['toggle'] = toggle;
 
 tbone['createView'] = createView;
 tbone['defaultView'] = __defaultView;

@@ -257,7 +257,3 @@ function lookupText(flag, query) {
     return (isString(value) || isRealNumber(value) || _.isDate(value)) && value != null ?
         value + '' : '';
 }
-
-function toggle(model_and_key) {
-    lookup.call(this, model_and_key, !lookup.call(this, model_and_key));
-}

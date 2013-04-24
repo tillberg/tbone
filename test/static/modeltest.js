@@ -209,17 +209,29 @@
             ok(me.query(1, '').attributes);
             equal(me.query(1, '').attributes.prop, 42);
         });
+
+        if (supports.toggle) {
+            test(name + ' toggle', function () {
+                var me = base.make();
+                me.query('prop', false);
+                equal(me.query('prop'), false);
+                me.toggle('prop');
+                equal(me.query('prop'), true);
+            });
+        }
     }
 
     addModelTests('backbone', tbone.models.bbbase, {
         deepBinding: false,
         nonObjectRoot: false,
-        invocable: false
+        invocable: false,
+        toggle: false
     });
 
     addModelTests('tbone', tbone.models.base, {
         deepBinding: true,
         nonObjectRoot: true,
-        invocable: true
+        invocable: true,
+        toggle: true
     });
 }());

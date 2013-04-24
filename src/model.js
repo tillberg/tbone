@@ -130,6 +130,9 @@ var baseModel = {
     'lookupText': lookupText,
     'set': lookup,
     'get': lookup,
+    'toggle': function (prop) {
+        this['query'](prop, !this['query'](prop));
+    },
 
     'find': function (obj) {
         function recurse(o, depth) {
