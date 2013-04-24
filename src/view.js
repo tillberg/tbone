@@ -187,11 +187,7 @@ var baseView = {
      * `ready` and `postRender` callbacks.
      */
     root: function () {
-        var self = this;
-        if (self.rootMemoized == null) {
-            self.rootMemoized = self.rootStr && lookup(DONT_GET_DATA, self.rootStr) || tbone;
-        }
-        return self.rootMemoized;
+        return tbone['query'](DONT_GET_DATA, this.rootStr || '');
     },
 
     /**
