@@ -201,9 +201,9 @@ var baseView = {
     // there could be some subtleties about how that connection is made and passed
     // around... and this would be a great thing to implement alongside passing
     // *data* to subviews through template references, e.g. ${id(data)}.
-    'query': function (query) {
+    'query': function (query, value) {
         query = (this.rootStr ? this.rootStr + '.' : '') + (query || '');
-        return tbone(query);
+        return arguments.length === 2 ? tbone(query, value) : tbone(query);
     },
 
     // deprecated
