@@ -1,9 +1,7 @@
 
 var baseView = {
     make: function (opts) {
-        var instance = function () {
-            // XXX Is there any use in this?
-        };
+        var instance = {};
         _.extend(instance, this);
         instance['initialize'](opts);
         return instance;
