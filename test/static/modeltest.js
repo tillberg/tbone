@@ -200,6 +200,15 @@
                 equal(me('week'), 7);
             });
         }
+
+        test(name + ' self-reference', function () {
+            var me = base.make();
+            me.query('prop', 42);
+            equal(me.attributes.prop, 42);
+            ok(me.query(1, ''));
+            ok(me.query(1, '').attributes);
+            equal(me.query(1, '').attributes.prop, 42);
+        });
     }
 
     addModelTests('backbone', tbone.models.bbbase, {

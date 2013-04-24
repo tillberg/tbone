@@ -45,7 +45,13 @@ if (window['Backbone']) {
          * then use that as the root data object instead of the global tbone.data.
          */
         var last_data;
-        var _data = this.isCollection ? this.models : this.attributes;
+
+        /**
+         * If DONT_GET_DATA, and there's no query, then this is a self-reference.
+         */
+        var _data = dontGetData && !query ? this :
+            this.isCollection ? this.models : this.attributes;
+
         var name_parts = [];
         var myRecentLookup = {};
         var firstprop = args[0] || '';

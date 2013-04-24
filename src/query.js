@@ -68,7 +68,12 @@ function lookup(flag, query, value) {
      * then use that as the root data object instead of the global tbone.data.
      */
     var last_data;
-    var _data = self.attributes;
+
+    /**
+     * If DONT_GET_DATA, and there's no query, then this is a self-reference.
+     */
+    var _data = dontGetData && !query ? self : self.attributes;
+
     var name_parts = [];
     var myRecentLookup = {};
     var id;
