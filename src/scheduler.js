@@ -69,8 +69,7 @@ _.extend(Scope.prototype,
                      * because collections need an add/push/append method.
                      * But also, how do we want to output errors?
                      */
-                    var errorNumber = tbone('__errors__.' + self.name + '.length') || 0;
-                    tbone('__errors__.' + self.name + '.' + errorNumber, (ex && ex.stack || ex) + '');
+                    tbone.push('__errors__.' + self.name, (ex && ex.stack || ex) + '');
                 }
             }
 
