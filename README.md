@@ -19,8 +19,8 @@ and model stays in sync by design and without unnecessary work.
 
 ## Download
 
-* [Development version](http://cdn.tbonejs.org/tbone-v0.3.0.js) *Uncompressed with Comments Xkb*
-* [Production version](http://cdn.tbonejs.org/tbone-v0.3.0.min.js) *Minified Xkb*
+* [Development version, with comments](http://cdn.tbonejs.org/tbone-v0.3.0.js) *23kB gzipped*
+* [Production version, minified](http://cdn.tbonejs.org/tbone-v0.3.0.min.js) *5.4kB gzipped*
 
 ## CDN
 
