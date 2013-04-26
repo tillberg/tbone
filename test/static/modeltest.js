@@ -244,6 +244,47 @@
             me.query('prop', 'awesome');
             strictEqual(me.query('prop'), 'awesome');
         });
+
+        if (supports.innerCollections) {
+            test(name + ' push', function () {
+                var me = base.make();
+                var val;
+                T(function () {
+                    val = me.query('coll.0');
+                });
+                me.push('coll', 42);
+                T.drain();
+                equal(val, 42);
+                me.push('coll', 7);
+                me.push('coll', 10);
+                T.drain();
+                equal(val, 42);
+                equal(me('coll.2'), 10);
+                equal(me('coll.length'), 3);
+            });
+
+            test(name + ' unshift', function () {
+                var me = base.make();
+                var val;
+                T(function () {
+                    val = me.query('coll.1');
+                });
+                me.unshift('coll', 42);
+                T.drain();
+                strictEqual(val, undefined);
+                me.unshift('coll', 7);
+                strictEqual(val, undefined);
+                T.drain();
+                equal(val, 42);
+                me.unshift('coll', 10);
+                equal(val, 42);
+                T.drain();
+                equal(val, 7);
+                equal(me('coll.2'), 42);
+                equal(me('coll.length'), 3);
+            });
+
+        }
     }
 
     // Ideally, it would be nice for tbone to gracefully not do crazy things
@@ -271,13 +312,15 @@
         deepBinding: false,
         nonObjectRoot: false,
         invocable: false,
-        toggle: false
+        toggle: false,
+        innerCollections: false
     });
 
     addModelTests('tbone', tbone.models.base, {
         deepBinding: true,
         nonObjectRoot: true,
         invocable: true,
-        toggle: true
+        toggle: true,
+        innerCollections: true
     });
 }());

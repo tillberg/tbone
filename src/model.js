@@ -134,6 +134,21 @@ var baseModel = {
         this['query'](prop, !this['query'](prop));
     },
 
+    'push': function (prop, value) {
+        if (arguments.length === 1) {
+            value = prop;
+            prop = '';
+        }
+        this['query'](QUERY_PUSH, prop, value);
+    },
+    'unshift': function (prop, value) {
+        if (arguments.length === 1) {
+            value = prop;
+            prop = '';
+        }
+        this['query'](QUERY_UNSHIFT, prop, value);
+    },
+
     'find': function (obj) {
         function recurse(o, depth) {
             if (depth > 10) {

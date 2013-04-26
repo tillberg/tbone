@@ -16,6 +16,16 @@ var DONT_GET_DATA = 1;
 var ITERATE_OVER_MODELS = 2;
 
 /**
+ * @const
+ */
+var QUERY_PUSH = 3;
+
+/**
+ * @const
+ */
+var QUERY_UNSHIFT = 4;
+
+/**
  * If you want to select the root, you can either pass __self__ or just an empty
  * string; __self__ is converted to an empty string and this "flag" is used to
  * check for whether we are selecting either.
@@ -25,10 +35,13 @@ var QUERY_SELF = '';
 
 function query(flag, prop, value) {
     var self = this;
-    var isSet;
     var dontGetData = flag === DONT_GET_DATA;
     var iterateOverModels = flag === ITERATE_OVER_MODELS;
-    if (typeof flag === 'string') {
+    var isPush = flag === QUERY_PUSH;
+    var isUnshift = flag === QUERY_UNSHIFT;
+    var isListOp = isPush || isUnshift;
+    var isSet = isListOp;
+    if (typeof flag !== 'number') {
         /**
          * If no flag provided, shift the prop and value over.  We do it this way instead
          * of having flag last so that we can type-check flag and discern optional flags
@@ -108,7 +121,7 @@ function query(flag, prop, value) {
             doSubQuery = args.length ||
                 ((!isSet || (value && !value['isBindable'])) && !dontGetData);
             break;
-        } else if (isSet && !isObject(_data) && args.length) {
+        } else if (isSet && !isObject(_data) && (args.length || isListOp)) {
             /**
              * When doing an implicit mkdir -p while setting a deep-nested property
              * for the first time, we peek at the next arg and create either an array
@@ -123,7 +136,8 @@ function query(flag, prop, value) {
                         partial: name_parts.join('.')
                     });
             }
-            self['query'](name_parts.join('.'), _data = rgxNumber.exec(args[0]) ? [] : {});
+            _data = (args.length ? rgxNumber.exec(args[0]) : isListOp) ? [] : {};
+            self['query'](name_parts.join('.'), _data);
         }
     }
 
@@ -146,6 +160,10 @@ function query(flag, prop, value) {
         if (last_data == null) {
             // Set top-level of model/collection
             self.attributes = value != null ? value : (self.isCollection ? [] : {});
+        } else if (isPush) {
+            last_data[setprop].push(value);
+        } else if (isUnshift) {
+            last_data[setprop].unshift(value);
         } else {
             last_data[setprop] = value;
         }
