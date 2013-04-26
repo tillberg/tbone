@@ -19,14 +19,14 @@ and model stays in sync by design and without unnecessary work.
 
 ## Download
 
-* [Development version](http://cdn.tbonejs.org/tbone-v0.2.js) *Uncompressed with Comments Xkb*
-* [Production version](http://cdn.tbonejs.org/tbone-v0.2.min.js) *Minified Xkb*
+* [Development version](http://cdn.tbonejs.org/tbone-v0.3.0.js) *Uncompressed with Comments Xkb*
+* [Production version](http://cdn.tbonejs.org/tbone-v0.3.0.min.js) *Minified Xkb*
 
 ## CDN
 
 ```html
-<script src="http://cdn.tbonejs.org/tbone-v0.2.js"></script>
-<script src="http://cdn.tbonejs.org/tbone-v0.2.min.js"></script>
+<script src="http://cdn.tbonejs.org/tbone-v0.3.0.js"></script>
+<script src="http://cdn.tbonejs.org/tbone-v0.3.0.min.js"></script>
 ```
 ## TBone
 
