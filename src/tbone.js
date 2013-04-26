@@ -56,6 +56,10 @@ function isRealNumber(x) {
     return typeof x === 'number' && !isNaN(x);
 }
 
+function isObject(x) {
+    return x !== null && typeof x === 'object';
+}
+
 var objectToString = Object.prototype.toString;
 function isArray(x) {
     return objectToString.call(x) === '[object Array]';

@@ -108,7 +108,7 @@ function query(flag, prop, value) {
             doSubQuery = args.length ||
                 ((!isSet || (value && !value['isBindable'])) && !dontGetData);
             break;
-        } else if (isSet && (_data === null || typeof _data !== 'object') && args.length) {
+        } else if (isSet && !isObject(_data) && args.length) {
             /**
              * When doing an implicit mkdir -p while setting a deep-nested property
              * for the first time, we peek at the next arg and create either an array
@@ -165,8 +165,7 @@ function query(flag, prop, value) {
                         // then we need to search recursively for "real" changes.
                         // We want to avoid firing change events when the user sets
                         // something to a deep copy of itself.
-                        if (typeof prev === 'object' && typeof curr === 'object' &&
-                            prev !== null && curr !== null) {
+                        if (isObject(prev) && isObject(curr)) {
                             exhaustive = true;
                         } else {
                             changed = true;
@@ -181,8 +180,7 @@ function query(flag, prop, value) {
                 // through all keys until we find one (note that this could duplicate
                 // some searching done while searching the event tree)
                 // This may not be super-efficient to call diff all the time.
-                if (typeof prev === 'object' && typeof curr === 'object' &&
-                    prev !== null && curr !== null) {
+                if (isObject(prev) && isObject(curr)) {
                     // prev and curr are both objects/arrays
                     // search through them recursively for any differences
                     var searched = {};
