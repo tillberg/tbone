@@ -122,14 +122,14 @@ var baseModel = {
                              self.onScopeExecute, self);
     },
 
-    'query': lookup,
-    'text': lookupText,
+    'query': query,
+    'text': queryText,
 
     // deprecated?
-    'lookup': lookup,
-    'lookupText': lookupText,
-    'set': lookup,
-    'get': lookup,
+    'lookup': query,
+    'lookupText': queryText,
+    'set': query,
+    'get': query,
     'toggle': function (prop) {
         this['query'](prop, !this['query'](prop));
     },

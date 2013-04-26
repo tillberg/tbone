@@ -3,18 +3,18 @@ var Backbone = window['Backbone'];
 
 if (Backbone) {
 
-    var bblookup = function (flag, query, value) {
+    var bbquery = function (flag, prop, value) {
         var isSet;
         var dontGetData = flag === DONT_GET_DATA;
         var iterateOverModels = flag === ITERATE_OVER_MODELS;
         if (typeof flag !== 'number') {
             /**
-             * If no flag provided, shift the query and value over.  We do it this way instead
+             * If no flag provided, shift the prop and value over.  We do it this way instead
              * of having flag last so that we can type-check flag and discern optional flags
              * from optional values.  And flag should only be used internally, anyway.
              */
-            value = query;
-            query = flag;
+            value = prop;
+            prop = flag;
             flag = null;
             /**
              * Use arguments.length to switch to set mode in order to properly support
@@ -26,10 +26,10 @@ if (Backbone) {
         }
 
         /**
-         * Remove a trailing dot and __self__ references, if any, from the query.
+         * Remove a trailing dot and __self__ references, if any, from the prop.
          **/
-        query = (query || '').replace(/\.?(__self__)?\.?$/, '');
-        var args = query.split('.');
+        prop = (prop || '').replace(/\.?(__self__)?\.?$/, '');
+        var args = prop.split('.');
 
         var setprop;
         if (isSet) {
@@ -49,18 +49,18 @@ if (Backbone) {
         var last_data;
 
         /**
-         * If DONT_GET_DATA, and there's no query, then this is a self-reference.
+         * If DONT_GET_DATA, and there's no prop, then this is a self-reference.
          */
-        var _data = dontGetData && !query ? this :
+        var _data = dontGetData && !prop ? this :
             this.isCollection ? this.models : this.attributes;
 
         var name_parts = [];
-        var myRecentLookup = {};
+        var myRecentQuery = {};
         var firstprop = args[0] || '';
-        var firstdata = query ? _data[firstprop] : _data;
+        var firstdata = prop ? _data[firstprop] : _data;
         var id;
         var arg;
-        var doSubLookup;
+        var doSubQuery;
 
         while ((arg = args.shift()) != null) {
             // Ignore empty string arguments.
@@ -85,21 +85,23 @@ if (Backbone) {
                     break;
                 }
             } else if (_data['isBindable']) {
-                doSubLookup = true;
+                doSubQuery = true;
                 break;
             }
         }
 
         if (!isSet && recentLookups) {
             id = uniqueId(this);
-            myRecentLookup = recentLookups[id] = (recentLookups && recentLookups[id]) || {
-                '__obj__': this
-            };
-            myRecentLookup[firstprop] = firstdata;
+            if (!recentLookups[id]) {
+                recentLookups[id] = {
+                    '__obj__': this
+                };
+            }
+            recentLookups[id][firstprop] = firstdata;
         }
 
         // Skip the sub-query if DONT_GET_DATA is set there are no more args
-        if (doSubLookup && (!dontGetData || args.length)) {
+        if (doSubQuery && (!dontGetData || args.length)) {
             return isSet ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
         }
 
@@ -143,7 +145,7 @@ if (Backbone) {
                 this.trigger('change');
             }
             return _data;
-        } else if (_data && !iterateOverModels && this.isCollection && query === '') {
+        } else if (_data && !iterateOverModels && this.isCollection && prop === QUERY_SELF) {
             /**
              * If iterateOverModels is not set and _data is a collection, return the
              * raw data of each model in a list.  XXX is this ideal?  or too magical?
@@ -280,7 +282,7 @@ if (Backbone) {
                 log(VERBOSE, self, 'update cancelled');
                 return;
             }
-            self['lookup'](QUERY_SELF, newParams);
+            self['query'](QUERY_SELF, newParams);
             log(INFO, self, 'updated', self.toJSON());
         },
         'state': noop,
@@ -300,12 +302,12 @@ if (Backbone) {
              * Copy query and text onto the Model, View, and Collection.
              *
              */
-            'query': bblookup,
-            'text': lookupText,
+            'query': bbquery,
+            'text': queryText,
 
             // deprecated?
-            'lookup': bblookup,
-            'lookupText': lookupText,
+            'lookup': bbquery,
+            'lookupText': queryText,
 
             /**
              * Wake up this model as well as (recursively) any models that depend on

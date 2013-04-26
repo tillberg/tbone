@@ -1,16 +1,16 @@
 
 /**
- * "Don't Get Data" - Special flag for lookup to return the model/collection instead
+ * "Don't Get Data" - Special flag for query to return the model/collection instead
  * of calling toJSON() on it.
  * @const
  */
 var DONT_GET_DATA = 1;
 
 /**
- * "Iterate Over Models" - Special flag for lookup to return an iterator over the
+ * "Iterate Over Models" - Special flag for query to return an iterator over the
  * models of the collection, enabling iteration over models, which is what we want
  * to do when using _.each(collection ...) in a template, as this allows us to
- * use model.lookup(...) and properly bind references to the models.
+ * use model.query(...) and properly bind references to the models.
  * @const
  */
 var ITERATE_OVER_MODELS = 2;
@@ -23,19 +23,19 @@ var ITERATE_OVER_MODELS = 2;
  */
 var QUERY_SELF = '';
 
-function lookup(flag, query, value) {
+function query(flag, prop, value) {
     var self = this;
     var isSet;
     var dontGetData = flag === DONT_GET_DATA;
     var iterateOverModels = flag === ITERATE_OVER_MODELS;
     if (typeof flag === 'string') {
         /**
-         * If no flag provided, shift the query and value over.  We do it this way instead
+         * If no flag provided, shift the prop and value over.  We do it this way instead
          * of having flag last so that we can type-check flag and discern optional flags
          * from optional values.  And flag should only be used internally, anyway.
          */
-        value = query;
-        query = flag;
+        value = prop;
+        prop = flag;
         flag = 0;
         /**
          * Use arguments.length to switch to set mode in order to properly support
@@ -47,10 +47,10 @@ function lookup(flag, query, value) {
     }
 
     /**
-     * Remove a trailing dot and __self__ references, if any, from the query.
+     * Remove a trailing dot and __self__ references, if any, from the prop.
      **/
-    query = (query || '').replace('__self__', '');
-    var args = query.split('.');
+    prop = (prop || '').replace('__self__', '');
+    var args = prop.split('.');
 
     var setprop;
     if (isSet) {
@@ -70,15 +70,14 @@ function lookup(flag, query, value) {
     var last_data;
 
     /**
-     * If DONT_GET_DATA, and there's no query, then this is a self-reference.
+     * If DONT_GET_DATA, and there's no prop, then this is a self-reference.
      */
-    var _data = dontGetData && !query ? self : self.attributes;
+    var _data = dontGetData && !prop ? self : self.attributes;
 
     var name_parts = [];
-    var myRecentLookup = {};
     var id;
     var arg;
-    var doSubLookup;
+    var doSubQuery;
     var parentCallbacks = [];
     var events = isSet && self._events['change'];
 
@@ -105,8 +104,8 @@ function lookup(flag, query, value) {
             break;
         } else if (_data && _data['isBindable']) {
             // To avoid duplicating the recentLookups code here, we set a flag and do
-            // the sub-lookup after recording lookups
-            doSubLookup = args.length ||
+            // the sub-query after recording queries
+            doSubQuery = args.length ||
                 ((!isSet || (value && !value['isBindable'])) && !dontGetData);
             break;
         } else if (isSet && (_data === null || typeof _data !== 'object') && args.length) {
@@ -117,9 +116,9 @@ function lookup(flag, query, value) {
              * property via query() so as to fire change events appropriately.
              */
             if (_data != null) {
-                log(WARN, this, 'mkdir', 'while writing <%=query%>, had to overwrite ' +
+                log(WARN, this, 'mkdir', 'while writing <%=prop%>, had to overwrite ' +
                     'primitive value <%=primitive%> at <%=partial%>', {
-                        query: query,
+                        prop: prop,
                         primitive: _data,
                         partial: name_parts.join('.')
                     });
@@ -130,14 +129,16 @@ function lookup(flag, query, value) {
 
     if (!isSet && recentLookups) {
         id = uniqueId(self);
-        myRecentLookup = recentLookups[id] = (recentLookups && recentLookups[id]) || {
-            '__obj__': self
-        };
-        myRecentLookup[name_parts.join('.')] = _data;
+        if (!recentLookups[id]) {
+            recentLookups[id] = {
+                '__obj__': self
+            };
+        }
+        recentLookups[id][name_parts.join('.')] = _data;
     }
 
     // Skip the sub-query if DONT_GET_DATA is set there are no more args
-    if (doSubLookup) {
+    if (doSubQuery) {
         return isSet ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
     }
 
@@ -242,7 +243,7 @@ function lookup(flag, query, value) {
             diff(events, _data, value, false);
         }
         return value;
-    } else if (!iterateOverModels && self.isCollection && query === '') {
+    } else if (!iterateOverModels && self.isCollection && prop === '') {
         /**
          * If iterateOverModels is not set and _data is a collection, return the
          * raw data of each model in a list.  XXX is this ideal?  or too magical?
@@ -252,8 +253,8 @@ function lookup(flag, query, value) {
     return _data;
 }
 
-function lookupText(flag, query) {
-    var value = query == null ? this['query'](flag) : this['query'](flag, query);
+function queryText(flag, prop) {
+    var value = prop == null ? this['query'](flag) : this['query'](flag, prop);
     return (isString(value) || isRealNumber(value) || _.isDate(value)) && value != null ?
         value + '' : '';
 }

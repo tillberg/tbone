@@ -6,8 +6,6 @@ var createView = tbone.createView;
 var autorun = tbone.autorun;
 var render = tbone.render;
 var drain = tbone.drain;
-var lookup = tbone.lookup;
-var lookupText = tbone.lookupText;
 
 T('lights', function() {
     return {
@@ -85,7 +83,7 @@ test('autorun', function () {
     T('state2.count', 4);
     var count = 2;
     autorun(function() {
-        count = lookup('state2.count');
+        count = tbone.lookup('state2.count');
     });
     equal(count, 4);
     T('state2.count', 5);
