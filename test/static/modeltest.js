@@ -284,6 +284,23 @@
                 equal(me('coll.length'), 3);
             });
 
+            test(name + ' remove first/last', function () {
+                var me = base.make();
+                me.query('coll', [ 5, 10, 15, 20, 25 ]);
+                var val;
+                T(function () {
+                    val = me.query('coll.2');
+                });
+                me.removeFirst('coll');
+                T.drain();
+                equal(val, 20);
+                equal(me.query('coll.0'), 10);
+                me.removeLast('coll');
+                me.removeLast('coll');
+                T.drain();
+                strictEqual(val, undefined);
+                equal(me.query('coll.length'), 2);
+            });
         }
     }
 

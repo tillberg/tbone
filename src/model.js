@@ -149,6 +149,13 @@ var baseModel = {
         this['query'](QUERY_UNSHIFT, prop, value);
     },
 
+    'removeFirst': function (prop) {
+        this['query'](QUERY_REMOVE_FIRST, prop);
+    },
+    'removeLast': function (prop) {
+        this['query'](QUERY_REMOVE_LAST, prop);
+    },
+
     'find': function (obj) {
         function recurse(o, depth) {
             if (depth > 10) {

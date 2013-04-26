@@ -26,6 +26,16 @@ var QUERY_PUSH = 3;
 var QUERY_UNSHIFT = 4;
 
 /**
+ * @const
+ */
+var QUERY_REMOVE_FIRST = 5;
+
+/**
+ * @const
+ */
+var QUERY_REMOVE_LAST = 6;
+
+/**
  * If you want to select the root, you can either pass __self__ or just an empty
  * string; __self__ is converted to an empty string and this "flag" is used to
  * check for whether we are selecting either.
@@ -39,7 +49,9 @@ function query(flag, prop, value) {
     var iterateOverModels = flag === ITERATE_OVER_MODELS;
     var isPush = flag === QUERY_PUSH;
     var isUnshift = flag === QUERY_UNSHIFT;
-    var isListOp = isPush || isUnshift;
+    var isRemoveFirst = flag === QUERY_REMOVE_FIRST;
+    var isRemoveLast = flag === QUERY_REMOVE_LAST;
+    var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
     var isSet = isListOp;
     if (typeof flag !== 'number') {
         /**
@@ -164,6 +176,10 @@ function query(flag, prop, value) {
             last_data[setprop].push(value);
         } else if (isUnshift) {
             last_data[setprop].unshift(value);
+        } else if (isRemoveFirst) {
+            last_data[setprop].shift(value);
+        } else if (isRemoveLast) {
+            last_data[setprop].pop(value);
         } else {
             last_data[setprop] = value;
         }
