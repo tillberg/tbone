@@ -24,6 +24,7 @@ cd ..
 optimization_level = os.environ.get('OPTIMIZATION_LEVEL', 'ADVANCED_OPTIMIZATIONS')
 debug = os.environ.get('TBONE_DEBUG', False)
 mode = 'debug' if debug else 'release'
+backbone = os.environ.get('BACKBONE_SUPPORT', True)
 minflag = '' if debug else '.min'
 
 def read(name):
@@ -41,11 +42,11 @@ sources = [
     'template',
     'view',
     'export',
-    'bbsupport',
+    'bbsupport' if backbone else None,
     'footer'
 ]
 
-all = '\n'.join([read(name) for name in sources])
+all = '\n'.join([read(name) for name in sources if name])
 
 if not debug:
     all = all.replace('var TBONE_DEBUG = window[\'TBONE_DEBUG\'];', 'var TBONE_DEBUG = false;')

@@ -1,5 +1,7 @@
 
-if (window['Backbone']) {
+var Backbone = window['Backbone'];
+
+if (Backbone) {
 
     var bblookup = function (flag, query, value) {
         var isSet;

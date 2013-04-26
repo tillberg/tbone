@@ -28,6 +28,7 @@ var BASE_PRIORITY_MODEL_SYNC = 3000;
 var BASE_PRIORITY_VIEW = 2000;
 /** @const */
 var BASE_PRIORITY_MODEL_ASYNC = 1000;
+
 /**
  * We also use the processQueue to initialize models & views.  By adding this delta
  * to priorities for initialization, we ensure that initialization happens in the
