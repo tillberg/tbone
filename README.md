@@ -1,33 +1,55 @@
-# TBone
+TBone
+=====
 
-Automagic event-binding for Backbone.
+### Declarative programming in Javascript
 
-TBone removes the complexity of manually managing data dependencies in Backbone,
-enabling "live" templates as well functions that automatically re-execute when
-the data they reference changes.
+TBone extends live template binding to Javascript functions.
 
-TBone is designed to scale with your application, enabling simple re-use of
-data throughout your application without you needing to tell the page what
-to update when that data changes.
+Similarly to how live templates bind automatically to changes in any of the
+properties used to render them, TBone uses T-functions to track all the
+dependencies of a function, and will re-run them any time those values
+change.
 
-At AppNeta, we've used TBone to eliminate a set of custom page events
-corresponding such as "refresh data" and "add filter"; with a large application,
-it becomes difficult to manage what exactly needs to be refreshed when something
-changes.  While Backbone is a critical step toward reducing this complexity,
-TBone enables us to do so without even thinking about event binding; every view
-and model stays in sync by design and without unnecessary work.
+### Example
+
+```javascript
+// Bind `fullname` to be the concatenation of `first` and `last`
+T('fullname', function () {
+    return T.text('first') + ' ' + T.text('last');
+});
+
+T('first', 'Sally'); // Set `first` to 'Sally'
+T('last', 'Smith'); // Set `last` to 'Smith'
+
+// Set `last` to 'Rogers' after 2 seconds
+setTimeout(function () {
+    T('last', 'Rogers');
+}, 2000);
+
+// Create an auto-executing T-function that sets span text based on `fullname`
+T(function () {
+    $('span').text(T.text('fullname'));
+    // -> "Sally Smith"
+    // -> after 2 seconds, "Sally Rogers"
+});
+```
+
+In addition to declarative-programming infrastructure, TBone provides
+functions for rendering live templates/views, as well as models and
+collections.
 
 ## Download
 
 * [Development version, with comments](http://cdn.tbonejs.org/tbone-v0.3.0.js) *23kB gzipped*
 * [Production version, minified](http://cdn.tbonejs.org/tbone-v0.3.0.min.js) *5.4kB gzipped*
 
-## CDN
+For personal use or low-traffic sites, feel free to use our CDN:
 
 ```html
-<script src="http://cdn.tbonejs.org/tbone-v0.3.0.js"></script>
-<script src="http://cdn.tbonejs.org/tbone-v0.3.0.min.js"></script>
+Development: <script src="http://cdn.tbonejs.org/tbone-v0.3.0.js"></script>
+Production: <script src="http://cdn.tbonejs.org/tbone-v0.3.0.min.js"></script>
 ```
+
 ## TBone
 
 **set** tbone.set(object, value)
