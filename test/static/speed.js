@@ -1,19 +1,20 @@
 (function(){
+  return;
 
-  tbone.createModel('count').singleton();
+  T('count', {});
   var count = 0;
 
   function increment() {
     tbone.set('count.er', ++count);
   }
 
-  tbone.createModel('counter', function() {
+  T('counter', function() {
     return {
       count: tbone.lookup('count.er')
     };
-  }).singleton();
+  });
 
-  tbone.createModel('subcounter', function () {
+  T('subcounter', function () {
     return {
       sub: {
         sub: {
@@ -29,7 +30,7 @@
         }
       }
     };
-  }).singleton();
+  });
 
   JSLitmus.test('tbone.lookup model', function(count) {
     while (count--) tbone.lookup('count');
@@ -43,13 +44,13 @@
     while (count--) tbone('count.count');
   });
 
-  tbone.createModel('unbound').singleton();
+  T('unbound', {});
 
   JSLitmus.test('T(prop, value) unbound', function(count) {
     while (count--) tbone('unbound.count', count);
   });
 
-  tbone.createModel('bound').singleton();
+  T('bound', {});
   _.each(_.range(20), function() {
     T(function() {
       T('bound.count');

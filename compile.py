@@ -24,13 +24,35 @@ cd ..
 optimization_level = os.environ.get('OPTIMIZATION_LEVEL', 'ADVANCED_OPTIMIZATIONS')
 debug = os.environ.get('TBONE_DEBUG', False)
 mode = 'debug' if debug else 'release'
+backbone = os.environ.get('BACKBONE_SUPPORT', True)
 minflag = '' if debug else '.min'
 
-with open('tbone.js', 'r') as f:
-    raw = f.read()
-parsed = raw.replace('var TBONE_DEBUG = window[\'TBONE_DEBUG\'];', 'var TBONE_DEBUG = %s;' % ('true' if debug else 'false'))
+def read(name):
+    with open('src/%s.js' % (name,), 'r') as f:
+        return f.read()
+
+sources = [
+    'header',
+    'tbone',
+    'scheduler',
+    'sync',
+    'query',
+    'model',
+    'collection',
+    'template',
+    'view',
+    'export',
+    'bbsupport' if backbone else None,
+    'footer'
+]
+
+all = '\n'.join([read(name) for name in sources if name])
+
+if not debug:
+    all = all.replace('var TBONE_DEBUG = window[\'TBONE_DEBUG\'];', 'var TBONE_DEBUG = false;')
+
 with open('build/tbone.%s.js' % mode, 'w') as f:
-    f.write(parsed)
+    f.write(all)
 
 cmd = [
     "java",
@@ -44,7 +66,7 @@ cmd = [
     "--externs",
     "externs/jquery.js",
     "--externs",
-    "externs/underscore-1.3.3.js",
+    "externs/underscore-1.4.4.js",
     "--externs",
     "externs/backbone-0.9.2.js",
     "--js",
@@ -56,7 +78,7 @@ if error:
     print >> sys.stderr, error
 else:
     output.write("//@ sourceMappingURL=tbone%s.js.map\n" % minflag)
-    output.write("(function(){'use strict';")
+    output.write("(function(){")
     output.write(out)
     output.write("}());")
     output.close()

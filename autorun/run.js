@@ -20,12 +20,18 @@ var tasks = [
   },
   {
     name: 'jshint',
-    watch: /tbone\/tbone.js/,
+    watch: /src\/.+.js/,
     exec: function() {
       info('JSHinting...');
+      var files = fs.readdirSync('src/');
+      files = _.filter(files, function (f) {
+        return f !== 'footer.js' && f !== 'header.js';
+      });
+      files = _.map(files, function (f) {
+        return 'src/' + f;
+      });
       var cmd = [
-        'autorun/node_modules/jshint/bin/hint --config .jshintrc tbone.js'
-        // 'gjslint tbone.js'
+        'autorun/node_modules/jshint/bin/hint --config .jshintrc ' + files.join(' ')
       ].join(';');
       exec('sh', ['-c', cmd], { cwd: './', pipe: true }, function(err) {
         if (err) {
@@ -91,8 +97,9 @@ var tasks = [
     watch: /build\/tbone.min.js$/,
     exec: function() {
       var cmd = [
-        'cp tbone.js build/tbone.min.js build/tbone.min.js.map $TARGET_DIR/',
-        'cp tbone.js test/static/tbone.js',
+        'cp build/tbone.debug.js $TARGET_DIR/tbone.js',
+        'cp build/tbone.min.js build/tbone.min.js.map $TARGET_DIR/',
+        'cp build/tbone.debug.js test/static/tbone.js',
         'cp build/tbone.min.js test/static/tbone.min.js'
       ].join(';');
       exec('sh', ['-c', cmd], { cwd: './' }, function(err, data) {
