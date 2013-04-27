@@ -224,7 +224,7 @@ var baseModel = {
      * @return {Boolean}
      */
     isAsync: function () {
-        return !!this['_url'];
+        return !!this['url'];
     },
     onScopeExecute: function (scope) {
         log(INFO, this, 'lookups', scope.lookups);
