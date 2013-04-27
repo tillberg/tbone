@@ -38,6 +38,10 @@ In addition to declarative-programming infrastructure, TBone provides
 functions for rendering live templates/views, as well as models and
 collections.
 
+TBone was originally built as an extension upon Backbone, and owes
+much of its Model/View API (as well as a verbatim copy of
+Backbone.sync), to [Backbone](http://backbonejs.org/).
+
 ## Download
 
 * [Development version, with comments](http://cdn.tbonejs.org/tbone-v0.3.0.js) *23kB gzipped*
@@ -52,7 +56,7 @@ Production: <script src="http://cdn.tbonejs.org/tbone-v0.3.0.min.js"></script>
 
 ## The Four Tenets of TBone
 
-### run: T(fn)
+### run: `T(fn)`
 
 Run **fn** now, and again anytime its dependencies change.
 
@@ -61,13 +65,13 @@ Run **fn** now, and again anytime its dependencies change.
   should be [idempotent](http://en.wikipedia.org/wiki/Idempotence#Computer_science_meaning),
   though advanced users may find other strategies useful.
 
-### get `T(prop)`
+### get: `T(prop)`
 
 Gets **prop** and bind current T-function to changes in it.
 
 - **prop**: String.  e.g. 'name' or 'person.name.first'
 
-### set to value `T(prop, value)`
+### set value: `T(prop, value)`
 
 Sets **prop** to **value**.
 
@@ -75,7 +79,7 @@ Sets **prop** to **value**.
 - **value**: any serializable object (String, Number, Array, Object, Date),
   or a TBone/Backbone model/collection.
 
-### set to function `T(prop, fn)`
+### set function: `T(prop, fn)`
 
 Binds **prop** to the live result of **fn**
 
@@ -83,51 +87,78 @@ Binds **prop** to the live result of **fn**
 - **fn**: Function.  The return value of this function will be set to **prop**.
   This function gets re-run any time its dependencies change.
 
+## TBone Models
 
+`T` (or `tbone`) is just a TBone model.  You can make more!
 
-**set** tbone.set(object, value)
+- `tbone.models.base`: Base TBone Model
+- `model.extend(prototypeProperties)`: Creates your very own TBone Model prototype.
+- `model.make(instanceProperties)`: Make a new model instance.
 
-Sets a **object** (i.e. an attribute in a model) to a specified value.
+### Model methods
 
-```javascript
-tbone.set('stapler.color', 'red');
-=> sets stapler color attribute to red...
+- `model(...)`: Models are callable, using the Four Tenets of TBone above.
+- `model.text(prop)`: read **prop** from the model, except return an empty string
+  if the value is not a string, Number other than NaN, or a Date.
+- `model.toggle(prop)`: sets **prop** to !**prop**, i.e. alternate between
+  true and false.
+- `model.query(prop, [value])`: Same as get / set value.
+- `model.find(value)`: Search for **value**, and return the prop path of the
+  first match found (using referential equality, ===).
+- `model.push(prop, value)`: Add **value** at the end of the list at **prop**.
+- `model.unshift(prop, value)`: Insert **value** at beginning of the list at
+  **prop**.
+- `model.removeFirst(prop)`: Remove the first item from the list at **prop**,
+  like `shift` except that you don't get the value back.
+- `model.removeLast(prop)`: Remove the last item from the list at **prop**,
+  like `pop` except that you don't get the value back.
 
-tbone.set('counter.value', 15);
-=> sets counter value attribute to 15...
-```
+### Model properties
 
-**lookup** tbone.lookup(object)
+- `model.url`: Override this to set either a URL or function that returns
+  a URL to fetch data via XHR.  If a function, you can use T-references to
+  make this model re-fetch data on a property change (e.g. applying a filter).
+- `model.state`: Override this with a function to generate this model's data.
+  This has similar utility to `T(prop, fn)`.
 
-Returns a specified **object**.
+### Collections
 
-```javascript
-tbone.set('stapler.color');
-=> returns 'red'...
+TBone Collections are a subclass of Model.  The main difference is that the
+root data item is an Array instead of an Object.
 
-tbone.set('counter.value');
-=> returns 15...
-```
+- `tbone.collections.base`: Base TBone Collection.
+- `collection.extend`, `collection.make`, etc.: Same as for Models.
 
-**createModel** tbone.createModel(name, [baseModel or function], [options])
+## TBone Views
 
-Creates your very own TBone **Model**. You can use chaining to both create and
-instantiate the **Model** with the `singleton()` method.
+- `tbone.createView(name, fn)`: Set the View "ready" function for **name**.
+  Match this up to a template by syncing **name** with the template's **name**.
+- `tbone.addTemplate(name, templateString)`: Register a new template, using
+  _.template to parse the template string.  Additionally, variable references
+  in the template are re-written as tbone queries.
+- `tbone.dontPatch(prop)`: Don't tbone-query-patch variables starting with
+  **prop** in tbone.addTemplate.  For example, if you have a formatting library
+  at `window.stringz`, use `tl.dontPatch('stringz')` so that you can use
+  stringz from within templates.
+- `tbone.render(elementArray)`: Render TBone Views/templates (recursively)
+  for each of the DOM elements passed.  Most applications can kick off TBone
+  with a single call to `tbone.render($('[tbone]'))`.
+- `tbone.defaultView(view)`: Set the default View to use when rendering a
+  template with no corresponding View.
 
-```javascript
-tbone.createModel('tweet');
-=> creates a model for a tweet.
+### View methods
 
-tbone.createModel('post').singleton();
-=> create and instantiates a model for a blog post.
-```
+- `view.extend`, `view.make`: Same as for Models.
+- `view.query(prop)`: Reads **prop** from the view's **root**.
+- `view.$(selector)`: Query DOM elements inside this View.  Always use this
+  instead of using the global `$(selector)`.
 
-**createView** tbone.createView(name, baseView, function, [options])
+### View properties
 
-Creates a TBone **View**, inheriting from another **View** (or the default **View** if
-`baseView` is not specified. Please note that `this` will be scoped to this **View**,
-thus you can access view specific elements via `this.$`.
+- `view.el`: Root DOM element of the View.
+- `view.$el`: JQuery selection of the root DOM element of the View.
 
+Example:
 ```javascript
 tbone.createView('widget', function () {
     this.$('span').text('42');
@@ -136,139 +167,53 @@ tbone.createView('widget', function () {
         return false;
     })
 });
-=> creates a view named widget and attaches a span and anchor to it.
+// => creates a view named widget that listens for user interaction and
+//    sets the 'selected.widget'
 ```
 
-**createCollection** tbone.createCollection(name, model)
+### tbone DOM attribute
 
-Creates a TBone **Collection** of the specified `model`. You can use chaining to
-both create and instantiate the **Collection** with the `singleton()` method.
-
-```javascript
-tbone.createCollection('tweets', tweet);
-=> creates a collection of tweets.
-
-tbone.createCollection('posts', post).singleton();
-=> creates and instantiates a collection of blog posts.
-```
-
-**autorun** tbone.autorun(function, context, priority, name, onExecuteCb, onExecuteContext, detached)
-
-Wrap a function call with automatic binding for any model properties accessed
-during the function's execution.
-
-Models and views update automatically by wrapping their reset functions with this.
-
-Additionally, this can be used within postRender callbacks to section off a smaller
-block of code to repeat when its own referenced properties are updated, without
-needing to re-render the entire view.
-
-
-```javascript
-tbone.autorun(...)
-```
-
-**render** tbone.render(elements, [parent])
-
-Render an array of HTML elements into **Views**.  This reads the TBone attribute
-and generates a **View** for each element accordingly.
-
-```javascript
-tbone.render(jQuery('[tbone]'));
-=> render all elements that contain a tbone attribute.
-```
-
-**data** tbone.data
-
-Object that contains all instances of TBone **Models**.
-
-```javascript
-tbone.data
-=> returns a javascript object all TBone model instances
-```
-
-## Models
-
-**models** tbone.models
-
-What it does!
-
-```javascript
-tbone...
-```
-
-**calc** model.calc()
-
-Overridable method that executes everytime a model dependency changes.
-
-```javascript
-tbone.set('timer', {
-    calc: function () {
-        // Dependency
-        var count = tbone.lookup('counter.value') || 0;
-
-        var rval = {};
-
-        // Calculate seconds and minutes.
-        rval.seconds = count % 60;
-        rval.minutes = Math.floor(count / 60);
-
-        return rval;
-    }
-}).singleton();
-=> overrides the calc method on the timer object
-=> executes each time the counter model changes
-```
-
-## Views
-
-**views** tbone.views
-
-What it does!
-
-```javascript
-tbone...
-```
-
-## Templates
-
-**templates** tbone.templates
-
-What it does!
-
-```javascript
-tbone...
-```
-
-**tmpl**
-
-Renders an externally-defined template, and executes the associated view.
-You should load that template via tbone.addTemplate(id, templateHTML).
+Views recursively render sub-Views by searching for [tbone] attributes, e.g.:
 
 ```html
-<div tbone=""></div>
+<div tbone="tmpl awesomeTemplate"></div>
+<div tbone="view superView"></div>
+<div tbone="tmpl itemTemplate root items.3"></div>
 ```
 
-**inline**
+Three properties can be specified in these tbone attributes:
 
-Renders a template define inline, and executes the associated view.  (note:
-This is not advised for complex applications, as there are some complications,
-especially when using ERB-style delimeters, which are not valid HTML.)
+- `tmpl <name>`: Renders the template named **name**.  Implies also that
+  the View by the same name will also be run after rendering the template.
+- `view <name>`: Executes the View named **name** on this element.
+- `root <prop>`: Passes **prop** as the View's **root**, which can be used
+  by the View ready function to look up properties on that object via
+  `this.query(prop)`.
 
-```html
-<div tbone=""></div>
-```
+## Even more fun stuff!
 
-**view**
-
-Does not render any template for this node, but executes the associated view.
-
-```html
-<div tbone=""></div>
-```
+- `tbone.views`, `tbone.models`, `tbone.collections`, `tbone.templates`:
+  All the stuff you've added to TBone.
+- `TBONE_DEBUG`: Set to true just before loading TBone in order to enable
+  debug output & features (not available using Production minified source).
+- `tbone.freeze()`: Freeze the page; no further TBone updates will occur.
+- `tbone.watchLog(query)`: Output log information to the console for **query**.
+  Interesting things to try: 'scheduler', 'exec', 'lookups', or the name of
+  View/Model/Collection.
+- `tbone.noConflict()`: Reset `T` and `tbone` to what they were before TBone
+  loaded.
+- `tbone.isReady()`: There are no pending Model/View updates, including
+  async Models that are waiting for ajax data.  This is helpful for automated
+  testing to determine that the page has "settled".
+- `tbone.getListeners(**model**)`: Returns list of all the unique listeners
+  that [recursively!] depend on **model**.
+- `tbone.hasViewListener(**model**)`: Returns true if a View is listening
+  either directly or indirectly (i.e. through other model dependencies) for
+  changes to **model**.  This is used internally by TBone to prevent loading
+  ajax data for any models that are not needed as part of the UI currently.
 
 ## License
 
-Copyright (c) 2012 Dan Tillberg, AppNeta
+Copyright (c) 2012-2013 Dan Tillberg, AppNeta
 
 TBone is freely redistributable under the MIT License.  See LICENSE for details.
