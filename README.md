@@ -50,7 +50,40 @@ Development: <script src="http://cdn.tbonejs.org/tbone-v0.3.0.js"></script>
 Production: <script src="http://cdn.tbonejs.org/tbone-v0.3.0.min.js"></script>
 ```
 
-## TBone
+## The Four Tenets of TBone
+
+### run: T(fn)
+
+Run **fn** now, and again anytime its dependencies change.
+
+- **fn**: Function.  This is executed immediately.  **fn** will get re-run
+  again anytime the T-references it makes change.  Thus, generally **fn**
+  should be [idempotent](http://en.wikipedia.org/wiki/Idempotence#Computer_science_meaning),
+  though advanced users may find other strategies useful.
+
+### get `T(prop)`
+
+Gets **prop** and bind current T-function to changes in it.
+
+- **prop**: String.  e.g. 'name' or 'person.name.first'
+
+### set to value `T(prop, value)`
+
+Sets **prop** to **value**.
+
+- **prop**: String.  e.g. 'name' or 'person.name.first'.
+- **value**: any serializable object (String, Number, Array, Object, Date),
+  or a TBone/Backbone model/collection.
+
+### set to function `T(prop, fn)`
+
+Binds **prop** to the live result of **fn**
+
+- **prop**: String.  e.g. 'name' or 'person.name.first'.
+- **fn**: Function.  The return value of this function will be set to **prop**.
+  This function gets re-run any time its dependencies change.
+
+
 
 **set** tbone.set(object, value)
 
