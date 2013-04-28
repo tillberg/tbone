@@ -152,37 +152,6 @@ var baseModel = {
         this['query'](QUERY_REMOVE_LAST, prop);
     },
 
-    'find': function (obj) {
-        function recurse(o, depth) {
-            if (depth > 10) {
-                return [];
-            }
-            if (o === obj) {
-                return [];
-            }
-            if (o !== null && typeof o === 'object') {
-                var result;
-                if (o.push) {
-                    for (var i = 0; i < o.length; i++) {
-                        if (!!(result = recurse(o[i], depth + 1))) {
-                            result.unshift(k);
-                            return result;
-                        }
-                    }
-                } else {
-                    for (var k in o) {
-                        if (!!(result = recurse(o[k], depth + 1))) {
-                            result.unshift(k);
-                            return result;
-                        }
-                    }
-                }
-            }
-        }
-        var result = recurse(this.attributes, 0);
-        return result ? result.join('.') : null;
-    },
-
     /**
      * Wake up this model as well as (recursively) any models that depend on
      * it.  Any view that is directly or indirectly depended on by the current
@@ -313,3 +282,36 @@ var baseModel = {
     'state': noop,
     'postFetch': noop
 };
+
+if (TBONE_DEBUG) {
+    baseModel['find'] = function (obj) {
+        function recurse(o, depth) {
+            if (depth > 10) {
+                return [];
+            }
+            if (o === obj) {
+                return [];
+            }
+            if (o !== null && typeof o === 'object') {
+                var result;
+                if (o.push) {
+                    for (var i = 0; i < o.length; i++) {
+                        if (!!(result = recurse(o[i], depth + 1))) {
+                            result.unshift(k);
+                            return result;
+                        }
+                    }
+                } else {
+                    for (var k in o) {
+                        if (!!(result = recurse(o[k], depth + 1))) {
+                            result.unshift(k);
+                            return result;
+                        }
+                    }
+                }
+            }
+        }
+        var result = recurse(this.attributes, 0);
+        return result ? result.join('.') : null;
+    };
+}
