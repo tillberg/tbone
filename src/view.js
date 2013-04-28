@@ -20,7 +20,8 @@ var baseView = {
         var self = this;
         uniqueId(self);
         _.extend(self, opts);
-        self['$el'] = $(self['el']).data('view', self);
+        self['$el'] = $(self['el']);
+        self['el']['view'] = self;
         self.priority = self.parentView ? self.parentView.priority - 1 : BASE_PRIORITY_VIEW;
         self.scope = autorun(self.render, self, self.priority, 'view_' + self.Name,
                              self.onScopeExecute, self, true);
@@ -82,7 +83,7 @@ var baseView = {
                 }
 
                 var $old = $('<div>').append(this.$el.children());
-                var newHtml = renderTemplate(self.templateId, self.rootStr);
+                var newHtml = renderTemplate(self.templateId, self);
                 log(INFO, self, 'newhtml', newHtml);
                 self.$el.html(newHtml);
 
@@ -185,24 +186,36 @@ var baseView = {
      * `ready` and `postRender` callbacks.
      */
     root: function () {
-        return tbone['query'](DONT_GET_DATA, this.rootStr || '');
+        return this['query'](DONT_GET_DATA, '');
     },
 
     /**
-     * Perform a safe lookup on the view's root, if any.  If there's no root, returns null.
+     * Perform a query relative to the view's rootObj and rootStr, delegating to
+     * rootObj for the actual query but prepending rootStr to the prop string.
      **/
-    // This should be rewritten to memoize the rootStr part of view lookups.
-    // This will need to work around the existing warning feature in the lookup
-    // function for cases where the root is actually a property of a model.
-    // Sublookups from there don't reference a model, and while this is all right
-    // (because the lookup of rootStr has bound the view already to that model),
-    // there could be some subtleties about how that connection is made and passed
-    // around... and this would be a great thing to implement alongside passing
-    // *data* to subviews through template references, e.g. ${id(data)}.
-    'query': function (query, value) {
-        query = (this.rootStr ? this.rootStr + '.' : '') + (query || '');
-        return arguments.length === 2 ? tbone(query, value) : tbone(query);
+    'query': function (flag, prop, value) {
+        var isSet = false;
+        if (typeof flag !== 'number') {
+            /**
+             * If no flag provided, shift the prop and value over.  We do it this way instead
+             * of having flag last so that we can type-check flag and discern optional flags
+             * from optional values.  And flag should only be used internally, anyway.
+             */
+            value = prop;
+            prop = flag;
+            flag = 0;
+            /**
+             * Use arguments.length to switch to set mode in order to properly support
+             * setting undefined.
+             */
+            isSet = arguments.length === 2;
+        }
+        prop = (this.rootStr ? this.rootStr + '.' : '') + (prop || '');
+        return isSet ? this.rootObj(flag, prop, value) : this.rootObj(flag, prop);
     },
+    'queryText': queryText,
+
+    'getHashId': getHashId,
 
     // deprecated
     'lookup': function (query) {
@@ -277,7 +290,7 @@ function render($els, parent, subViews) {
             }
             var templateId = inlineTemplateId || props['tmpl'];
             var viewId = props['view'];
-            var rootStr = props['root'];
+            var root = props['root'];
 
             /**
              * Use either the view or template attributes as the `name` of the view.
@@ -303,14 +316,29 @@ function render($els, parent, subViews) {
              */
             var myView = views[name] || defaultView;
 
-            return myView.make({
+            var rootObj = hashedObjectCache[root] || tbone;
+
+            if (!rootObj['query']) {
+                rootObj = tbone.make(rootObj);
+            }
+
+            var opts = {
                 Name: name,
                 origOuterHTML: outerHTML,
                 'el': el,
                 templateId: templateId,
                 parentView: parent,
-                rootStr: rootStr
-            });
+                rootObj: rootObj,
+                rootStr: hashedObjectCache[root] ? '' : root
+            };
+
+            // This could potentially miss some cached objects (e.g.
+            // if the subview was removed during view-ready execution)
+            // Might be simpler just to clear hashedObjectCache when
+            // the processQueue finishes?
+            delete hashedObjectCache[root];
+
+            return myView.make(opts);
         }
     });
 }
@@ -321,6 +349,23 @@ function __defaultView(view) {
         defaultView = view;
     }
     return defaultView;
+}
+
+var hashedObjectCache = {};
+
+/**
+ * @const (String)
+ */
+var HEXCHARS = '0123456789ABCDEF';
+
+function getHashId(obj) {
+    var hashArray = [];
+    for (var i = 20; i; i--) {
+        hashArray.push(HEXCHARS.charAt(Math.floor(Math.random() * HEXCHARS.length)));
+    }
+    var hash = hashArray.join('');
+    hashedObjectCache[hash] = obj;
+    return hash;
 }
 
 /**

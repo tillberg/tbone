@@ -14,7 +14,7 @@ function regexp(str, flags) {
  * @type {RegExp}
  * @const
  */
-var rgxLookup = /<%(=|-|)([\s\S]+?)%>/g;
+var rgxLookup = /<%(=|-|@|)([\s\S]+?)%>/g;
 
 /**
  * Find function declaractions (so that we can detect variables added to the closure scope
@@ -94,7 +94,7 @@ function withLookupListeners(str, textOp, closureVariables) {
                     firstArg,
                     '.isBindable ? ',
                     firstArg,
-                    '.lookup',
+                    '.query',
                     textOp ? 'Text' : '',
                     '("',
                     expr.slice(firstArg.length + 1),
@@ -105,14 +105,14 @@ function withLookupListeners(str, textOp, closureVariables) {
                 ].join('');
             } else {
                 /**
-                 * Patch the reference to use lookup (or lookupText).
+                 * Patch the reference to use query (or queryText).
                  */
                 return [
-                    'tbone.lookup',
+                    'root.query',
                     textOp ? 'Text' : '',
                     '(',
                     ITERATE_OVER_MODELS,
-                    ', rootStr + "',
+                    ', "',
                     expr,
                     '")'
                 ].join('');
@@ -184,6 +184,11 @@ function initTemplate(string) {
             return instrumented;
         }
 
+        var isDataRef = textOp === '@';
+        if (isDataRef) {
+            textOp = '';
+        }
+
         /**
          * Find unquoted segments within the code block.  Pass quoted segments through unmodified.
          */
@@ -230,7 +235,10 @@ function initTemplate(string) {
                 return cs_parsed() + all;
             }) + cs_parsed() + (quoted || '');
         }) + cs_parsed();
-        return '<%' + textOp + newContents + '%>';
+        return '<%' + (
+            isDataRef ? '= root.getHashId(' + newContents + ') ' :
+            textOp + newContents) + '%>';
+
     });
 
     /**
@@ -238,7 +246,7 @@ function initTemplate(string) {
      * parameter.  On render, we'll pass either a model/collection or tbone itself as the root.
      * @type {Function}
      */
-    var fn = _.template(parsed, null, { 'variable': 'rootStr' });
+    var fn = _.template(parsed, null, { 'variable': 'root' });
     /**
      * For debugging purposes, save a copy of the parsed template for reference.
      * @type {string}
@@ -247,7 +255,7 @@ function initTemplate(string) {
     return fn;
 }
 
-function renderTemplate(id, rootStr) {
+function renderTemplate(id, root) {
     var template = templates[id];
     if (!template) {
         error('Could not find template ' + id);
@@ -256,5 +264,5 @@ function renderTemplate(id, rootStr) {
     if (typeof template === 'string') {
         template = templates[id] = initTemplate(template);
     }
-    return template(rootStr ? rootStr + '.' : '');
+    return template(root);
 }

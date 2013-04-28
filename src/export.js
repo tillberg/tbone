@@ -8,11 +8,11 @@ window['tbone'] = window['T'] = tbone;
 tbone['models'] = models;
 tbone['views'] = views;
 tbone['collections'] = collections;
-tbone['data'] = tbone;
-tbone['_data'] = tbone.attributes; // XXX don't use this
+tbone['data'] = tbone; // deprecated
+tbone['_data'] = tbone.attributes; // deprecated
 tbone['templates'] = templates;
 
-tbone['autorun'] = tbone;
+tbone['autorun'] = tbone; // deprecated
 
 tbone['createView'] = createView;
 tbone['defaultView'] = __defaultView;
@@ -41,6 +41,8 @@ if (TBONE_DEBUG) {
     onLog(logconsole);
 }
 
+// This is used by BBVis to hook into the base model/collection/view
+// before they are modified.  You can, too.
 if (window['dispatchEvent'] && window['CustomEvent']) {
     dispatchEvent(new CustomEvent('tbone_loaded'));
 }

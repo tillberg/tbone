@@ -100,6 +100,7 @@ var baseModel = {
     },
 
     construct: function (opts) {
+        delete this['tboneid'];
         this._events = {};
         this['query']('', opts);
     },
@@ -123,13 +124,14 @@ var baseModel = {
     },
 
     'query': query,
+    'queryText': queryText,
     'text': queryText,
 
-    // deprecated?
-    'lookup': query,
-    'lookupText': queryText,
-    'set': query,
-    'get': query,
+    'lookup': query, // deprecated
+    'lookupText': queryText, // deprecated
+    'set': query, // deprecated
+    'get': query, // deprecated
+
     'toggle': function (prop) {
         this['query'](prop, !this['query'](prop));
     },

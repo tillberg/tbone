@@ -38,8 +38,9 @@ function tmpl(name, root) {
     if (inline) {
         // name is actually just an anonymous template
         tmplId = 'tmpl' + (nextId++);
-        attrs.push('inline:' + tmplId);
-        // tbone.addTemplate(tmplId, name);
+        // attrs.push('inline:' + tmplId);
+        attrs.push('tmpl:' + tmplId);
+        tbone.addTemplate(tmplId, name);
     } else {
         attrs.push('tmpl:' + tmplId);
     }
@@ -406,4 +407,34 @@ test('ready called once per view render', function () {
     T.drain();
     equal(counter_counter, 1); // only the { number: 4 } model needs to be rendered anew
     equal($el.find('.counter-1').length, 3);
+});
+
+test('pass data to view', function () {
+    var $el = tmpl('words');
+    T('words', [
+        { word: 'World' }
+    ]);
+    T.drain();
+    equal($el.text(), '[ World ]');
+    T('words.0.word', 'Yo');
+    T.drain();
+    equal($el.text(), '[ Yo ]');
+    T('words.0', { word: 'Hi' });
+    T.drain();
+    equal($el.text(), '[ Hi ]');
+});
+
+test('pass model to view', function () {
+    var $el = tmpl('words');
+    T('words', [
+        tbone.make({ word: 'World' })
+    ]);
+    T.drain();
+    equal($el.text(), '[ World ]');
+    T('words.0.word', 'Yo');
+    T.drain();
+    equal($el.text(), '[ Yo ]');
+    T('words.0', tbone.make({ word: 'Hi' }));
+    T.drain();
+    equal($el.text(), '[ Hi ]');
 });
