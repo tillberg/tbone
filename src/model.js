@@ -2,7 +2,6 @@
 /**
  * baseModel
  * @constructor
- * @extends Backbone.Model
  */
 var baseModel = {
     /**
@@ -216,8 +215,8 @@ var baseModel = {
         });
     },
 
-    toJSON: function () {
-      return _.clone(this.attributes);
+    'toJSON': function () {
+        return this.attributes;
     },
 
     /**
@@ -242,9 +241,6 @@ var baseModel = {
             this.scope.trigger();
         }
     },
-    'isVisible': function () {
-        return hasViewListener(this);
-    },
     update: function () {
         var self = this;
         if (self.isAsync()) {
@@ -255,23 +251,14 @@ var baseModel = {
     },
     updateAsync: function () {
         var self = this;
-        var expirationSeconds = self['expirationSeconds'];
         function complete() {
             inflight--;
-            delete self.__xhr;
-            if (expirationSeconds) {
-                if (self.expirationTimeout) {
-                    clearTimeout(self.expirationTimeout);
-                }
-                self.expirationTimeout = setTimeout(function () {
-                    self.reset();
-                }, expirationSeconds * 1000);
-            }
+            delete self.xhrInFlight;
         }
 
         var url = self.url();
         var lastFetchedUrl = self.fetchedUrl;
-        self.sleeping = !this['isVisible']();
+        self.sleeping = !hasViewListener(self);
         if (self.sleeping) {
             /**
              * Regardless of whether url is non-null, this model goes to sleep
@@ -280,7 +267,7 @@ var baseModel = {
              **/
             log(INFO, self, 'sleep');
             self.sleeping = true;
-        } else if (url != null && (expirationSeconds || url !== lastFetchedUrl)) {
+        } else if (url != null && url !== lastFetchedUrl) {
             /**
              * If a defined URL function returns null, it will prevent fetching.
              * This can be used e.g. to prevent loading until all required
@@ -295,7 +282,7 @@ var baseModel = {
                     self['query'](QUERY_SELF, self.parse(resp));
                     self['postFetch']();
                     self.trigger('fetch');
-                    log(INFO, self, 'updated', self.toJSON());
+                    log(INFO, self, 'updated', self.attributes);
                     complete();
                 },
                 error: function () {
@@ -304,16 +291,16 @@ var baseModel = {
                 'beforeSend': function (xhr) {
                     // If we have an active XHR in flight, we should abort
                     // it because we don't want that anymore.
-                    if (self.__xhr) {
+                    if (self.xhrInFlight) {
                         log(WARN, self, 'abort',
                             'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
                             'oldurl': lastFetchedUrl,
                             'newurl': url
                         });
-                        self.__xhr.abort();
+                        self.xhrInFlight.abort();
                     }
-                    self.__xhr = xhr;
-                    xhr['__backbone__'] = true;
+                    self.xhrInFlight = xhr;
+                    xhr['__tbone__'] = true;
                 },
                 url: url
             });
@@ -325,7 +312,7 @@ var baseModel = {
         var newParams = self['state']();
         if (newParams !== null) {
             self['query'](QUERY_SELF, newParams);
-            log(VERBOSE, self, 'updated', self.toJSON());
+            log(VERBOSE, self, 'updated', self.attributes);
         }
     },
     'state': noop,
