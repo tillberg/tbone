@@ -64,10 +64,8 @@ _.extend(Scope.prototype,
                     self.fn.call(self.context);
                 } catch (ex) {
                     /**
-                     * This could be improved.  For one, we don't want to bind
-                     * to the length of the errors list.  Though that's really
-                     * because collections need an add/push/append method.
-                     * But also, how do we want to output errors?
+                     * This could be improved.  But it's better than not being able
+                     * to see the errors at all.
                      */
                     tbone.push('__errors__.' + self.name, (ex && ex.stack || ex) + '');
                 }
@@ -255,13 +253,13 @@ function queueExec (scope) {
         /**
          * If a timer to process the queue is not already set, set one.
          */
-        if (!processQueueTimer && unfrozen) {
+        if (!processQueueTimer && !(TBONE_DEBUG && frozen)) {
             processQueueTimer = _.defer(processQueue);
         }
     }
 }
 
-var unfrozen = true;
+var frozen = false;
 
 /**
  * Drain the Scope execution queue, in priority order.
@@ -271,7 +269,7 @@ function processQueue () {
     var queueProcessTime = timer();
     var scope;
     var remaining = 1000;
-    while (unfrozen && --remaining && !!(scope = pop())) {
+    while (!(TBONE_DEBUG && frozen) && --remaining && !!(scope = pop())) {
         /**
          * Update the scopesQueued map so that this Scope may be requeued.
          */
@@ -326,5 +324,5 @@ function drain () {
 }
 
 function freeze () {
-    unfrozen = false;
+    frozen = true;
 }

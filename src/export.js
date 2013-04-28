@@ -8,11 +8,7 @@ window['tbone'] = window['T'] = tbone;
 tbone['models'] = models;
 tbone['views'] = views;
 tbone['collections'] = collections;
-tbone['data'] = tbone; // deprecated
-tbone['_data'] = tbone.attributes; // deprecated
 tbone['templates'] = templates;
-
-tbone['autorun'] = tbone; // deprecated
 
 tbone['createView'] = createView;
 tbone['defaultView'] = __defaultView;
@@ -20,14 +16,17 @@ tbone['addTemplate'] = addTemplate;
 tbone['dontPatch'] = dontPatch;
 tbone['render'] = render;
 
-tbone['isReady'] = isReady;
 tbone['drain'] = drain;
-tbone['freeze'] = freeze;
+tbone['isReady'] = isReady;
 
 tbone['noConflict'] = function () {
     window['T'] = orig_T;
     window['tbone'] = orig_tbone;
 };
+
+tbone['data'] = tbone; // deprecated
+tbone['_data'] = tbone.attributes; // deprecated
+tbone['autorun'] = tbone; // deprecated
 
 models['base'] = baseModel;
 collections['base'] = baseCollection;
@@ -38,6 +37,7 @@ if (TBONE_DEBUG) {
     tbone['getListeners'] = getListeners;
     tbone['hasViewListener'] = hasViewListener;
     tbone['onLog'] = onLog;
+    tbone['freeze'] = freeze;
     onLog(logconsole);
 }
 
