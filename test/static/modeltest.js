@@ -302,6 +302,39 @@
                 equal(me.query('coll.length'), 2);
             });
         }
+
+        test(name + ' detects date change', function () {
+            var me = base.make();
+            var calls = 0;
+            T(function () {
+                me.query('prop.date');
+                calls++;
+            });
+            var calls2 = 0;
+            T(function () {
+                me.query('prop');
+                calls2++;
+            });
+            me.query('prop.date', new Date(1333333333333));
+            T.drain();
+            me.query('prop.date', new Date(1444444444444));
+            T.drain();
+            equal(calls, 3);
+            equal(calls2, 3);
+        });
+
+        test(name + ' detects array length change', function () {
+            var me = base.make();
+            me.query('prop', [ undefined ]);
+            var calls = 0;
+            T(function () {
+                me.query('prop');
+                calls++;
+            });
+            me.query('prop', []);
+            T.drain();
+            equal(calls, 2);
+        });
     }
 
     // Ideally, it would be nice for tbone to gracefully not do crazy things

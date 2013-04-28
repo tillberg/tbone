@@ -57,7 +57,11 @@ function isRealNumber(x) {
 }
 
 function isObject(x) {
-    return x !== null && typeof x === 'object';
+    return x !== null && typeof x === 'object' && !isDate(x);
+}
+
+function isDate(x) {
+    return !!(x && x.getTimezoneOffset && x.setUTCFullYear);
 }
 
 var objectToString = Object.prototype.toString;
@@ -165,7 +169,7 @@ function logconsole (level, context, event, msg, data) {
                              logLevels.type[type] || 0) || logLevels.base;
     if (event === 'lookups') {
         msg = _.reduce(msg, function(memo, map, id) {
-            memo[map.__path__] = map;
+            memo[map.__obj__.Name || ('tboneid-' + map.__obj__.tboneid)] = map;
             return memo;
         }, {});
     }
