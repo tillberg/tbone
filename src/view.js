@@ -348,17 +348,18 @@ function render($els, parent, subViews) {
 }
 
 var defaultView = baseView;
-function __defaultView(view) {
-    if (view) {
-        defaultView = view;
-    }
-    return defaultView;
+/**
+ * Set the default View to use when rendering templates with no matching View.
+ * @param {ViewPrototype} view
+ */
+function setDefaultView(view) {
+    defaultView = view;
 }
 
 var hashedObjectCache = {};
 
 /**
- * @const (String)
+ * @const
  */
 var HEXCHARS = '0123456789ABCDEF';
 
@@ -377,7 +378,7 @@ function getHashId(obj) {
  *
  * Create a new view, inheriting from another view (or the default view).
  *
- * This is the primary method you should use to add JS logic to your application. e.g.:
+ * This is the primary method you should use to add JS logic to your UI. e.g.:
  *
  * tbone.createView('widget', function () {
  *     this.$('span').text('42');
@@ -390,12 +391,14 @@ function getHashId(obj) {
  * The function above whenever a template renders an element with a tbone attribute
  * of "widget", and this.$ will be scoped to that view.
  *
- * @param  {String=}                       name Name for the view.
- * @param  {new(Backbone.View, Object=)=}  base Base view to extend.
- * @param  {Function}                      fn   convenience parameter for specifying ready
- *                                              function.
- * @param  {Object}                        opts additional prototype properties
- * @return {new(Backbone.View, Object=)}
+ * All of the parameters are optional, though you're best off passing *something*.
+ *
+ * @param  {String=}               name Name for the view.
+ * @param  {ViewPrototype=}        base Base view to extend.
+ * @param  {function(this:View)=}  fn   convenience parameter for specifying ready
+ *                                      function.
+ * @param  {Object=}               opts additional prototype properties
+ * @return {ViewPrototype}
  */
 function createView(name, base, fn, opts) {
     var args = [].slice.call(arguments);

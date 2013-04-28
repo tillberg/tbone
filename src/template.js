@@ -57,7 +57,12 @@ var rgxLookupableRef = regexp('(\\. )?(([\\w$_]+)(\\.[\\w$_]+)*)', 'g');
  */
 var rgxNumber = /^\d+$/;
 
+/**
+ * Hashmap of properties to never try to tbone.lookup when instrumenting a template.
+ * @type {Object.<string, Boolean>}
+ */
 var neverLookup = {};
+
 _.each(('break case catch continue debugger default delete do else finally for function if in ' +
         'instanceof new return switch this throw try typeof var void while with ' +
         'Array Boolean Date Function Iterator Number Object RegExp String ' +
@@ -67,6 +72,13 @@ _.each(('break case catch continue debugger default delete do else finally for f
     neverLookup[word] = true;
 });
 
+/**
+ * Don't tbone-query-patch variables starting with **namespace** in tbone.addTemplate.
+ * For example, if you have a formatting library at `window.stringz`, use
+ * `tl.dontPatch('stringz')` so that you can use stringz from within templates,
+ * e.g. `<%= stringz.formatMoney(account.balance) %>`.
+ * @param  {string} namespace
+ */
 function dontPatch (namespace) {
     neverLookup[namespace] = true;
 }
@@ -247,15 +259,24 @@ function initTemplate(string) {
      * @type {Function}
      */
     var fn = _.template(parsed, null, { 'variable': 'root' });
-    /**
-     * For debugging purposes, save a copy of the parsed template for reference.
-     * @type {string}
-     */
-    fn.parsed = parsed;
+
+    if (TBONE_DEBUG) {
+        /**
+         * For debugging purposes, save a copy of the parsed template for reference.
+         * @type {string}
+         */
+        fn.parsed = parsed;
+    }
+
     return fn;
 }
 
-function renderTemplate(id, root) {
+/**
+ * Render the named template with the specified view
+ * @param {string} id
+ * @param {View}   view
+ */
+function renderTemplate(id, view) {
     var template = templates[id];
     if (!template) {
         error('Could not find template ' + id);
@@ -264,5 +285,5 @@ function renderTemplate(id, root) {
     if (typeof template === 'string') {
         template = templates[id] = initTemplate(template);
     }
-    return template(root);
+    return template(view);
 }

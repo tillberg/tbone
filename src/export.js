@@ -11,7 +11,7 @@ tbone['collections'] = collections;
 tbone['templates'] = templates;
 
 tbone['createView'] = createView;
-tbone['defaultView'] = __defaultView;
+tbone['setDefaultView'] = setDefaultView;
 tbone['addTemplate'] = addTemplate;
 tbone['dontPatch'] = dontPatch;
 tbone['render'] = render;
