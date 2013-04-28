@@ -44,6 +44,6 @@ if (TBONE_DEBUG) {
 
 // This is used by BBVis to hook into the base model/collection/view
 // before they are modified.  You can, too.
-if (window['dispatchEvent'] && window['CustomEvent']) {
+try{
     dispatchEvent(new CustomEvent('tbone_loaded'));
-}
+} catch(e) {}

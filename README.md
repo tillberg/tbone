@@ -54,6 +54,14 @@ Development: <script src="http://cdn.tbonejs.org/tbone-v0.3.0.js"></script>
 Production: <script src="http://cdn.tbonejs.org/tbone-v0.3.0.min.js"></script>
 ```
 
+## Requirements
+
+* JQuery or Zepto
+* Underscore.js
+
+Modern browsers are best.  All unit tests pass in IE7+, though some parts, especially
+View updates, should be considered experimental for IE8 and older.
+
 ## The Four Tenets of TBone
 
 ### run: `T(fn)`

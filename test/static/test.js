@@ -26,7 +26,7 @@ var echo = tbone.models.base.extend(function() {
 
 var origText = $.fn.text;
 $.fn.text = function() {
-    return _.string.trim(origText.call(this));
+    return _.string.trim(origText.call(this)).replace(/\s+/g, ' ');
 };
 
 var nextId = 1;
@@ -204,11 +204,11 @@ test('set w/ function', function () {
 });
 
 function arrRender(arr) {
-    return _.map(arr, function (n) { return n + ''; }).join('  ');
+    return _.map(arr, function (n) { return n + ''; }).join(' ');
 }
 
 function numbersRender(arr) {
-    return _.map(arr, function (n) { return '[' + n + ']'; }).join('    ');
+    return _.map(arr, function (n) { return '[' + n + ']'; }).join(' ');
 }
 
 test('collection binding', function () {
@@ -348,21 +348,20 @@ test('template parsing of if/else', function () {
 test('template parsing of _.each', function () {
     equal(text('<% _.each([], function(n) { %> <%=n%> <% }); %>'), '');
     equal(text('<% _.each([1], function(n) { %> bob <% }); %>'), 'bob');
-    equal(text('<% _.each([1, 2], function(n) { %> bob <% }); %>'), 'bob  bob');
-    equal(text('<% _.each([1, 2], function(n) { %> <%=n%> <% }); %>'), '1  2');
-    equal(text('<%\n_\n.\neach\n(\n[\n1\n,\n2]\n,\nfunction\n(\nn\n)\n{\n%> <%=n%> <%\n}\n)\n;\n%>'), '1  2');
-    equal(text('<%_.each([1,2],function(n){%> <%=n%> <%});%>'), '1  2');
-    equal(text('<%\t  \n_\t.    each \n(\t[  \n1,\n  2],\t   \n\tfunction\t ( n \t)\t{%> <%=n%> <%\t}  ) \t\n ;%>'), '1  2');
-    equal(text('<% _.each([1, 2], function(n) { %><% if (true) { %> <%=n%> <% } %><% }); %>'), '1  2');
-    equal(text('<% _.map([1, 2], function(n) { %><% if (true) { %> <%=n%> <% } %><% }); %>'), '1  2');
+    equal(text('<% _.each([1, 2], function(n) { %> bob <% }); %>'), 'bob bob');
+    equal(text('<% _.each([1, 2], function(n) { %> <%=n%> <% }); %>'), '1 2');
+    equal(text('<%\n_\n.\neach\n(\n[\n1\n,\n2]\n,\nfunction\n(\nn\n)\n{\n%> <%=n%> <%\n}\n)\n;\n%>'), '1 2');
+    equal(text('<%_.each([1,2],function(n){%> <%=n%> <%});%>'), '1 2');
+    equal(text('<%\t  \n_\t.    each \n(\t[  \n1,\n  2],\t   \n\tfunction\t ( n \t)\t{%> <%=n%> <%\t}  ) \t\n ;%>'), '1 2');
+    equal(text('<% _.each([1, 2], function(n) { %><% if (true) { %> <%=n%> <% } %><% }); %>'), '1 2');
+    equal(text('<% _.map([1, 2], function(n) { %><% if (true) { %> <%=n%> <% } %><% }); %>'), '1 2');
 
-    equal(text('<% _.each(val.primes, function(prime, i) { %> <%=prime%> <% }); %>'), '2  3  5  7');
-    equal(text('<% _.each(val.primes, function(prime, i) { %> <%=i%> <% }); %>'), '0  1  2  3');
-
+    equal(text('<% _.each(val.primes, function(prime, i) { %> <%=prime%> <% }); %>'), '2 3 5 7');
+    equal(text('<% _.each(val.primes, function(prime, i) { %> <%=i%> <% }); %>'), '0 1 2 3');
 
     equal(text('numbers'), numbersRender([2, 3, 7, 42]));
     equal(text('<% _.each(things, function() { %> this is a thing <% }); %>'),
-        _.map([2, 3, 7, 42], function () { return 'this is a thing'; }).join('  '));
+        _.map([2, 3, 7, 42], function () { return 'this is a thing'; }).join(' '));
 
 });
 
