@@ -127,7 +127,7 @@ var baseModel = {
     'get': query, // deprecated
 
     'toggle': function (prop) {
-        this['query'](prop, !this['query'](prop));
+        this['query'](QUERY_TOGGLE, prop);
     },
 
     'push': function (prop, value) {

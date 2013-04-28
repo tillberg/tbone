@@ -4,9 +4,11 @@ var Backbone = window['Backbone'];
 if (Backbone) {
 
     var bbquery = function (flag, prop, value) {
-        var isSet;
         var dontGetData = flag === DONT_GET_DATA;
         var iterateOverModels = flag === ITERATE_OVER_MODELS;
+        var isToggle = flag === QUERY_TOGGLE;
+        var hasValue = arguments.length === 3;
+        var isSet = isToggle || hasValue;
         if (typeof flag !== 'number') {
             /**
              * If no flag provided, shift the prop and value over.  We do it this way instead
@@ -22,6 +24,7 @@ if (Backbone) {
              */
             if (arguments.length === 2) {
                 isSet = true;
+                hasValue = true;
             }
         }
 
@@ -102,7 +105,7 @@ if (Backbone) {
 
         // Skip the sub-query if DONT_GET_DATA is set there are no more args
         if (doSubQuery && (!dontGetData || args.length)) {
-            return isSet ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
+            return hasValue ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
         }
 
         if (isSet) {
@@ -130,11 +133,15 @@ if (Backbone) {
                         this.clear();
                     }
                 }
-            } else if (last_data[setprop] !== value) {
-                /**
-                 * Set the value to a property on a regular JS object.
-                 */
-                last_data[setprop] = value;
+            } else {
+                if (isToggle) {
+                    value = last_data[setprop] = !_data;
+                } else if (last_data[setprop] !== value) {
+                    /**
+                     * Set the value to a property on a regular JS object.
+                     */
+                    last_data[setprop] = value;
+                }
                 /**
                  * If we're setting a nested property of a model (or collection?), then
                  * trigger a change event for the top-level property.
@@ -144,7 +151,7 @@ if (Backbone) {
                 }
                 this.trigger('change');
             }
-            return _data;
+            return value;
         } else if (_data && !iterateOverModels && this.isCollection && prop === QUERY_SELF) {
             /**
              * If iterateOverModels is not set and _data is a collection, return the

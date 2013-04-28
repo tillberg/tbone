@@ -36,6 +36,11 @@ var QUERY_REMOVE_FIRST = 5;
 var QUERY_REMOVE_LAST = 6;
 
 /**
+ * @const
+ */
+var QUERY_TOGGLE = 7;
+
+/**
  * If you want to select the root, you can either pass __self__ or just an empty
  * string; __self__ is converted to an empty string and this "flag" is used to
  * check for whether we are selecting either.
@@ -51,8 +56,10 @@ function query(flag, prop, value) {
     var isUnshift = flag === QUERY_UNSHIFT;
     var isRemoveFirst = flag === QUERY_REMOVE_FIRST;
     var isRemoveLast = flag === QUERY_REMOVE_LAST;
+    var isToggle = flag === QUERY_TOGGLE;
     var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
-    var isSet = isListOp;
+    var hasValue = arguments.length === 3;
+    var isSet = isListOp || isToggle || hasValue;
     if (typeof flag !== 'number') {
         /**
          * If no flag provided, shift the prop and value over.  We do it this way instead
@@ -68,6 +75,7 @@ function query(flag, prop, value) {
          */
         if (arguments.length === 2) {
             isSet = true;
+            hasValue = true;
         }
     }
 
@@ -130,6 +138,8 @@ function query(flag, prop, value) {
         } else if (isQueryable(_data)) {
             // To avoid duplicating the recentLookups code here, we set a flag and do
             // the sub-query after recording queries
+            // Skip the sub-query if DONT_GET_DATA is set, there are no more args,
+            // or if this is a set operation and value is a queryable.
             doSubQuery = args.length ||
                 ((!isSet || !isQueryable(value)) && !dontGetData);
             break;
@@ -163,25 +173,28 @@ function query(flag, prop, value) {
         recentLookups[id][name_parts.join('.')] = _data;
     }
 
-    // Skip the sub-query if DONT_GET_DATA is set there are no more args
     if (doSubQuery) {
-        return isSet ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
+        return hasValue ? _data['query'](flag, args.join('.'), value) : _data['query'](flag, args.join('.'));
     }
 
     if (isSet) {
         if (last_data == null) {
             // Set top-level of model/collection
             self.attributes = value != null ? value : (self.isCollection ? [] : {});
-        } else if (isPush) {
-            last_data[setprop].push(value);
-        } else if (isUnshift) {
-            last_data[setprop].unshift(value);
-        } else if (isRemoveFirst) {
-            last_data[setprop].shift(value);
-        } else if (isRemoveLast) {
-            last_data[setprop].pop(value);
         } else {
-            last_data[setprop] = value;
+            if (isPush) {
+                _data.push(value);
+            } else if (isUnshift) {
+                _data.unshift(value);
+            } else if (isRemoveFirst) {
+                _data.shift(value);
+            } else if (isRemoveLast) {
+                _data.pop(value);
+            } else if (isToggle) {
+                value = last_data[setprop] = !_data;
+            } else {
+                last_data[setprop] = value;
+            }
         }
 
         var diff = function (evs, curr, prev, exhaustive, depth) {
@@ -260,9 +273,6 @@ function query(flag, prop, value) {
             if (changed) {
                 var callbacks = evs[QUERY_SELF] || [];
                 for (n = 0; n < callbacks.length; n++) {
-                    // if (callsRemaining-- < 0) {
-                    //     return false;
-                    // }
                     callbacks[n].callback.call(callbacks[n].context);
                 }
             }
