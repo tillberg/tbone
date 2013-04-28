@@ -192,7 +192,14 @@ function query(flag, prop, value) {
                 _data.pop(value);
             } else if (isToggle) {
                 value = last_data[setprop] = !_data;
-            } else {
+            } else if (isObject(last_data)) {
+                /**
+                 * Only set the property onto last_data if last_data isObject.
+                 * This guards against errors on edge cases where the root of
+                 * a model gets set to a non-object, then you try to set a
+                 * sub-property of that.  Safari throws an exception; others
+                 * just ignore it.
+                 */
                 last_data[setprop] = value;
             }
         }
