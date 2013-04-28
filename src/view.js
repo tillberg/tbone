@@ -215,7 +215,11 @@ var baseView = {
     },
     'queryText': queryText,
 
+    // getHashId and isQueryable are used at template render.  They're really not
+    // properties of views so much as it is useful to reference these functions
+    // on the view, which is what we pass to _.template already.
     'getHashId': getHashId,
+    'isQueryable': isQueryable,
 
     // deprecated
     'lookup': function (query) {

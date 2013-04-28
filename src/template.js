@@ -90,9 +90,9 @@ function withLookupListeners(str, textOp, closureVariables) {
                 return [
                     '(',
                     firstArg,
-                    ' && ',
+                    ' && root.isQueryable(',
                     firstArg,
-                    '.isBindable ? ',
+                    ') ? ',
                     firstArg,
                     '.query',
                     textOp ? 'Text' : '',

@@ -127,11 +127,11 @@ function query(flag, prop, value) {
             // path in the event binding.
             name_parts = name_parts.concat(args);
             break;
-        } else if (_data && _data['isBindable']) {
+        } else if (isQueryable(_data)) {
             // To avoid duplicating the recentLookups code here, we set a flag and do
             // the sub-query after recording queries
             doSubQuery = args.length ||
-                ((!isSet || (value && !value['isBindable'])) && !dontGetData);
+                ((!isSet || !isQueryable(value)) && !dontGetData);
             break;
         } else if (isSet && !isObject(_data) && (args.length || isListOp)) {
             /**

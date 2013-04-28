@@ -84,7 +84,7 @@ if (Backbone) {
                 } else {
                     break;
                 }
-            } else if (_data['isBindable']) {
+            } else if (isQueryable(_data)) {
                 doSubQuery = true;
                 break;
             }
@@ -291,11 +291,6 @@ if (Backbone) {
 
     _.each([Backbone.Model.prototype, Backbone.Collection.prototype], function (proto) {
         _.extend(proto, {
-            /**
-             * isBindable is just a convenience used to identify whether an object is
-             * either a Model or a Collection.
-             */
-            'isBindable': true,
             'isBackbone': true,
 
             /**

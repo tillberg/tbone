@@ -4,18 +4,13 @@
  * @constructor
  */
 var baseModel = {
-    /**
-     * isBindable is just a convenience used to identify whether an object is
-     * either a Model or a Collection.
-     */
-    'isBindable': true,
     isModel: true,
     make: function (opts) {
         var self = this;
         var instance = function (arg0, arg1, arg2) {
             if (typeof arg0 === 'function') {
                 return autorun(arg0, arg1, arg2);
-            } else if (typeof arg1 === 'function' && !arg1['isBindable']) {
+            } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
                 return instance['query'](arg0, self.extend(arg1).make());
             } else {
                 return instance['query'].apply(instance, arguments);

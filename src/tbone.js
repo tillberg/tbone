@@ -64,6 +64,10 @@ function isDate(x) {
     return !!(x && x.getTimezoneOffset && x.setUTCFullYear);
 }
 
+function isQueryable(x) {
+    return !!(x && typeof x['query'] === 'function');
+}
+
 var objectToString = Object.prototype.toString;
 function isArray(x) {
     return objectToString.call(x) === '[object Array]';
@@ -217,7 +221,7 @@ function getListeners(self) {
         }
     });
     // TBone-native:
-    if (self.isBindable && isfunction(self)) {
+    if (isQueryable(self) && isfunction(self)) {
         var stack = [ self['_events'] ];
         var next, callbacks, k;
 
