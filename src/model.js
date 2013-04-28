@@ -7,19 +7,21 @@ var baseModel = {
     isModel: true,
     make: function (opts) {
         var self = this;
-        var instance = function (arg0, arg1, arg2) {
+        var modelInstance = function TBoneModel (arg0, arg1, arg2) {
             if (typeof arg0 === 'function') {
                 return autorun(arg0, arg1, arg2);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
-                return instance['query'](arg0, self.extend(arg1).make());
+                return modelInstance['query'](arg0, self.extend(arg1).make());
             } else {
-                return instance['query'].apply(instance, arguments);
+                return (arguments.length === 1 ? modelInstance['query'](arg0) :
+                        arguments.length === 2 ? modelInstance['query'](arg0, arg1) :
+                                                 modelInstance['query'](arg0, arg1, arg2));
             }
         };
-        _.extend(instance, self);
-        instance.construct(opts);
-        instance['initialize'](opts);
-        return instance;
+        _.extend(modelInstance, self);
+        modelInstance.construct(opts);
+        modelInstance['initialize'](opts);
+        return modelInstance;
     },
     'extend': function (subclass) {
         return _.extend({}, this, typeof subclass === 'function' ? { 'state': subclass } : subclass);

@@ -16,6 +16,7 @@ tbone['addTemplate'] = addTemplate;
 tbone['dontPatch'] = dontPatch;
 tbone['render'] = render;
 
+// Included in minified source, but intended for TESTING only:
 tbone['drain'] = drain;
 tbone['isReady'] = isReady;
 
