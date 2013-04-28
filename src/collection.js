@@ -5,8 +5,5 @@ var baseCollection = baseModel.extend({
     'model': baseModel,
     'add': function (data) {
         this['query'](this.attributes.length + '', this['model'].make(data));
-    },
-    'clear': function () {
-        this['query']('', []);
     }
 });

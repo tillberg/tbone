@@ -196,7 +196,7 @@ var baseModel = {
         log(INFO, this, 'lookups', scope.lookups);
     },
     'clear': function () {
-        this['query']('', {});
+        this['query']('', null);
     },
     /**
      * Triggers scope re-execution.
