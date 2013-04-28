@@ -162,7 +162,6 @@ var baseModel = {
     wake: function (woken) {
         // Wake up this model if it was sleeping
         if (this.sleeping) {
-            this.trigger('wake');
             this.sleeping = false;
             this.reset();
         }
