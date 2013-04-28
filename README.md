@@ -133,13 +133,13 @@ root data item is an Array instead of an Object.
 
 - `tbone.createView(name, fn)`: Set the View "ready" function for **name**.
   Match this up to a template by syncing **name** with the template's **name**.
-- `tbone.addTemplate(name, templateString)`: Register a new template, using
-  _.template to parse the template string.  Additionally, variable references
-  in the template are re-written as tbone queries.
+- `tbone.addTemplate(name, template)`: Register a new template, either a string
+  or a function.  If a string is passed, it will be passed to _.template after
+  re-writing variable references in the template as tbone queries.
 - `tbone.dontPatch(prop)`: Don't tbone-query-patch variables starting with
   **prop** in tbone.addTemplate.  For example, if you have a formatting library
   at `window.stringz`, use `tl.dontPatch('stringz')` so that you can use
-  stringz from within templates.
+  stringz from within templates, e.g. `<%= stringz.formatMoney(account.balance) %>`.
 - `tbone.render(elementArray)`: Render TBone Views/templates (recursively)
   for each of the DOM elements passed.  Most applications can kick off TBone
   with a single call to `tbone.render($('[tbone]'))`.
