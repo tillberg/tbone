@@ -5,24 +5,9 @@ var _ = require('underscore')._;
 _.mixin(require('underscore.string'));
 var express = require('express');
 var app = express();
-var fs = require('fs');
 var utils = require('../autorun/utils.js');
 var util = require('util');
 var async = require('async');
-
-var templateFiles = fs.readdirSync('templates');
-var templates = {}
-_.each(templateFiles, function (filename) {
-  var template = fs.readFileSync('templates/' + filename, 'utf8');
-  templates[filename.replace(/\.html$/, '')] = (' ' + template + ' ').replace(/\s+/g, ' ');
-});
-
-app.get('/templates.js', function(req, res) {
-  var body = 'var templates = ' + JSON.stringify(templates) + ';';
-  res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Content-Length', body.length);
-  res.end(body);
-});
 
 app.use(express.static(__dirname + '/static'));
 var server = app.listen(9238, runtests);

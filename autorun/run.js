@@ -116,6 +116,7 @@ var tasks = [
     exec: function() {
       var cmd = [
         'fuser -ks -HUP 9238/tcp',
+        './gen-templates.js',
         'sleep 0.5', // we need to wait for the test process to actually shut down the connection
         './test-headless.js'
       ].join(';');
