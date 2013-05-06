@@ -113,6 +113,7 @@ var tasks = [
   {
     name: 'test',
     watch: /\/tbone\/test\//,
+    ignore: /templates\.js/,
     exec: function() {
       var cmd = [
         'fuser -ks -HUP 9238/tcp',
@@ -154,7 +155,7 @@ monitor.stdout.on('line', function(line) {
   var match = (/(\w+) (.*)/).exec(line);
   var filename = match[2];
   var tasksToExec = _.filter(tasks, function(opts) {
-    return filename.match(opts.watch);
+    return filename.match(opts.watch) && (!opts.ignore || !filename.match(opts.ignore));
   });
   var tasksQueued = _.filter(tasksToExec, function(opts) {
     return opts.exec();
