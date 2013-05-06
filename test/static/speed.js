@@ -1,5 +1,4 @@
 (function(){
-  return;
 
   T('count', {});
   var count = 0;
