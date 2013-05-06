@@ -335,6 +335,43 @@
             T.drain();
             equal(calls, 2);
         });
+
+        test(name + ' binding to nested model property', function () {
+            var me = base.make();
+            var you = base.make();
+            me.query('you', you);
+            you.query('prop', 7);
+            var calls = 0;
+            T(function () {
+                me.query('you.prop');
+                calls++;
+            });
+            var calls2 = 0;
+            T(function () {
+                me.query('you');
+                calls2++;
+            });
+            var calls3 = 0;
+            T(function () {
+                you.query('');
+                calls3++;
+            });
+            var calls4 = 0;
+            T(function () {
+                you.query('prop');
+                calls4++;
+            });
+            me.query('you.prop', 42);
+            T.drain();
+            you.query('prop', 7);
+            T.drain();
+            equal(calls, 3);
+            equal(calls2, 3);
+            equal(calls3, 3);
+            equal(calls4, 3);
+            console.log(me);
+            console.log(you);
+        });
     }
 
     // Ideally, it would be nice for tbone to gracefully not do crazy things

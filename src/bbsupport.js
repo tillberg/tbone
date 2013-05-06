@@ -17,7 +17,7 @@ if (Backbone) {
              */
             value = prop;
             prop = flag;
-            flag = null;
+            flag = 0;
             /**
              * Use arguments.length to switch to set mode in order to properly support
              * setting undefined.
@@ -105,7 +105,7 @@ if (Backbone) {
 
         // Skip the sub-query if DONT_GET_DATA is set there are no more args
         if (doSubQuery && (!dontGetData || args.length)) {
-            return hasValue ? _data['query'](args.join('.'), value) : _data['query'](flag, args.join('.'));
+            return hasValue ? _data['query'](flag, args.join('.'), value) : _data['query'](flag, args.join('.'));
         }
 
         if (isSet) {
