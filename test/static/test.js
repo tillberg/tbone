@@ -437,3 +437,23 @@ test('pass model to view', function () {
     T.drain();
     equal($el.text(), '[ Hi ]');
 });
+
+test('tbone model with simultaneous changes to bound properties', function () {
+    // This is kind of an odd test but it really came up as a bug ~5/6/2013
+    var me = tbone.models.base.make();
+    me('', { a: 5, z: 7 });
+    var calls = 0;
+    T(function () {
+        me('a');
+        calls++;
+    });
+    var calls2 = 0;
+    T(function () {
+        me('z');
+        calls2++;
+    });
+    me('', { a: 4, z: 6 });
+    T.drain();
+    equal(calls, 2);
+    equal(calls2, 2);
+});

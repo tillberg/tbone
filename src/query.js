@@ -230,7 +230,7 @@ function query(flag, prop, value) {
                         }
                     }
                 } else {
-                    changed = changed || diff(evs[k], curr[k], prev[k], false, depth + 1);
+                    changed = diff(evs[k], curr[k], prev[k], false, depth + 1) || changed;
                 }
             }
             if (exhaustive && !changed) {
