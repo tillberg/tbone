@@ -6,6 +6,43 @@
  */
 var currentParentScope;
 
+function now () {
+    return new Date().getTime();
+}
+
+/**
+ * Returns a function that returns the elapsed time.
+ * @return {function(): Number} Function that returns elapsed time.
+ */
+function timer() {
+    var started;
+    var cumulative;
+    var me = {
+        stop: function () {
+            cumulative = now() - started;
+        },
+        start: function () {
+            started = now();
+        },
+        done: function () {
+            me.stop();
+            timers.pop();
+            if (timers.length) {
+                timers[timers.length - 1].start();
+            }
+            return cumulative;
+        }
+    };
+    me.start();
+    if (timers.length) {
+        timers[timers.length - 1].stop();
+    }
+    timers.push(me);
+    return me;
+}
+
+var timers = [ ];
+
 /**
  * An autobinding function execution scope.  See autorun for details.
  * @constructor
@@ -43,7 +80,12 @@ _.extend(Scope.prototype,
      */
     execute: function () {
         var self = this;
+        var myTimer;
         if (!self.destroyed) {
+            if (TBONE_DEBUG) {
+                myTimer = timer();
+            }
+
             self.unbindAll();
             self.destroySubScopes();
             // Save our parent's lookups and subscopes.  It's like pushing our own values
@@ -93,6 +135,22 @@ _.extend(Scope.prototype,
             // the values we saved above.
             recentLookups = oldLookups;
             currentParentScope = oldParentScope;
+
+            if (TBONE_DEBUG) {
+                var executionTimeMs = myTimer.done();
+                log(VERBOSE, 'scheduler', 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                    'priority': self.priority,
+                    'name': self.name,
+                    'duration': executionTimeMs
+                });
+                if (executionTimeMs > 10) {
+                    log(VERBOSE, 'scheduler', 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                        'priority': self.priority,
+                        'name': self.name,
+                        'duration': executionTimeMs
+                    });
+                }
+            }
         }
     },
     /**
@@ -266,7 +324,7 @@ var frozen = false;
  */
 function processQueue () {
     processQueueTimer = null;
-    var queueProcessTime = timer();
+    var queueProcessStartTime = now();
     var scope;
     var remaining = 1000;
     while (!(TBONE_DEBUG && frozen) && --remaining && !!(scope = pop())) {
@@ -275,37 +333,16 @@ function processQueue () {
          */
         delete scopesQueued[uniqueId(scope)];
 
-        var scopeExecTime;
-        if (TBONE_DEBUG) {
-            scopeExecTime = timer();
-        }
-
         /**
          * Execute the scope, and in turn, the wrapped function.
          */
         scope.execute();
-
-        if (TBONE_DEBUG) {
-            var executionTimeMs = scopeExecTime();
-            log(VERBOSE, 'scheduler', 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
-                'priority': scope.priority,
-                'name': scope.name,
-                'duration': executionTimeMs
-            });
-            if (executionTimeMs > 10) {
-                log(VERBOSE, 'scheduler', 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
-                    'priority': scope.priority,
-                    'name': scope.name,
-                    'duration': executionTimeMs
-                });
-            }
-        }
     }
     if (!remaining) {
         log(ERROR, 'scheduler', 'processQueue', 'exceeded max processQueue iterations');
     }
     log(VERBOSE, 'scheduler', 'processQueue', 'ran for <%=duration%>ms', {
-        'duration': queueProcessTime()
+        'duration': now() - queueProcessStartTime
     });
     log(VERBOSE, 'scheduler', 'viewRenders', 'rendered <%=viewRenders%> total', {
         'viewRenders': viewRenders

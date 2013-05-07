@@ -73,21 +73,6 @@ function isArray(x) {
     return objectToString.call(x) === '[object Array]';
 }
 
-/**
- * Returns a function that returns the elapsed time.
- * @return {function(): Number} Function that returns elapsed time.
- */
-function timer() {
-    var start = new Date().getTime();
-    /**
-     * Function that returns elapsed time since the outer function was invoked.
-     * @return {Number} Elapsed time in ms
-     */
-    return function () {
-        return new Date().getTime() - start;
-    };
-}
-
 function warn() {
     if (TBONE_DEBUG) {
         console.warn.apply(console, arguments);
