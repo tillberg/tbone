@@ -278,7 +278,7 @@ function initTemplate(string) {
  */
 function renderTemplate(id, view) {
     var template = templates[id];
-    if (!template) {
+    if (template == null) {
         error('Could not find template ' + id);
         return '';
     }
