@@ -323,7 +323,9 @@ function render($els, parent, subViews) {
             var rootObj = hashedObjectCache[root] || tbone;
 
             if (!rootObj['query']) {
-                rootObj = tbone.make(rootObj);
+                var instaModel = tbone.make();
+                instaModel.query('', rootObj);
+                rootObj = instaModel;
             }
 
             var opts = {

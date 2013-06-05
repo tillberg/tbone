@@ -425,15 +425,19 @@ test('pass data to view', function () {
 
 test('pass model to view', function () {
     var $el = tmpl('words');
+    var world = tbone.make();
+    world('word', 'World');
     T('words', [
-        tbone.make({ word: 'World' })
+        world
     ]);
     T.drain();
     equal($el.text(), '[ World ]');
     T('words.0.word', 'Yo');
     T.drain();
     equal($el.text(), '[ Yo ]');
-    T('words.0', tbone.make({ word: 'Hi' }));
+    var hi = tbone.make();
+    hi('word', 'Hi');
+    T('words.0', hi);
     T.drain();
     equal($el.text(), '[ Hi ]');
 });

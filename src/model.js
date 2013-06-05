@@ -18,9 +18,9 @@ var baseModel = {
                                                  modelInstance['query'](arg0, arg1, arg2));
             }
         };
-        _.extend(modelInstance, self);
-        modelInstance.construct(opts);
-        modelInstance['initialize'](opts);
+        _.extend(modelInstance, self, opts || {});
+        modelInstance.construct();
+        modelInstance['initialize']();
         return modelInstance;
     },
     'extend': function (subclass) {
@@ -95,17 +95,17 @@ var baseModel = {
         }
     },
 
-    construct: function (opts) {
+    construct: function () {
         delete this['tboneid'];
         this._events = {};
-        this['query']('', opts);
+        this['query']('', null);
     },
 
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
      */
-    'initialize': function (opts) {
+    'initialize': function () {
         var self = this;
         uniqueId(self);
         var isAsync = self.sleeping = self.isAsync();
