@@ -280,6 +280,15 @@ var baseModel = {
             log(VERBOSE, self, 'updated', self.attributes);
         }
     },
+
+    /**
+     * By default, async models will use $.ajax to fetch data; override this
+     * with something else if desired.
+     */
+    'ajax': function () {
+        return $.ajax.apply($, arguments);
+    },
+
     'state': noop,
     'postFetch': noop
 };

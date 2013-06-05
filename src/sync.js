@@ -73,7 +73,7 @@
     }
 
     // Make the request, allowing the user to override any Ajax options.
-    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
+    var xhr = options.xhr = model.ajax(_.extend(params, options));
     // model.trigger('request', model, xhr, options);
     return xhr;
   }
@@ -86,9 +86,3 @@
     'delete': 'DELETE',
     'read':   'GET'
   };
-
-  // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
-  // Override this if you'd like to use a different library.
-  function ajax () {
-    return $.ajax.apply($, arguments);
-  }
