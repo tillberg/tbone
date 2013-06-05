@@ -204,7 +204,7 @@ function query(flag, prop, value) {
             }
         }
 
-        var diff = function (evs, curr, prev, exhaustive, depth) {
+        var diff = function (evs, curr, prev, exhaustive, depth, fireAll) {
             // XXX how to handle objects with cycles?
             // Kludge alert: if the objects are too deep, just assume there is
             // a change.
@@ -214,7 +214,14 @@ function query(flag, prop, value) {
             evs = evs || {};
             curr = curr || {};
             prev = prev || {};
-            var changed = false;
+            if (isQueryable(prev) || isQueryable(curr)) {
+                // The only reason either prev or curr should be queryable is if
+                // we're setting a model where there previous was none.  In this
+                // case, *all* descendant events must be rebound to the new model
+                // by firing them all immediately.
+                fireAll = true;
+            }
+            var changed = fireAll;
             var k, i, n;
             for (k in evs) {
                 if (k === QUERY_SELF) {
@@ -230,7 +237,7 @@ function query(flag, prop, value) {
                         }
                     }
                 } else {
-                    changed = diff(evs[k], curr[k], prev[k], false, depth + 1) || changed;
+                    changed = diff(evs[k], curr[k], prev[k], false, depth + 1, fireAll) || changed;
                 }
             }
             if (exhaustive && !changed) {
@@ -252,7 +259,7 @@ function query(flag, prop, value) {
                             for (k = 0; k < obj.length && !changed; k++) {
                                 if (!searched[k]) {
                                     searched[k] = true;
-                                    if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
+                                    if (diff(evs[k], curr[k], prev[k], true, depth + 1, false)) {
                                         changed = true;
                                     }
                                 }
@@ -261,7 +268,7 @@ function query(flag, prop, value) {
                             for (k in obj) {
                                 if (!searched[k]) {
                                     searched[k] = true;
-                                    if (diff(evs[k], curr[k], prev[k], true, depth + 1)) {
+                                    if (diff(evs[k], curr[k], prev[k], true, depth + 1, false)) {
                                         changed = true;
                                         break;
                                     }
@@ -289,13 +296,13 @@ function query(flag, prop, value) {
             // If there are any changes at all, then we need to fire one or more
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
-            if (diff(events, _data, value, true, 0)) {
+            if (diff(events, _data, value, true, 0, false)) {
                 for (var i = 0; i < parentCallbacks.length; i++) {
                     parentCallbacks[i].callback.call(parentCallbacks[i].context);
                 }
             }
         } else {
-            diff(events, _data, value, false, 0);
+            diff(events, _data, value, false, 0, false);
         }
         return value;
     } else if (!iterateOverModels && self.isCollection && prop === '') {

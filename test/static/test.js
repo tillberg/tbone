@@ -442,6 +442,19 @@ test('pass model to view', function () {
     equal($el.text(), '[ Hi ]');
 });
 
+test('fire change event when adding a model', function () {
+    var count = 0;
+    T(function() {
+        T('mysub.prop');
+        count++;
+    });
+    T('mysub', function () {
+        return { else: 4 };
+    });
+    T.drain();
+    equal(count, 2);
+});
+
 test('tbone model with simultaneous changes to bound properties', function () {
     // This is kind of an odd test but it really came up as a bug ~5/6/2013
     var me = tbone.models.base.make();
