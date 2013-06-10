@@ -243,16 +243,13 @@ var baseModel = {
             inflight++;
             sync('read', self, {
                 'dataType': 'text',
-                success: function (resp) {
+                'success': function (resp) {
                     self['query'](QUERY_SELF, self.parse(resp));
                     self['postFetch']();
                     self.trigger('fetch');
                     log(INFO, self, 'updated', self.attributes);
-                    complete();
                 },
-                error: function () {
-                    complete();
-                },
+                'complete': complete,
                 'beforeSend': function (xhr) {
                     // If we have an active XHR in flight, we should abort
                     // it because we don't want that anymore.
@@ -267,7 +264,7 @@ var baseModel = {
                     self.xhrInFlight = xhr;
                     xhr['__tbone__'] = true;
                 },
-                url: url
+                'url': url
             });
         }
     },
