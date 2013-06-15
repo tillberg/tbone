@@ -28,18 +28,18 @@ function formatTime(t) {
 }
 
 function runtests() {
-  var phantom = require('phantom');
+  var phantom = require('node-phantom');
   _.each(['debug', 'release'], function(mode) {
-    phantom.create(function(ph) {
-      ph.createPage(function(page) {
+    phantom.create(function(err, ph) {
+      ph.createPage(function(err, page) {
         function log(msg) {
           info('<<magenta>>' + _.pad(mode, 8) + ': <<grey>>' + msg);
         }
-        page.open("http://localhost:9238/?mode=" + mode, function(status) {
+        page.open("http://localhost:9238/?mode=" + mode, function(err, status) {
           function loadQUnitResults() {
-            page.evaluate(function() {
+            page.evaluate(function(err) {
               return window.qunit_results;
-            }, function(results) {
+            }, function(err, results) {
               if (results) {
                 var fail_color = results.failed ? '<<red>>' : '';
                 var msg = '<<green>>' + results.passed + ' passed<<grey>>, ' + fail_color +
@@ -65,14 +65,14 @@ function runtests() {
               formatTime(time) + 's');
           }
           function loadJSLitmusResults() {
-            page.evaluate(function() {
+            page.evaluate(function(err) {
               var rval = {
                 tests: window.jslitmus_tests,
                 done: window.jslitmus_done
               };
               window.jslitmus_tests = [];
               return rval;
-            }, function(rval) {
+            }, function(err, rval) {
               var tests = rval.tests;
               _.each(tests || [], function(test) {
                 var time = test.period;
