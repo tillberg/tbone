@@ -3,7 +3,6 @@ _.each(templates, function(template, id) {
 });
 
 var createView = tbone.createView;
-var autorun = tbone.autorun;
 var render = tbone.render;
 var drain = tbone.drain;
 
@@ -83,7 +82,7 @@ test('autorun', function () {
     T('state2', {});
     T('state2.count', 4);
     var count = 2;
-    autorun(function() {
+    tbone(function() {
         count = tbone.lookup('state2.count');
     });
     equal(count, 4);

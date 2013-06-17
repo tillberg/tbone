@@ -25,10 +25,6 @@ tbone['noConflict'] = function () {
     window['tbone'] = orig_tbone;
 };
 
-tbone['data'] = tbone; // deprecated
-tbone['_data'] = tbone.attributes; // deprecated
-tbone['autorun'] = tbone; // deprecated
-
 models['base'] = baseModel;
 collections['base'] = baseCollection;
 views['base'] = baseView;

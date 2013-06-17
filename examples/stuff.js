@@ -16,6 +16,6 @@ tbone.createModel('now', function() {
     };
 }).singleton();
 
-tbone.autorun(function() {
+T(function() {
     $('#test2').text("It's " + tbone.lookupText('now.string'));
 });
