@@ -39,6 +39,7 @@ if (TBONE_DEBUG) {
     tbone['hasViewListener'] = hasViewListener;
     tbone['onLog'] = onLog;
     tbone['freeze'] = freeze;
+    tbone['opts'] = opts;
     onLog(logconsole);
 }
 

@@ -69,13 +69,13 @@ if (mode === 0) {
     });
 }
 
-
 var renders = 0;
 var lastFpsMeasure;
 var rendered = function () {
     renders += 1;
 };
 var fps = 0;
+var prevFps;
 var fpsTimer = function () {
     var now = (new Date()).getTime();
     var dt = now - lastFpsMeasure;
@@ -84,15 +84,15 @@ var fpsTimer = function () {
     var decay = Math.min(0.2, dt / 1000);
     fps = decay * (1000 * Math.max(0, renders) / dt) + (1 - decay) * fps;
     var rounded = Math.round(fps);
-    var prevFps = T('fps');
     if (rounded !== prevFps) {
+        prevFps = rounded;
         T('fps', rounded >= 1 ? rounded : '');
         // avoid counting the re-render of the fps meter toward fps measurement:
         renders = -1;
     } else {
         renders = 0;
     }
-    setTimeout(fpsTimer, 100);
+    setTimeout(fpsTimer, rounded === 0 ? 1000 : 100);
 };
 fpsTimer();
 

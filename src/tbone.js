@@ -7,6 +7,7 @@ var collections = {};
 var templates = {};
 var views = {};
 var recentLookups;
+var opts = TBONE_DEBUG ? { 'aliasCheck': true } : {};
 
 /**
  * Scheduling priority constants

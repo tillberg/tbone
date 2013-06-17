@@ -153,30 +153,32 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
  * This is only ever called if TBONE_DEBUG is true.
  */
 function serializeForComparison(model) {
-    try {
-        return JSON.stringify(model.attributes, function (key, value) {
-            // If value is an array or object, screen its keys for queryables.
-            // Queryables track their own changes, so we don't care to
-            // check that they haven't changed without this model knowing.
-            if (isObject(value)) {
-                // This is not a way to serialize correctly, but
-                // we just want to show that the original structures
-                // were the same, minus queryables.
-                var localized = {};
-                for (var k in value) {
-                    if (!isQueryable(value[k])) {
-                        localized[k] = value[k];
+    if (opts['aliascheck']) {
+        try {
+            return JSON.stringify(model.attributes, function (key, value) {
+                // If value is an array or object, screen its keys for queryables.
+                // Queryables track their own changes, so we don't care to
+                // check that they haven't changed without this model knowing.
+                if (isObject(value)) {
+                    // This is not a way to serialize correctly, but
+                    // we just want to show that the original structures
+                    // were the same, minus queryables.
+                    var localized = {};
+                    for (var k in value) {
+                        if (!isQueryable(value[k])) {
+                            localized[k] = value[k];
+                        }
                     }
+                    return localized;
+                } else {
+                    return value;
                 }
-                return localized;
-            } else {
-                return value;
-            }
-        });
-    } catch (e) {
-        log(WARN, model, 'aliascheck', 'Failed to serialize attributes to JSON');
-        return null;
+            });
+        } catch (e) {
+            log(WARN, model, 'aliascheck', 'Failed to serialize attributes to JSON');
+        }
     }
+    return null;
 }
 
 function listDiffs(curr, prev, accum) {
