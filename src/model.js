@@ -216,9 +216,12 @@ var baseModel = {
     },
     updateAsync: function () {
         var self = this;
+        var myXhr;
         function complete() {
-            inflight--;
-            delete self.xhrInFlight;
+            if (myXhr === self.xhrInFlight) {
+                inflight--;
+                delete self.xhrInFlight;
+            }
         }
 
         var url = self.url();
@@ -240,7 +243,6 @@ var baseModel = {
              **/
             self.fetchedUrl = url;
             self.clear();
-            inflight++;
             sync('read', self, {
                 'dataType': 'text',
                 'success': function (resp) {
@@ -260,8 +262,10 @@ var baseModel = {
                             'newurl': url
                         });
                         self.xhrInFlight.abort();
+                        complete(); // Decrement inflight counter
                     }
-                    self.xhrInFlight = xhr;
+                    inflight++;
+                    myXhr = self.xhrInFlight = xhr;
                     xhr['__tbone__'] = true;
                 },
                 'url': url

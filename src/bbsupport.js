@@ -218,17 +218,11 @@ if (Backbone) {
         },
         updateAsync: function () {
             var self = this;
-            var expirationSeconds = self['expirationSeconds'];
+            var myXhr;
             function complete() {
-                inflight--;
-                delete self.__xhr;
-                if (expirationSeconds) {
-                    if (self.expirationTimeout) {
-                        clearTimeout(self.expirationTimeout);
-                    }
-                    self.expirationTimeout = setTimeout(function () {
-                        self.reset();
-                    }, expirationSeconds * 1000);
+                if (myXhr === self.xhrInFlight) {
+                    inflight--;
+                    delete self.xhrInFlight;
                 }
             }
 
@@ -243,7 +237,7 @@ if (Backbone) {
                  **/
                 log(INFO, self, 'sleep');
                 self.sleeping = true;
-            } else if (url != null && (expirationSeconds || url !== lastFetchedUrl)) {
+            } else if (url != null && url !== lastFetchedUrl) {
                 /**
                  * If a defined URL function returns null, it will prevent fetching.
                  * This can be used e.g. to prevent loading until all required
@@ -251,31 +245,29 @@ if (Backbone) {
                  **/
                 self.fetchedUrl = url;
                 self.clear();
-                inflight++;
                 self.fetch({
                     'dataType': 'text',
                     success: function () {
                         self['postFetch']();
                         self.trigger('fetch');
                         log(INFO, self, 'updated', self.toJSON());
-                        complete();
                     },
-                    error: function () {
-                        complete();
-                    },
+                    'complete': complete,
                     'beforeSend': function (xhr) {
                         // If we have an active XHR in flight, we should abort
                         // it because we don't want that anymore.
-                        if (self.__xhr) {
+                        if (self.xhrInFlight) {
                             log(WARN, self, 'abort',
                                 'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
                                 'oldurl': lastFetchedUrl,
                                 'newurl': url
                             });
-                            self.__xhr.abort();
+                            self.xhrInFlight.abort();
+                            complete(); // Decrement inflight counter
                         }
-                        self.__xhr = xhr;
-                        xhr['__backbone__'] = true;
+                        inflight++;
+                        myXhr = self.xhrInFlight = xhr;
+                        xhr['__tbone__'] = true;
                     },
                     url: url
                 });
