@@ -53,15 +53,13 @@ var QUERY_SELF = '';
  */
 var MAX_RECURSIVE_DIFF_DEPTH = 8;
 
-function recursiveDiff (evs, curr, prev, exhaustive, depth, fireAll) {
+function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
     // Kludge alert: if the objects are too deep, just assume there is
     // a change.
     if (depth > MAX_RECURSIVE_DIFF_DEPTH) {
-        log(ERROR, self, 'recursiveDiff', 'recursiveDiff hit depth limit of ' +
-            '<%=limit%> while setting <%=prop%>', {
-                limit: MAX_RECURSIVE_DIFF_DEPTH,
-                prop: prop
-            });
+        log(WARN, self, 'recurseLimit', 'hit recursion depth limit of <%=limit%>', {
+            limit: MAX_RECURSIVE_DIFF_DEPTH
+        });
         return true;
     }
     evs = evs || {};
@@ -90,7 +88,7 @@ function recursiveDiff (evs, curr, prev, exhaustive, depth, fireAll) {
                 }
             }
         } else {
-            changed = recursiveDiff(evs[k], curr[k], prev[k], false, depth + 1, fireAll) || changed;
+            changed = recursiveDiff(self, evs[k], curr[k], prev[k], false, depth + 1, fireAll) || changed;
         }
     }
     if (exhaustive && !changed) {
@@ -112,7 +110,7 @@ function recursiveDiff (evs, curr, prev, exhaustive, depth, fireAll) {
                     for (k = 0; k < obj.length && !changed; k++) {
                         if (!searched[k]) {
                             searched[k] = true;
-                            if (recursiveDiff(evs[k], curr[k], prev[k], true, depth + 1, false)) {
+                            if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
                                 changed = true;
                             }
                         }
@@ -121,7 +119,7 @@ function recursiveDiff (evs, curr, prev, exhaustive, depth, fireAll) {
                     for (k in obj) {
                         if (!searched[k]) {
                             searched[k] = true;
-                            if (recursiveDiff(evs[k], curr[k], prev[k], true, depth + 1, false)) {
+                            if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
                                 changed = true;
                                 break;
                             }
@@ -379,13 +377,13 @@ function query(flag, prop, value) {
             // If there are any changes at all, then we need to fire one or more
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
-            if (recursiveDiff(events, _data, value, true, 0, false)) {
+            if (recursiveDiff(self, events, _data, value, true, 0, false)) {
                 for (var i = 0; i < parentCallbacks.length; i++) {
                     parentCallbacks[i].callback.call(parentCallbacks[i].context);
                 }
             }
         } else {
-            recursiveDiff(events, _data, value, false, 0, false);
+            recursiveDiff(self, events, _data, value, false, 0, false);
         }
 
         if (TBONE_DEBUG) {
