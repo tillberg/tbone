@@ -238,24 +238,29 @@ function query(flag, prop, value) {
      * Remove a trailing dot and __self__ references, if any, from the prop.
      **/
     prop = (prop || '').replace('__self__', '');
-    var args = prop.split('.');
-
-    var setprop;
-    if (isSet) {
-        /**
-         * For set operations, we only want to look up the parent of the property we
-         * are modifying; pop the final property we're setting from args and save it
-         * for later.
-         * @type {string}
-         */
-        setprop = args[args.length - 1];
+    var argParts = prop.split('.');
+    var args = [];
+    var i;
+    for (i = 0; i < argParts.length; i++) {
+        // Ignore empty string arguments.
+        if (argParts[i]) {
+            args.push(argParts[i]);
+        }
     }
+
+    /**
+     * For set operations, we only want to look up the parent of the property we
+     * are modifying; pop the final property we're setting from args and save it
+     * for later.
+     * @type {string}
+     */
+    var setprop = args[args.length - 1] || 'attributes';
 
     /**
      * If this function was called with a bindable context (i.e. a Model or Collection),
      * then use that as the root data object instead of the global tbone.data.
      */
-    var last_data;
+    var last_data = self;
 
     /**
      * If DONT_GET_DATA, and there's no prop, then this is a self-reference.
@@ -269,34 +274,31 @@ function query(flag, prop, value) {
     var parentCallbacks = [];
     var events = isSet && self._events['change'];
 
-    while ((arg = args.shift()) != null) {
-        // Ignore empty string arguments.
-        if (arg === QUERY_SELF) {
-            continue;
-        }
-
-        name_parts.push(arg);
-        last_data = _data;
-
-        _data = _data[arg];
-        if (events) {
-            parentCallbacks = parentCallbacks.concat(events[QUERY_SELF] || []);
-            events = events[arg];
-        }
-
+    while (true) {
         if (_data == null && !isSet) {
             // Couldn't even get to the level of the value we're trying to look up.
             // Concat the rest of args onto name_parts so that we record the full
             // path in the event binding.
             name_parts = name_parts.concat(args);
             break;
-        } else if (isQueryable(_data)) {
-            // To avoid duplicating the recentLookups code here, we set a flag and do
-            // the sub-query after recording queries
-            // Skip the sub-query if DONT_GET_DATA is set, there are no more args,
-            // or if this is a set operation and value is a queryable.
-            doSubQuery = args.length ||
-                ((!isSet || !isQueryable(value)) && !dontGetData);
+        } else if (_data !== self && isQueryable(_data)) {
+            /**
+             * To avoid duplicating the recentLookups code here, we set a flag and do
+             * the sub-query after recording queries.
+             *
+             * Always do the subquery if there are more args.
+             * If there are no more args...
+             * - and this is a set...
+             *   -        to a queryable: Don't sub-query.  Set property to new queryable.
+             *   -    to a non-queryable: Do the sub-query.  Push the value to the
+             *                            other model (don't overwrite the model).  This
+             *                            is kind of magical?
+             * - and this is a get...
+             *   -    with DONT_GET_DATA: Don't do sub-query.  Get the model itself.
+             *   - without DONT_GET_DATA: Do the sub-query.  Delegate getting that model's
+             *                            data to the other model.
+             */
+            doSubQuery = args.length || (isSet ? !isQueryable(value) : !dontGetData);
             break;
         } else if (isSet && !isObject(_data) && (args.length || isListOp)) {
             /**
@@ -313,8 +315,29 @@ function query(flag, prop, value) {
                         partial: name_parts.join('.')
                     });
             }
+            /**
+             * Decide whether to implicitly create an array or an object.
+             *
+             * If there are args remaining, then use the next arg to determine;
+             * for a number, create an array - anything else, an object.
+             *
+             * If there are no more args, then create an array if this is a list
+             * operation; otherwise, an object.
+             */
             _data = (args.length ? rgxNumber.exec(args[0]) : isListOp) ? [] : {};
             self['query'](name_parts.join('.'), _data);
+        }
+
+        arg = args.shift();
+        if (arg == null) { break; }
+
+        name_parts.push(arg);
+        last_data = _data;
+
+        _data = _data[arg];
+        if (events) {
+            parentCallbacks = parentCallbacks.concat(events[QUERY_SELF] || []);
+            events = events[arg];
         }
     }
 
@@ -349,30 +372,18 @@ function query(flag, prop, value) {
             }
         }
 
-        if (last_data == null) {
-            // Set top-level of model/collection
-            self.attributes = value != null ? value : (self.isCollection ? [] : {});
+        if (isPush) {
+            _data.push(value);
+        } else if (isUnshift) {
+            _data.unshift(value);
+        } else if (isRemoveFirst) {
+            _data.shift(value);
+        } else if (isRemoveLast) {
+            _data.pop(value);
+        } else if (isToggle) {
+            value = last_data[setprop] = !_data;
         } else {
-            if (isPush) {
-                _data.push(value);
-            } else if (isUnshift) {
-                _data.unshift(value);
-            } else if (isRemoveFirst) {
-                _data.shift(value);
-            } else if (isRemoveLast) {
-                _data.pop(value);
-            } else if (isToggle) {
-                value = last_data[setprop] = !_data;
-            } else if (isObject(last_data)) {
-                /**
-                 * Only set the property onto last_data if last_data isObject.
-                 * This guards against errors on edge cases where the root of
-                 * a model gets set to a non-object, then you try to set a
-                 * sub-property of that.  Safari throws an exception; others
-                 * just ignore it.
-                 */
-                last_data[setprop] = value;
-            }
+            last_data[setprop] = value;
         }
 
         if (parentCallbacks.length) {
@@ -380,7 +391,7 @@ function query(flag, prop, value) {
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
             if (recursiveDiff(self, events, _data, value, true, 0, false)) {
-                for (var i = 0; i < parentCallbacks.length; i++) {
+                for (i = 0; i < parentCallbacks.length; i++) {
                     parentCallbacks[i].callback.call(parentCallbacks[i].context);
                 }
             }

@@ -97,8 +97,8 @@ var baseModel = {
 
     construct: function () {
         delete this['tboneid'];
+        delete this['attributes'];
         this._events = {};
-        this['query']('', null);
     },
 
     /**
@@ -196,7 +196,7 @@ var baseModel = {
         log(INFO, this, 'lookups', scope.lookups);
     },
     'clear': function () {
-        this['query']('', null);
+        this['query']('', undefined);
     },
     /**
      * Triggers scope re-execution.
@@ -275,9 +275,8 @@ var baseModel = {
     updateSync: function () {
         var self = this;
         // this.state returns the new state, synchronously
-        var newParams = self['state']();
-        if (newParams !== null) {
-            self['query'](QUERY_SELF, newParams);
+        if (self['state']) {
+            self['query'](QUERY_SELF, self['state']());
             log(VERBOSE, self, 'updated', self.attributes);
         }
     },
@@ -290,7 +289,7 @@ var baseModel = {
         return $.ajax.apply($, arguments);
     },
 
-    'state': noop,
+    'state': null,
     'postFetch': noop
 };
 

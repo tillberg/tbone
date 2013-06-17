@@ -9,6 +9,6 @@ var baseCollection = baseModel.extend({
     'add': function (data) {
         var child = this['model'].make();
         child['query']('', data);
-        this['query'](this.attributes.length + '', child);
+        this['push'](child);
     }
 });

@@ -276,15 +276,12 @@ if (Backbone) {
         updateSync: function () {
             var self = this;
             // this.state returns the new state, synchronously
-            var newParams = self['state']();
-            if (newParams === null) {
-                log(VERBOSE, self, 'update cancelled');
-                return;
+            if (self['state']) {
+                self['query'](QUERY_SELF, self['state']());
+                log(INFO, self, 'updated', self.toJSON());
             }
-            self['query'](QUERY_SELF, newParams);
-            log(INFO, self, 'updated', self.toJSON());
         },
-        'state': noop,
+        'state': null,
         'postFetch': noop
     });
 

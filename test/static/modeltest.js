@@ -184,10 +184,12 @@
                 me.query('', 42);
                 equal(me.query(''), 42);
                 equal(T('me'), 42);
-                // Subproperties are no longer supported (this is a JS
-                // restriction, more or less)
+                // Writing a subproperty to the number will destroy the
+                // number (with a console warning).
                 T('me.prop', 7);
-                equal(T('me.prop'), undefined);
+                ok(typeof T('me') === 'object');
+                equal(T('me').prop, 7);
+                equal(T('me.prop'), 7);
             });
         }
 

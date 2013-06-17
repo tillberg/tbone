@@ -41,9 +41,9 @@ var BASE_PRIORITY_MODEL_ASYNC = 1000;
  */
 var PRIORITY_INIT_DELTA = 5000;
 
-function identity(x) { return x; }
-/** @const */
-function noop () { return null; }
+function identity (x) { return x; }
+
+function noop () { return undefined; }
 
 function isfunction (x) {
     return typeof x === 'function';
