@@ -48,6 +48,104 @@ var QUERY_TOGGLE = 7;
  */
 var QUERY_SELF = '';
 
+/**
+ * @const
+ */
+var MAX_RECURSIVE_DIFF_DEPTH = 8;
+
+function recursiveDiff (evs, curr, prev, exhaustive, depth, fireAll) {
+    // Kludge alert: if the objects are too deep, just assume there is
+    // a change.
+    if (depth > MAX_RECURSIVE_DIFF_DEPTH) {
+        log(ERROR, self, 'recursiveDiff', 'recursiveDiff hit depth limit of ' +
+            '<%=limit%> while setting <%=prop%>', {
+                limit: MAX_RECURSIVE_DIFF_DEPTH,
+                prop: prop
+            });
+        return true;
+    }
+    evs = evs || {};
+    curr = curr || {};
+    prev = prev || {};
+    if (isQueryable(prev) || isQueryable(curr)) {
+        // The only reason either prev or curr should be queryable is if
+        // we're setting a model where there previous was none (or vice versa).
+        // In this case, *all* descendant events must be rebound to the new
+        // model by firing them all immediately.
+        fireAll = true;
+    }
+    var changed = fireAll;
+    var k, i, n;
+    for (k in evs) {
+        if (k === QUERY_SELF) {
+            if (prev !== curr) {
+                // If prev and curr are both "object" types (but not null),
+                // then we need to search recursively for "real" changes.
+                // We want to avoid firing change events when the user sets
+                // something to a deep copy of itself.
+                if (isObject(prev) && isObject(curr)) {
+                    exhaustive = true;
+                } else {
+                    changed = true;
+                }
+            }
+        } else {
+            changed = recursiveDiff(evs[k], curr[k], prev[k], false, depth + 1, fireAll) || changed;
+        }
+    }
+    if (exhaustive && !changed) {
+        // If exhaustive specified, and we haven't yet found a change, search
+        // through all keys until we find one (note that this could duplicate
+        // some searching done while searching the event tree)
+        // This may not be super-efficient to call recursiveDiff all the time.
+        if (isObject(prev) && isObject(curr)) {
+            // prev and curr are both objects/arrays
+            // search through them recursively for any differences
+            var searched = {};
+            var objs = [prev, curr];
+            for (i = 0; i < 2 && !changed; i++) {
+                var obj = objs[i];
+                if (isArray(obj)) {
+                    if (prev.length !== curr.length) {
+                        changed = true;
+                    }
+                    for (k = 0; k < obj.length && !changed; k++) {
+                        if (!searched[k]) {
+                            searched[k] = true;
+                            if (recursiveDiff(evs[k], curr[k], prev[k], true, depth + 1, false)) {
+                                changed = true;
+                            }
+                        }
+                    }
+                } else {
+                    for (k in obj) {
+                        if (!searched[k]) {
+                            searched[k] = true;
+                            if (recursiveDiff(evs[k], curr[k], prev[k], true, depth + 1, false)) {
+                                changed = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (prev !== curr) {
+            // prev and curr are primitives (i.e. not arrays/objects)
+            // and they are different.  thus, we've found a change and
+            // will pass this outward so that we know to fire all
+            // parent callbacks
+            changed = true;
+        }
+    }
+    if (changed) {
+        var callbacks = evs[QUERY_SELF] || [];
+        for (n = 0; n < callbacks.length; n++) {
+            callbacks[n].callback.call(callbacks[n].context);
+        }
+    }
+    return changed;
+}
+
 function query(flag, prop, value) {
     var self = this;
     var dontGetData = flag === DONT_GET_DATA;
@@ -204,105 +302,17 @@ function query(flag, prop, value) {
             }
         }
 
-        var diff = function (evs, curr, prev, exhaustive, depth, fireAll) {
-            // XXX how to handle objects with cycles?
-            // Kludge alert: if the objects are too deep, just assume there is
-            // a change.
-            if (depth > 8) {
-                return true;
-            }
-            evs = evs || {};
-            curr = curr || {};
-            prev = prev || {};
-            if (isQueryable(prev) || isQueryable(curr)) {
-                // The only reason either prev or curr should be queryable is if
-                // we're setting a model where there previous was none.  In this
-                // case, *all* descendant events must be rebound to the new model
-                // by firing them all immediately.
-                fireAll = true;
-            }
-            var changed = fireAll;
-            var k, i, n;
-            for (k in evs) {
-                if (k === QUERY_SELF) {
-                    if (prev !== curr) {
-                        // If prev and curr are both "object" types (but not null),
-                        // then we need to search recursively for "real" changes.
-                        // We want to avoid firing change events when the user sets
-                        // something to a deep copy of itself.
-                        if (isObject(prev) && isObject(curr)) {
-                            exhaustive = true;
-                        } else {
-                            changed = true;
-                        }
-                    }
-                } else {
-                    changed = diff(evs[k], curr[k], prev[k], false, depth + 1, fireAll) || changed;
-                }
-            }
-            if (exhaustive && !changed) {
-                // If exhaustive specified, and we haven't yet found a change, search
-                // through all keys until we find one (note that this could duplicate
-                // some searching done while searching the event tree)
-                // This may not be super-efficient to call diff all the time.
-                if (isObject(prev) && isObject(curr)) {
-                    // prev and curr are both objects/arrays
-                    // search through them recursively for any differences
-                    var searched = {};
-                    var objs = [prev, curr];
-                    for (i = 0; i < 2 && !changed; i++) {
-                        var obj = objs[i];
-                        if (isArray(obj)) {
-                            if (prev.length !== curr.length) {
-                                changed = true;
-                            }
-                            for (k = 0; k < obj.length && !changed; k++) {
-                                if (!searched[k]) {
-                                    searched[k] = true;
-                                    if (diff(evs[k], curr[k], prev[k], true, depth + 1, false)) {
-                                        changed = true;
-                                    }
-                                }
-                            }
-                        } else {
-                            for (k in obj) {
-                                if (!searched[k]) {
-                                    searched[k] = true;
-                                    if (diff(evs[k], curr[k], prev[k], true, depth + 1, false)) {
-                                        changed = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if (prev !== curr) {
-                    // prev and curr are primitives (i.e. not arrays/objects)
-                    // and they are different.  thus, we've found a change and
-                    // will pass this outward so that we know to fire all
-                    // parent callbacks
-                    changed = true;
-                }
-            }
-            if (changed) {
-                var callbacks = evs[QUERY_SELF] || [];
-                for (n = 0; n < callbacks.length; n++) {
-                    callbacks[n].callback.call(callbacks[n].context);
-                }
-            }
-            return changed;
-        };
         if (parentCallbacks.length) {
             // If there are any changes at all, then we need to fire one or more
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
-            if (diff(events, _data, value, true, 0, false)) {
+            if (recursiveDiff(events, _data, value, true, 0, false)) {
                 for (var i = 0; i < parentCallbacks.length; i++) {
                     parentCallbacks[i].callback.call(parentCallbacks[i].context);
                 }
             }
         } else {
-            diff(events, _data, value, false, 0, false);
+            recursiveDiff(events, _data, value, false, 0, false);
         }
         return value;
     } else if (!iterateOverModels && self.isCollection && prop === '') {
