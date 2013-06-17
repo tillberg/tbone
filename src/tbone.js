@@ -147,7 +147,7 @@ function log () {
  *                                                             rendered from data.  Or just relevant data.
  * @param  {Object=}                                   data    Relevant data
  */
-function logconsole (level, context, event, msg, data) {
+function logconsole (level, context, event, msg, data, moredata) {
     var name = isString(context) ? context : context.Name;
     var type = (isString(context) ? context :
                 context.isModel ? 'model' :
@@ -173,7 +173,7 @@ function logconsole (level, context, event, msg, data) {
         var message = frame + ' / ' + event + (includeColon ? ': ' : '');
         var logfn = console[(level === ERROR ? 'error' : level === WARN ? 'warn' : 'log')];
         if (logfn) {
-            logfn.call(console, message, templated || msg || '');
+            logfn.call(console, message, templated || msg || '', moredata || '');
         }
     }
 }

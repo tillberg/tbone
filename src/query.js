@@ -146,6 +146,63 @@ function recursiveDiff (evs, curr, prev, exhaustive, depth, fireAll) {
     return changed;
 }
 
+/**
+ * serialize the model in a semi-destructive way.  We don't really care
+ * about the result as long as we can use it to test for anything that
+ * gets changed behind TBone's back (i.e. by changing arrays/objects that
+ * TBone has stored).
+ *
+ * This is only ever called if TBONE_DEBUG is true.
+ */
+function serializeForComparison(model) {
+    try {
+        return JSON.stringify(model.attributes, function (key, value) {
+            // If value is an array or object, screen its keys for queryables.
+            // Queryables track their own changes, so we don't care to
+            // check that they haven't changed without this model knowing.
+            if (isObject(value)) {
+                // This is not a way to serialize correctly, but
+                // we just want to show that the original structures
+                // were the same, minus queryables.
+                var localized = {};
+                for (var k in value) {
+                    if (!isQueryable(value[k])) {
+                        localized[k] = value[k];
+                    }
+                }
+                return localized;
+            } else {
+                return value;
+            }
+        });
+    } catch (e) {
+        log(WARN, model, 'aliascheck', 'Failed to serialize attributes to JSON');
+        return null;
+    }
+}
+
+function listDiffs(curr, prev, accum) {
+    var diffs = {};
+    if (isObject(prev) && isObject(curr)) {
+        var searched = {};
+        var objs = [prev, curr];
+        for (var i = 0; i < 2; i++) {
+            var obj = objs[i];
+            for (var k in obj) {
+                if (!searched[k]) {
+                    searched[k] = true;
+                    _.extend(diffs, listDiffs(prev[k], curr[k], accum.concat(k)));
+                }
+            }
+        }
+    } else {
+        if (prev !== curr) {
+            diffs[accum.join('.')] = prev + ' -> ' + curr;
+        }
+    }
+    return diffs;
+}
+
 function query(flag, prop, value) {
     var self = this;
     var dontGetData = flag === DONT_GET_DATA;
@@ -276,6 +333,22 @@ function query(flag, prop, value) {
     }
 
     if (isSet) {
+        if (TBONE_DEBUG) {
+            if (self.prevJson) {
+                var json = serializeForComparison(self);
+                if (json !== self.prevJson) {
+                    var before = JSON.parse(self.prevJson);
+                    var after = JSON.parse(json);
+                    var diffs = listDiffs(after, before, []);
+                    log(ERROR, self, 'aliascheck', 'aliased change detected', {}, {
+                        before: before,
+                        after: after,
+                        diffs: diffs
+                    });
+                }
+            }
+        }
+
         if (last_data == null) {
             // Set top-level of model/collection
             self.attributes = value != null ? value : (self.isCollection ? [] : {});
@@ -313,6 +386,10 @@ function query(flag, prop, value) {
             }
         } else {
             recursiveDiff(events, _data, value, false, 0, false);
+        }
+
+        if (TBONE_DEBUG) {
+            self.prevJson = serializeForComparison(self);
         }
         return value;
     } else if (!iterateOverModels && self.isCollection && prop === '') {
