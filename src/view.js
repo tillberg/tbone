@@ -303,10 +303,6 @@ function render($els, parent, subViews) {
             if (!name) {
                 error('No view or template was specified for this element: ', el);
             }
-            if (templateId && templates[templateId] == null) {
-                error('Could not find template for ' + templateId + '.  If you don\'t want to ' +
-                      'use a template, use the view attribute instead.');
-            }
             /**
              * Add a class matching the view name for styling convenience.
              */

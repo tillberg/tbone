@@ -279,8 +279,16 @@ function initTemplate(string) {
 function renderTemplate(id, view) {
     var template = templates[id];
     if (template == null) {
-        error('Could not find template ' + id);
-        return '';
+        // Attempt to lazy-load the template from a script tag, e.g.
+        // <script name="<id>" type="text/tbone-tmpl">...</script>
+        // The type doesn't matter, per se, but you should specify one so
+        // as not to have your template parsed as javascript.
+        template = $('script[name="' + id + '"]').html();
+        if (!template) {
+            error('Could not find template ' + id + '.  If you don\'t want to ' +
+                  'use a template, use the view attribute instead.');
+            return '';
+        }
     }
     if (typeof template === 'string') {
         template = templates[id] = initTemplate(template);
