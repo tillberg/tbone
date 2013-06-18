@@ -242,7 +242,9 @@ var baseModel = {
              * parameters are set.
              **/
             self.fetchedUrl = url;
-            self.clear();
+            if (self['clearOnFetch']) {
+                self.clear();
+            }
             sync('read', self, {
                 'dataType': 'text',
                 'success': function (resp) {
@@ -290,7 +292,9 @@ var baseModel = {
     },
 
     'state': null,
-    'postFetch': noop
+    'postFetch': noop,
+
+    'clearOnFetch': true
 };
 
 if (TBONE_DEBUG) {
