@@ -371,8 +371,6 @@
             equal(calls2, 3);
             equal(calls3, 3);
             equal(calls4, 3);
-            console.log(me);
-            console.log(you);
         });
     }
 

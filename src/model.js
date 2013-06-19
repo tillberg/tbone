@@ -1,5 +1,11 @@
 
 /**
+ * @type {RegExp}
+ * @const
+ */
+var rgxEventSplitter = /[. :]+/;
+
+/**
  * baseModel
  * @constructor
  */
@@ -27,7 +33,7 @@ var baseModel = {
         return _.extend({}, this, typeof subclass === 'function' ? { 'state': subclass } : subclass);
     },
     'on': function (name, callback, context) {
-        var parts = name.split(/\W+/);
+        var parts = name.split(rgxEventSplitter);
         var events = this._events;
         var arg;
 
@@ -78,7 +84,7 @@ var baseModel = {
     'trigger': function (name) {
         var self = this;
         var events = self._events;
-        var parts = name.split(/\W+/);
+        var parts = name.split(rgxEventSplitter);
         var arg;
         while ((arg = parts.shift()) != null) {
             if (arg === '') {
@@ -123,6 +129,14 @@ var baseModel = {
     'queryText': queryText,
     'text': queryText,
 
+    'useIds': function () {
+        return !!this['idAttribute'];
+    },
+
+    'queryId': function () {
+        return this['query'](this['idAttribute']);
+    },
+
     'lookup': query, // deprecated
     'lookupText': queryText, // deprecated
     'set': query, // deprecated
@@ -152,6 +166,10 @@ var baseModel = {
     },
     'removeLast': function (prop) {
         this['query'](QUERY_REMOVE_LAST, prop);
+    },
+
+    'unset': function (prop) {
+        this['query'](QUERY_UNSET, prop);
     },
 
     /**

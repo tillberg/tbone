@@ -473,3 +473,47 @@ test('tbone model with simultaneous changes to bound properties', function () {
     equal(calls, 2);
     equal(calls2, 2);
 });
+
+test('tbone id queries', function () {
+    var model = tbone.models.base.extend({
+        idAttribute: 'id'
+    });
+    var c = tbone.collections.base.make({
+        model: model
+    });
+    var me = tbone.models.base.make();
+    me('coll', c);
+    c.add({ id: 7, name: 'bob' });
+    c.add({ id: 2, name: 'susan' });
+    c.add({ id: 42, name: 'sally' });
+    equal(me('coll.#2.name'), 'susan');
+    var name42;
+    T(function () {
+        name42 = me('coll.#42.name');
+    });
+    var name66;
+    T(function () {
+        name66 = me('coll.#66.name');
+    });
+    equal(name42, 'sally');
+    c('#42.name', 'polly');
+    equal(name42, 'sally');
+    T.drain();
+    equal(name42, 'polly');
+    me('coll.#42', { id: 66, name: 'robert' });
+    equal(name42, 'polly');
+    T.drain();
+    equal(name42, undefined);
+    equal(name66, 'robert');
+
+    // Test adding an unidentified model, then setting its ID
+    var count = _.keys(me('coll')).length;
+    var john = model.make();
+    john('name', 'john');
+    c.add(john);
+    T.drain();
+    equal(_.keys(me('coll')).length, count + 1);
+    john('id', 'awesome');
+    T.drain();
+    equal(me('coll.#awesome.name'), 'john');
+});

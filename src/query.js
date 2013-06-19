@@ -41,6 +41,11 @@ var QUERY_REMOVE_LAST = 6;
 var QUERY_TOGGLE = 7;
 
 /**
+ * @const
+ */
+var QUERY_UNSET = 8;
+
+/**
  * If you want to select the root, you can either pass __self__ or just an empty
  * string; __self__ is converted to an empty string and this "flag" is used to
  * check for whether we are selecting either.
@@ -213,8 +218,9 @@ function query(flag, prop, value) {
     var isRemoveLast = flag === QUERY_REMOVE_LAST;
     var isToggle = flag === QUERY_TOGGLE;
     var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
+    var isUnset = flag === QUERY_UNSET;
     var hasValue = arguments.length === 3;
-    var isSet = isListOp || isToggle || hasValue;
+    var isSet = isListOp || isToggle || isUnset || hasValue;
     if (typeof flag !== 'number') {
         /**
          * If no flag provided, shift the prop and value over.  We do it this way instead
@@ -289,6 +295,7 @@ function query(flag, prop, value) {
              * Always do the subquery if there are more args.
              * If there are no more args...
              * - and this is a set...
+             *   - (but really an unset): Don't do the sub-query regardless.
              *   -        to a queryable: Don't sub-query.  Set property to new queryable.
              *   -    to a non-queryable: Do the sub-query.  Push the value to the
              *                            other model (don't overwrite the model).  This
@@ -298,9 +305,16 @@ function query(flag, prop, value) {
              *   - without DONT_GET_DATA: Do the sub-query.  Delegate getting that model's
              *                            data to the other model.
              */
-            doSubQuery = args.length || (isSet ? !isQueryable(value) : !dontGetData);
+            doSubQuery = args.length || (isSet ? !isUnset && !isQueryable(value) : !dontGetData);
             break;
         } else if (isSet && !isObject(_data) && (args.length || isListOp)) {
+            /**
+             * Don't do implicit mkdir -p if we're just trying to unset something
+             * that doesn't exist.
+             */
+            if (isUnset) {
+                return;
+            }
             /**
              * When doing an implicit mkdir -p while setting a deep-nested property
              * for the first time, we peek at the next arg and create either an array
@@ -380,6 +394,8 @@ function query(flag, prop, value) {
             _data.shift(value);
         } else if (isRemoveLast) {
             _data.pop(value);
+        } else if (isUnset) {
+            delete last_data[setprop];
         } else if (isToggle) {
             value = last_data[setprop] = !_data;
         } else {
@@ -408,6 +424,7 @@ function query(flag, prop, value) {
          * If iterateOverModels is not set and _data is a collection, return the
          * raw data of each model in a list.  XXX is this ideal?  or too magical?
          */
+        // XXX this doesn't do the right thing for id-using collections
         _data = _.map(_data, function (d) { return d['query'](); });
     }
     return _data;
