@@ -129,9 +129,7 @@ var baseModel = {
     'queryText': queryText,
     'text': queryText,
 
-    'useIds': function () {
-        return !!this['idAttribute'];
-    },
+    'idAttribute': 'id',
 
     'queryId': function () {
         return this['query'](this['idAttribute']);

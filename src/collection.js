@@ -8,6 +8,9 @@ var baseCollection = baseModel.extend({
     // It might be better to remove isModel and use isQueryable instead.
     isModel: true,
     'model': baseModel,
+
+    'lookupById': false,
+
     'add': function (data) {
         var self = this;
         var child;
@@ -22,14 +25,14 @@ var baseCollection = baseModel.extend({
             child = self['model'].make();
             child['query']('', data);
         }
-        if (child['useIds']()) {
+        if (self['lookupById']) {
             /**
-             * If the child model has idAttribute set (or otherwise has useIds() return
-             * true), then watch the child model's id attribute, updating its location
-             * in this collection (which will be an object, not an array) in case the
-             * child's id changes.  This is mostly useful in case the ID is not set
-             * initially.  In this case, we assign a random temporary ID so that it
-             * gets included when iterating over the collection.
+             * If this collection has lookupById set, then watch the child model's
+             * idAttribute, updating its location in this collection (which will be
+             * an object, not an array) in case the child's id changes.  The latter is
+             * mostly useful in case the ID is not set initially.  In this case, we
+             * assign a temporary ID so that it gets included when iterating over the
+             * collection.
              */
             T(function () {
                 if (lastId) {

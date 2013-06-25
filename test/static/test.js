@@ -475,17 +475,14 @@ test('tbone model with simultaneous changes to bound properties', function () {
 });
 
 test('tbone id queries', function () {
-    var model = tbone.models.base.extend({
-        idAttribute: 'id'
-    });
-    var c = tbone.collections.base.make({
-        model: model
+    var coll = tbone.collections.base.make({
+        lookupById: true
     });
     var me = tbone.models.base.make();
-    me('coll', c);
-    c.add({ id: 7, name: 'bob' });
-    c.add({ id: 2, name: 'susan' });
-    c.add({ id: 42, name: 'sally' });
+    me('coll', coll);
+    coll.add({ id: 7, name: 'bob' });
+    coll.add({ id: 2, name: 'susan' });
+    coll.add({ id: 42, name: 'sally' });
     equal(me('coll.#2.name'), 'susan');
     var name42;
     T(function () {
@@ -496,7 +493,7 @@ test('tbone id queries', function () {
         name66 = me('coll.#66.name');
     });
     equal(name42, 'sally');
-    c('#42.name', 'polly');
+    coll('#42.name', 'polly');
     equal(name42, 'sally');
     T.drain();
     equal(name42, 'polly');
