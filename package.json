@@ -1,0 +1,24 @@
+{
+  "name": "TBone",
+  "version": "0.3.4",
+  "description": "Automagic event-binding for Backbone",
+  "main": "build/tbone.debug.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/appneta/tbone.git"
+  },
+  "author": "Dan Tillberg <dan@tillberg.us>",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/appneta/tbone/issues"
+  }
+}
