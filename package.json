@@ -1,5 +1,5 @@
 {
-  "name": "TBone",
+  "name": "tbone",
   "version": "0.3.4",
   "description": "Automagic event-binding for Backbone",
   "main": "build/tbone.debug.js",
