@@ -34,27 +34,51 @@ var baseCollection = baseModel.extend({
              * assign a temporary ID so that it gets included when iterating over the
              * collection.
              */
-            T(function () {
+            var removed;
+            var update = function () {
                 if (lastId) {
                     self['unset'](lastId, null);
                     self['trigger']('change:' + lastId);
+                    delete self._removeCallbacks[lastId];
                 }
-                var id = child['queryId']();
-                if (!id && !lastId) {
-                    id = '__unidentified' + (nextTempId++);
-                }
-                if (id) {
+                if (!removed) {
+                    var id = child['queryId']();
+                    if (!id) {
+                        id = '__unidentified' + (nextTempId++);
+                    }
                     id = '#' + id;
                     self['query'](id, child);
                     self['trigger']('change:' + id);
+                    self._removeCallbacks[id] = remove;
+                    lastId = id;
                 }
-                lastId = id;
-            });
+            };
+            var remove = function () {
+                removed = true;
+                update();
+            };
+            autorun(update);
         } else {
             /**
              * Otherwise, the collection will act as a simple array of models.
              */
             self['push'](child);
+        }
+    },
+
+    /**
+     * Remove a model by ID or by model instance.
+     *
+     * ** This is only supported currently when lookupById is set. **
+     */
+    'remove': function (model) {
+        if (!this['lookupById']) {
+            log(ERROR, this, 'removeNotSupported', 'collection.remove is only supported ' +
+                'with lookupById set to true.');
+        }
+        var id = '#' + (isQueryable(model) ? model['queryId']() : model);
+        if (this._removeCallbacks[id]) {
+            this._removeCallbacks[id]();
         }
     }
 });

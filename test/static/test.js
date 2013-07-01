@@ -481,7 +481,9 @@ test('tbone id queries', function () {
     var me = tbone.models.base.make();
     me('coll', coll);
     coll.add({ id: 7, name: 'bob' });
-    coll.add({ id: 2, name: 'susan' });
+    var model2 = tbone.models.base.make();
+    model2.query('', { id: 2, name: 'susan' })
+    coll.add(model2);
     coll.add({ id: 42, name: 'sally' });
     equal(me('coll.#2.name'), 'susan');
     var name42;
@@ -513,4 +515,18 @@ test('tbone id queries', function () {
     john('id', 'awesome');
     T.drain();
     equal(me('coll.#awesome.name'), 'john');
+
+    // Test removing a model by model instance
+    coll.remove(model2);
+    equal(_.keys(me('coll')).length, count);
+    equal(coll('#2.name'), undefined);
+
+    // Test removing a non-existent model by id
+    coll.remove(42);
+    equal(_.keys(me('coll')).length, count);
+
+    // Test removing a model by model by id
+    coll.remove(66);
+    equal(_.keys(me('coll')).length, count - 1);
+    equal(coll('#66.name'), undefined);
 });

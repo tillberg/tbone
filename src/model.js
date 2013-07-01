@@ -105,6 +105,7 @@ var baseModel = {
         delete this['tboneid'];
         delete this['attributes'];
         this._events = {};
+        this._removeCallbacks = {};
     },
 
     /**
