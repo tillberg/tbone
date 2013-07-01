@@ -1,3 +1,6 @@
+// ANSI color support and simpler child process execution
+// Dan Tillberg <dan@tillberg.us>
+
 var cproc = require('child_process');
 var _ = require('underscore')._;
 _.mixin(require('underscore.string'));
@@ -62,12 +65,19 @@ function exec(cmd, args, opts, cb) {
   }
   var lineBuffer = '';
   proc.stdout.on('data', function (data) {
-    if (opts.pipe) { log(data); }
     lineBuffer = lineBuffer + data;
     while (true) {
       var lineMatch = lineBuffer.match(/(.+)\n/);
       if (lineMatch) {
-        proc.stdout.emit('line', lineMatch[1]);
+        var line = lineMatch[1];
+        if (opts.pipe) {
+          var prefix = '';
+          if (opts.name) {
+            prefix = '<<blue>>' + _.pad(opts.name, 12) + '<<grey>>: ';
+          }
+          info(prefix + line);
+        }
+        proc.stdout.emit('line', line);
         lineBuffer = lineBuffer.replace(/.+\n/, '');
       } else {
         break;
@@ -100,12 +110,12 @@ global.debug = function(x, name) {
 
 global.error = function () {
   var s = util.format.apply(null, arguments);
-  console.error(setcolor(s, "red"));
+  console.error(colored_text('<<red>>' + s));
 };
 
 global.warn = function () {
   var s = util.format.apply(null, arguments);
-  console.warn(setcolor(s, "yellow"));
+  console.warn(colored_text('<<yellow>>' + s));
 };
 
 global.info = function () {
