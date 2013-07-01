@@ -7,7 +7,7 @@ var baseView = {
         return instance;
     },
     'extend': function (subclass) {
-        return _.extend({}, this, subclass);
+        return _.extend({}, this, subclass, { parentView: this });
     },
 
     '$': function(selector) {
@@ -22,7 +22,7 @@ var baseView = {
         _.extend(self, opts);
         self['$el'] = $(self['el']);
         self['el']['view'] = self;
-        self.priority = self.parentView ? self.parentView.priority - 1 : BASE_PRIORITY_VIEW;
+        self.priority = self.domParentView ? self.domParentView.priority - 1 : BASE_PRIORITY_VIEW;
         self.scope = autorun(self.render, self, self.priority, 'view_' + self.Name,
                              self.onScopeExecute, self, true);
     },
@@ -227,11 +227,15 @@ var baseView = {
     },
 
     'parentRoot': function () {
-        return this.parentView && this.parentView.root();
+        return this.domParentView && this.domParentView.root();
     },
 
+    /**
+     * Get the DOM parent view, i.e. the view associated with the closest
+     * ancestor DOM node that is a view root element.
+     */
     'parent': function () {
-        return this.parentView;
+        return this.domParentView;
     }
 };
 
@@ -303,10 +307,6 @@ function render($els, parent, subViews) {
             if (!name) {
                 error('No view or template was specified for this element: ', el);
             }
-            /**
-             * Add a class matching the view name for styling convenience.
-             */
-            $this.addClass(name);
 
             /**
              * Find the corresponding view matching the name (`viewId` or `templateId`) to the
@@ -316,6 +316,20 @@ function render($els, parent, subViews) {
              */
             var myView = views[name] || defaultView;
 
+            /**
+             * Add a class matching the view name for CSS.
+             */
+            $this.addClass(name);
+
+            /**
+             * Also add a class for each of the parent views, if any.
+             */
+            var parentView = myView.parentView;
+            while (parentView && parentView.Name) {
+                $this.addClass(parentView.Name);
+                parentView = parentView.parentView;
+            }
+
             var rootObj = hashedObjectCache[root] || tbone;
 
             var opts = {
@@ -323,7 +337,7 @@ function render($els, parent, subViews) {
                 origOuterHTML: outerHTML,
                 'el': el,
                 templateId: templateId,
-                parentView: parent,
+                domParentView: parent,
                 rootObj: rootObj,
                 rootStr: hashedObjectCache[root] ? '' : root
             };
@@ -427,8 +441,9 @@ function createView(name, base, fn, opts) {
     } else {
         fn = null;
     }
-    opts = arg || {};
-    opts.Name = name;
+    opts = _.extend({}, arg || {}, {
+        Name: name
+    });
     var baseReady = base['ready'];
     if (fn) {
         opts['ready'] = baseReady === noop ? fn : function () {

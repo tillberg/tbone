@@ -2,7 +2,6 @@ _.each(templates, function(template, id) {
     tbone.addTemplate(id, template);
 });
 
-var createView = tbone.createView;
 var render = tbone.render;
 var drain = tbone.drain;
 
@@ -378,7 +377,7 @@ test('template render with tb-root', function () {
 });
 
 var counter_counter;
-createView('counter', function() {
+tbone.createView('counter', function() {
     this.$('a').each(function() {
         counter_counter++;
         this.counter = (this.counter || 0) + 1;
@@ -405,6 +404,16 @@ test('ready called once per view render', function () {
     T.drain();
     equal(counter_counter, 1); // only the { number: 4 } model needs to be rendered anew
     equal($el.find('.counter-1').length, 3);
+});
+
+tbone.createView('interCounter', tbone.views.counter, function () {});
+tbone.createView('subCounter', tbone.views.interCounter, function () {});
+
+test('views get CSS class for each parent view', function () {
+    var $el = tmpl('subCounter');
+    equal($el.hasClass('subCounter'), true);
+    equal($el.hasClass('interCounter'), true);
+    equal($el.hasClass('counter'), true);
 });
 
 test('pass data to view', function () {
