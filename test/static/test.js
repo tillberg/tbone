@@ -505,9 +505,9 @@ test('tbone id queries', function () {
 
     // Test adding an unidentified model, then setting its ID
     var count = _.keys(me('coll')).length;
-    var john = model.make();
+    var john = tbone.models.base.make();
     john('name', 'john');
-    c.add(john);
+    coll.add(john);
     T.drain();
     equal(_.keys(me('coll')).length, count + 1);
     john('id', 'awesome');

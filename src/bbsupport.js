@@ -1,5 +1,5 @@
 
-var Backbone = window['Backbone'];
+var Backbone = root['Backbone'];
 
 if (Backbone) {
 

@@ -49,7 +49,7 @@ sources = [
 all = '\n'.join([read(name) for name in sources if name])
 
 if not debug:
-    all = all.replace('var TBONE_DEBUG = window[\'TBONE_DEBUG\'];', 'var TBONE_DEBUG = false;')
+    all = all.replace('var TBONE_DEBUG = root[\'TBONE_DEBUG\'];', 'var TBONE_DEBUG = false;')
 
 with open('build/tbone.%s.js' % mode, 'w') as f:
     f.write(all)

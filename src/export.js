@@ -1,10 +1,12 @@
 
 var tbone = baseModel.make();
 
-var orig_tbone = window['tbone'];
-var orig_T = window['T'];
+var orig_tbone = root['tbone'];
+var orig_T = root['T'];
 
-window['tbone'] = window['T'] = tbone;
+root['tbone'] = tbone;
+root['T'] = tbone;
+
 tbone['models'] = models;
 tbone['views'] = views;
 tbone['collections'] = collections;
@@ -21,8 +23,8 @@ tbone['drain'] = drain;
 tbone['isReady'] = isReady;
 
 tbone['noConflict'] = function () {
-    window['T'] = orig_T;
-    window['tbone'] = orig_tbone;
+    root['T'] = orig_T;
+    root['tbone'] = orig_tbone;
 };
 
 models['base'] = baseModel;

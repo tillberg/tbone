@@ -1,6 +1,17 @@
+var root;
+var _;
+// Export TBone for Node.js or for the browser
+if (typeof exports !== 'undefined') {
+    _ = require('underscore')['_'];
+    root = exports;
+} else {
+    root = window;
+    _ = root['_'];
+}
+
 
 /** @const {boolean} */
-var TBONE_DEBUG = window['TBONE_DEBUG'];
+var TBONE_DEBUG = root['TBONE_DEBUG'];
 
 var models = {};
 var collections = {};
