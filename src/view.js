@@ -121,10 +121,12 @@ var baseView = {
                  */
                 if (activeElementSelector) {
                     var newActiveElement = self.$(activeElementSelector)[activeElementIndex];
-                    $(newActiveElement).focus();
-                    if (selectionStart != null && selectionEnd != null) {
-                        newActiveElement.selectionStart = selectionStart;
-                        newActiveElement.selectionEnd = selectionEnd;
+                    if (newActiveElement) {
+                        $(newActiveElement).focus();
+                        if (selectionStart != null && selectionEnd != null) {
+                            newActiveElement.selectionStart = selectionStart;
+                            newActiveElement.selectionEnd = selectionEnd;
+                        }
                     }
                 }
             } else {
