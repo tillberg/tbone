@@ -215,7 +215,7 @@ var baseView = {
         prop = (this.rootStr ? this.rootStr + '.' : '') + (prop || '');
         return isSet ? this.rootObj(flag, prop, value) : this.rootObj(flag, prop);
     },
-    'queryText': queryText,
+    'queryText': queryText, // deprecated
 
     'denullText': denullText,
 

@@ -88,7 +88,7 @@ function dontPatch (namespace) {
  * This allows us to automatically and dynamically bind to change events on the models
  * to auto-refresh this template.
  */
-function withLookupListeners(str, textOp, closureVariables) {
+function withLookupListeners(str, closureVariables) {
     return str.replace(rgxLookupableRef, function (all, precedingDot, expr, firstArg) {
         if (neverLookup[firstArg] || precedingDot || rgxNumber.test(firstArg)) {
             return all;
@@ -106,9 +106,7 @@ function withLookupListeners(str, textOp, closureVariables) {
                     firstArg,
                     ') ? ',
                     firstArg,
-                    '.query',
-                    textOp ? 'Text' : '',
-                    '("',
+                    '.query("',
                     expr.slice(firstArg.length + 1),
                     '")',
                     ' : ',
@@ -117,12 +115,10 @@ function withLookupListeners(str, textOp, closureVariables) {
                 ].join('');
             } else {
                 /**
-                 * Patch the reference to use query (or queryText).
+                 * Patch the reference to use query.
                  */
                 return [
-                    'root.query',
-                    textOp ? 'Text' : '',
-                    '(',
+                    'root.query(',
                     ITERATE_OVER_MODELS,
                     ', "',
                     expr,
@@ -191,7 +187,7 @@ function initTemplate(string) {
              * Pass the accumulated string to withLookupListeners, replacing variable
              * references with calls to lookup.
              */
-            var instrumented = withLookupListeners(cs.join(''), textOp, inClosure);
+            var instrumented = withLookupListeners(cs.join(''), inClosure);
             cs = [];
             return instrumented;
         }
@@ -248,8 +244,13 @@ function initTemplate(string) {
             }) + cs_parsed() + (quoted || '');
         }) + cs_parsed();
         return '<%' + (
-            isDataRef ? '= root.getHashId(' + newContents + ') ' :
-            textOp + newContents) + '%>';
+            isDataRef ?
+                ('= root.getHashId(' + newContents + ') ') :
+                textOp ?
+                    // if this is a text op (= or -), pass it through denullText
+                    (textOp + 'root.denullText(' + newContents + ')') :
+                    newContents
+            ) + '%>';
 
     });
 

@@ -127,8 +127,8 @@ var baseModel = {
     },
 
     'query': query,
-    'queryText': queryText,
-    'text': queryText,
+    'queryText': queryText, // deprecated
+    'text': queryText, // deprecated
 
     'idAttribute': 'id',
 
