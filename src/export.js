@@ -17,6 +17,7 @@ tbone['setDefaultView'] = setDefaultView;
 tbone['addTemplate'] = addTemplate;
 tbone['dontPatch'] = dontPatch;
 tbone['render'] = render;
+tbone['denullText'] = denullText;
 
 // Included in minified source, but intended for TESTING only:
 tbone['drain'] = drain;

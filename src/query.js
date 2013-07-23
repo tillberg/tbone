@@ -431,7 +431,5 @@ function query(flag, prop, value) {
 }
 
 function queryText(flag, prop) {
-    var value = prop == null ? this['query'](flag) : this['query'](flag, prop);
-    return (isString(value) || isRealNumber(value) || isDate(value)) && value != null ?
-        value + '' : '';
+    return denullText(prop == null ? this['query'](flag) : this['query'](flag, prop));
 }

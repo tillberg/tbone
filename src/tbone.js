@@ -80,6 +80,10 @@ function isQueryable(x) {
     return !!(x && typeof x['query'] === 'function');
 }
 
+function isBoolean(x) {
+    return typeof x === 'boolean';
+}
+
 var objectToString = Object.prototype.toString;
 function isArray(x) {
     return objectToString.call(x) === '[object Array]';
@@ -192,6 +196,10 @@ function logconsole (level, context, event, msg, data, moredata) {
 
 function onLog (cb) {
     logCallbacks.push(cb);
+}
+
+function denullText(v) {
+    return (isString(v) || isRealNumber(v) || isDate(v) || isBoolean(v)) ? v + '' : '';
 }
 
 /**

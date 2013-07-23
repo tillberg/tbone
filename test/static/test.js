@@ -539,3 +539,21 @@ test('tbone id queries', function () {
     equal(_.keys(me('coll')).length, count - 1);
     equal(coll('#66.name'), undefined);
 });
+
+test('denullText', function () {
+    equal(tbone.denullText('hello'), 'hello');
+    equal(tbone.denullText(''), '');
+    equal(tbone.denullText(undefined), '');
+    equal(tbone.denullText(null), '');
+    var d = new Date();
+    equal(tbone.denullText(d), d + '');
+    equal(tbone.denullText(NaN), '');
+    equal(tbone.denullText(0), '0');
+    equal(tbone.denullText(42), '42');
+    equal(tbone.denullText(true), 'true');
+    equal(tbone.denullText(false), 'false');
+    equal(tbone.denullText({}), '');
+    equal(tbone.denullText({ some: 'prop' }), '');
+    equal(tbone.denullText([]), '');
+    equal(tbone.denullText([42, 100]), '');
+});
