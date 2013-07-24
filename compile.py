@@ -45,7 +45,10 @@ sources = [
     'model/fancy/localstorage',
     'model/fancy/location',
     'dom/template',
-    'dom/view',
+    'dom/view/hash',
+    'dom/view/base',
+    'dom/view/render',
+    'dom/view/create',
     'export',
     'ext/bbsupport' if backbone else None,
     'snippet/footer'
