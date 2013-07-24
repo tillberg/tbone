@@ -176,7 +176,7 @@ if (Backbone) {
             /**
              * Queue the autorun of update.  We want this to happen after the current JS module
              * is loaded but before anything else gets updated.  We can't do that with setTimeout
-             * or _.defer because that could possibly fire after processQueue.
+             * or _.defer because that could possibly fire after drainQueue.
              */
             queueExec({
                 execute: function () {

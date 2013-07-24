@@ -108,7 +108,7 @@ function render($els, parent, subViews) {
             // This could potentially miss some cached objects (e.g.
             // if the subview was removed during view-ready execution)
             // Might be simpler just to clear hashedObjectCache when
-            // the processQueue finishes?
+            // the drainQueue finishes?
             delete hashedObjectCache[root];
 
             return myView.make(opts);

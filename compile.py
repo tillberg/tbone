@@ -34,7 +34,10 @@ def read(name):
 sources = [
     'snippet/header',
     'init',
-    'scheduler/scheduler',
+    'scheduler/timer',
+    'scheduler/autorun',
+    'scheduler/scope',
+    'scheduler/drainqueue',
     'model/core/query',
     'model/core/base',
     'model/core/bound',
