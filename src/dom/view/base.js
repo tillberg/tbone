@@ -191,7 +191,7 @@ var baseView = {
      * `ready` and `postRender` callbacks.
      */
     root: function () {
-        return this['query'](DONT_GET_DATA, '');
+        return this['query'](DONT_GET_DATA);
     },
 
     /**

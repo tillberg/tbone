@@ -23,7 +23,8 @@ var baseModel = {
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
                 return instance['query'](arg0, boundModel.extend({ 'state': arg1 }).make());
             } else {
-                return (arguments.length === 1 ? instance['query'](arg0) :
+                return (arguments.length === 0 ? instance['query']() :
+                        arguments.length === 1 ? instance['query'](arg0) :
                         arguments.length === 2 ? instance['query'](arg0, arg1) :
                                                  instance['query'](arg0, arg1, arg2));
             }
