@@ -112,6 +112,10 @@ var baseModel = {
 
     'query': query,
 
+    'queryModel': function (prop) {
+        return this['query'](DONT_GET_DATA, prop);
+    },
+
     'idAttribute': 'id',
 
     'queryId': function () {
