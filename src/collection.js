@@ -36,14 +36,14 @@ var baseCollection = baseModel.extend({
              */
             var removed;
             var update = function () {
-                if (lastId) {
+                if (lastId != null) {
                     self['unset'](lastId, null);
                     self['trigger']('change:' + lastId);
                     delete self._removeCallbacks[lastId];
                 }
                 if (!removed) {
                     var id = child['queryId']();
-                    if (!id) {
+                    if (id == null) {
                         id = '__unidentified' + (nextTempId++);
                     }
                     id = '#' + id;

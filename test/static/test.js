@@ -501,20 +501,20 @@ test('tbone id queries', function () {
     T(function () {
         name42 = me('coll.#42.name');
     });
-    var name66;
+    var name0;
     T(function () {
-        name66 = me('coll.#66.name');
+        name0 = me('coll.#0.name');
     });
     equal(name42, 'sally');
     coll('#42.name', 'polly');
     equal(name42, 'sally');
     T.drain();
     equal(name42, 'polly');
-    me('coll.#42', { id: 66, name: 'robert' });
+    me('coll.#42', { id: 0, name: 'robert' });
     equal(name42, 'polly');
     T.drain();
     equal(name42, undefined);
-    equal(name66, 'robert');
+    equal(name0, 'robert');
 
     // Test adding an unidentified model, then setting its ID
     var count = _.keys(me('coll')).length;
@@ -537,9 +537,9 @@ test('tbone id queries', function () {
     equal(_.keys(me('coll')).length, count);
 
     // Test removing a model by model by id
-    coll.remove(66);
+    coll.remove(0);
     equal(_.keys(me('coll')).length, count - 1);
-    equal(coll('#66.name'), undefined);
+    equal(coll('#0.name'), undefined);
 });
 
 test('denullText', function () {
