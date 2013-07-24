@@ -18,14 +18,14 @@ var baseModel = {
             if (typeof arg0 === 'function') {
                 return autorun(arg0, arg1, arg2);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
-                return instance['query'](arg0, self.extend(arg1).make());
+                return instance['query'](arg0, boundModel.extend({ 'state': arg1 }).make());
             } else {
                 return (arguments.length === 1 ? instance['query'](arg0) :
                         arguments.length === 2 ? instance['query'](arg0, arg1) :
                                                  instance['query'](arg0, arg1, arg2));
             }
         };
-        _.extend(instance, self, opts || {});
+        _.extend(instance, self, isFunction(opts) ? { 'state': opts } : opts || {});
 
         // Initialize the model instance
         delete instance['tboneid'];
@@ -38,8 +38,9 @@ var baseModel = {
         return instance;
     },
     'extend': function (subclass) {
-        return _.extend({}, this, typeof subclass === 'function' ? { 'state': subclass } : subclass);
+        return _.extend({}, this, subclass);
     },
+    'initialize': noop,
     'on': function (name, callback, context) {
         var parts = name.split(rgxEventSplitter);
         var events = this._events;
@@ -109,38 +110,13 @@ var baseModel = {
         }
     },
 
-    /**
-     * Constructor function to initialize each new model instance.
-     * @return {[type]}
-     */
-    'initialize': function () {
-        var self = this;
-
-        var isAsync = self.sleeping = self.isAsync();
-        var priority = isAsync ? BASE_PRIORITY_MODEL_ASYNC : BASE_PRIORITY_MODEL_SYNC;
-        /**
-         * Queue the autorun of update.  We want this to happen after the current JS module
-         * is loaded but before anything else gets updated.  We can't do that with setTimeout
-         * or _.defer because that could possibly fire after processQueue.
-         */
-        self.scope = autorun(self.update, self, priority, 'model_' + self.Name,
-                             self.onScopeExecute, self);
-    },
-
     'query': query,
-    'queryText': queryText, // deprecated
-    'text': queryText, // deprecated
 
     'idAttribute': 'id',
 
     'queryId': function () {
         return this['query'](this['idAttribute']);
     },
-
-    'lookup': query, // deprecated
-    'lookupText': queryText, // deprecated
-    'set': query, // deprecated
-    'get': query, // deprecated
 
     'toggle': function (prop) {
         this['query'](QUERY_TOGGLE, prop);
@@ -153,6 +129,7 @@ var baseModel = {
         }
         this['query'](QUERY_PUSH, prop, value);
     },
+
     'unshift': function (prop, value) {
         if (arguments.length === 1) {
             value = prop;
@@ -164,6 +141,7 @@ var baseModel = {
     'removeFirst': function (prop) {
         this['query'](QUERY_REMOVE_FIRST, prop);
     },
+
     'removeLast': function (prop) {
         this['query'](QUERY_REMOVE_LAST, prop);
     },
@@ -171,6 +149,43 @@ var baseModel = {
     'unset': function (prop) {
         this['query'](QUERY_UNSET, prop);
     },
+
+    'clear': function () {
+        this['query']('', undefined);
+    },
+
+    'toJSON': function () {
+        return this.attributes;
+    },
+
+    wake: noop,
+
+    'queryText': queryText, // deprecated
+    'text': queryText, // deprecated
+    'lookup': query, // deprecated
+    'lookupText': queryText, // deprecated
+    'set': query, // deprecated
+    'get': query // deprecated
+
+};
+
+var boundModel = baseModel.extend({
+    /**
+     * Constructor function to initialize each new model instance.
+     * @return {[type]}
+     */
+    'initialize': function () {
+        var self = this;
+        /**
+         * Queue the autorun of update.  We want this to happen after the current JS module
+         * is loaded but before anything else gets updated.  We can't do that with setTimeout
+         * or _.defer because that could possibly fire after processQueue.
+         */
+        self.scope = autorun(self.update, self, self.scopePriority,
+                             'model_' + self.Name, self.onScopeExecute, self);
+    },
+
+    scopePriority: BASE_PRIORITY_MODEL_SYNC,
 
     /**
      * Wake up this model as well as (recursively) any models that depend on
@@ -188,6 +203,7 @@ var baseModel = {
         /**
          * Wake up models that depend directly on this model that have not already
          * been woken up.
+         * XXX - how does this work?
          */
         _.each((this.scope && this.scope.lookups) || [], function (lookup) {
             var bindable = lookup.__obj__;
@@ -198,24 +214,16 @@ var baseModel = {
         });
     },
 
-    'toJSON': function () {
-        return this.attributes;
-    },
-
-    /**
-     * Indicates whether this function should use the asynchronous or
-     * synchronous logic.
-     * @return {Boolean}
-     */
-    isAsync: function () {
-        return !!this['url'];
-    },
     onScopeExecute: function (scope) {
         log(INFO, this, 'lookups', scope.lookups);
     },
-    'clear': function () {
-        this['query']('', undefined);
+
+    update: function () {
+        var self = this;
+        self['query'](QUERY_SELF, self['state']());
+        log(VERBOSE, self, 'updated', self.attributes);
     },
+
     /**
      * Triggers scope re-execution.
      */
@@ -224,36 +232,61 @@ var baseModel = {
             this.scope.trigger();
         }
     },
+
+    /**
+     * returns the new state, synchronously
+     */
+    'state': noop
+});
+
+var asyncModel = boundModel.extend({
     update: function () {
         var self = this;
-        if (self.isAsync()) {
-            self.updateAsync();
+        self.sleeping = self['sleepEnabled'] && !hasViewListener(self);
+        if (self.sleeping) {
+            /**
+             * This model will not update itself until there's a view listener
+             * waiting for data (directly or through a chain of other models)
+             * from this model.
+             */
+            log(INFO, self, 'sleep');
         } else {
-            self.updateSync();
+            // XXX do we want to allow rolling updates?  i.e., instead of only
+            // allowing updates from the current generation, allow updates
+            // greater than or equal to the generation of the last update?
+            var generation = self.generation = (self.generation || 0) + 1;
+            if (self.abortCallback) {
+                self.abortCallback();
+            }
+            var opts = self['state'](function (value) {
+                if (generation === self.generation) {
+                    self.abortCallback = null;
+                    self['query']('', value);
+                }
+            });
+            self.abortCallback = opts && opts['onAbort'];
         }
     },
-    updateAsync: function () {
+
+    scopePriority: BASE_PRIORITY_MODEL_ASYNC,
+
+    'sleepEnabled': false
+
+});
+
+var ajaxModel = asyncModel.extend({
+    'state': function (cb) {
         var self = this;
         var myXhr;
         function complete() {
-            if (myXhr === self.xhrInFlight) {
+            if (myXhr) {
                 inflight--;
-                delete self.xhrInFlight;
+                myXhr = null;
             }
         }
 
         var url = self.url();
-        var lastFetchedUrl = self.fetchedUrl;
-        self.sleeping = !hasViewListener(self);
-        if (self.sleeping) {
-            /**
-             * Regardless of whether url is non-null, this model goes to sleep
-             * if there's no view listener waiting for data (directly or through
-             * a chain of other models) from this model.
-             **/
-            log(INFO, self, 'sleep');
-            self.sleeping = true;
-        } else if (url != null && url !== lastFetchedUrl) {
+        if (url != null && url !== self.fetchedUrl) {
             /**
              * If a defined URL function returns null, it will prevent fetching.
              * This can be used e.g. to prevent loading until all required
@@ -266,39 +299,34 @@ var baseModel = {
             sync('read', self, {
                 'dataType': 'text',
                 'success': function (resp) {
-                    self['query'](QUERY_SELF, self.parse(resp));
+                    cb(self.parse(resp));
                     self['postFetch']();
                     self.trigger('fetch');
                     log(INFO, self, 'updated', self.attributes);
                 },
                 'complete': complete,
                 'beforeSend': function (xhr) {
-                    // If we have an active XHR in flight, we should abort
-                    // it because we don't want that anymore.
-                    if (self.xhrInFlight) {
-                        log(WARN, self, 'abort',
-                            'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
-                            'oldurl': lastFetchedUrl,
-                            'newurl': url
-                        });
-                        self.xhrInFlight.abort();
-                        complete(); // Decrement inflight counter
-                    }
                     inflight++;
-                    myXhr = self.xhrInFlight = xhr;
+                    myXhr = xhr;
                     xhr['__tbone__'] = true;
                 },
                 'url': url
             });
         }
-    },
-    updateSync: function () {
-        var self = this;
-        // this.state returns the new state, synchronously
-        if (self['state']) {
-            self['query'](QUERY_SELF, self['state']());
-            log(VERBOSE, self, 'updated', self.attributes);
-        }
+        return {
+            onAbort: function () {
+                // If we have an active XHR in flight, we should abort
+                // it because we don't want that anymore.
+                if (myXhr) {
+                    log(WARN, self, 'abort',
+                        'aborting obsolete ajax request. old url: <%=oldurl%>', {
+                        'oldurl': self.fetchedUrl
+                    });
+                    myXhr.abort();
+                    complete();
+                }
+            }
+        };
     },
 
     /**
@@ -309,11 +337,13 @@ var baseModel = {
         return $.ajax.apply($, arguments);
     },
 
-    'state': null,
     'postFetch': noop,
 
-    'clearOnFetch': true
-};
+    'clearOnFetch': true, // XXX move to async model
+
+    'sleepEnabled': true
+
+});
 
 if (TBONE_DEBUG) {
     baseModel['find'] = function (obj) {

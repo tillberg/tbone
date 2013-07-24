@@ -29,6 +29,10 @@ tbone['noConflict'] = function () {
 };
 
 models['base'] = baseModel;
+models['bound'] = boundModel;
+models['async'] = asyncModel;
+models['ajax'] = ajaxModel;
+
 collections['base'] = baseCollection;
 views['base'] = baseView;
 

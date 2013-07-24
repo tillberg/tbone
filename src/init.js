@@ -56,7 +56,7 @@ function identity (x) { return x; }
 
 function noop () { return undefined; }
 
-function isfunction (x) {
+function isFunction (x) {
     return typeof x === 'function';
 }
 
@@ -228,7 +228,7 @@ function getListeners(self) {
         }
     });
     // TBone-native:
-    if (isQueryable(self) && isfunction(self)) {
+    if (isQueryable(self) && isFunction(self)) {
         var stack = [ self['_events'] ];
         var next, callbacks, k;
 

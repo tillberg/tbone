@@ -16,10 +16,12 @@ T('lights', function() {
 
 T('state', tbone.models.base.make());
 
-var echo = tbone.models.base.extend(function() {
-    return {
-        echo: tbone.lookup('lights.count')
-    };
+var echo = tbone.models.bound.extend({
+    state: function() {
+        return {
+            echo: tbone.lookup('lights.count')
+        };
+    }
 });
 
 var origText = $.fn.text;
@@ -556,4 +558,50 @@ test('denullText', function () {
     equal(tbone.denullText({ some: 'prop' }), '');
     equal(tbone.denullText([]), '');
     equal(tbone.denullText([42, 100]), '');
+});
+
+asyncTest('async model', function () {
+    expect( 3 );
+
+    var src = tbone.make();
+    src('prop', 42);
+    var me = tbone.models.async.make(function (cb) {
+        var val = src('prop');
+        setTimeout(function () {
+            cb({ 'asyncprop': val });
+            _.defer(sync);
+        }, 10);
+    });
+    equal(me('asyncprop'), undefined);
+    var numUpdates = 0;
+    function sync () {
+        numUpdates++;
+        if (numUpdates === 1) {
+            equal(me('asyncprop'), 42);
+            src('prop', 100);
+        } else {
+            equal(me('asyncprop'), 100);
+            start();
+        }
+    }
+});
+
+asyncTest('async model abort', function () {
+    expect( 2 );
+
+    var src = tbone.make();
+    src('prop', 42);
+    var me = tbone.models.async.make(function (cb) {
+        src('prop');
+        return {
+            onAbort: function () {
+                ok(true, 'called onAbort');
+                start();
+            }
+        }
+    });
+    equal(me('asyncprop'), undefined);
+    setTimeout(function () {
+        src('prop', 36);
+    }, 1);
 });
