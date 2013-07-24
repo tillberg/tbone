@@ -405,7 +405,7 @@ function query(flag, prop, value) {
         } else if (isToggle) {
             value = last_data[setprop] = !_data;
         } else if (isIncrement) {
-            value = last_data[setprop] = _data + value;
+            value = last_data[setprop] = (_data || 0) + value;
         } else {
             last_data[setprop] = value;
         }
@@ -432,8 +432,17 @@ function query(flag, prop, value) {
          * If iterateOverModels is not set and _data is a collection, return the
          * raw data of each model in a list.  XXX is this ideal?  or too magical?
          */
-        // XXX this doesn't do the right thing for id-using collections
-        _data = _.map(_data, function (d) { return d['query'](); });
+        if (isArray(_data)) {
+            _data = _.map(_data, function (d) { return d['query'](); });
+        } else {
+            _data = _.reduce(_.keys(_data), function (memo, k) {
+                if (isQueryable(_data[k])) {
+                    memo[k] = _data[k]['query']();
+                }
+                return memo;
+            }, {});
+        }
+
     }
     return _data;
 }

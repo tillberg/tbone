@@ -505,10 +505,15 @@ test('tbone id queries', function () {
     T(function () {
         name0 = me('coll.#0.name');
     });
+    var len;
+    T(function () {
+        len = coll('size');
+    });
     equal(name42, 'sally');
     coll('#42.name', 'polly');
     equal(name42, 'sally');
     T.drain();
+    equal(len, 3);
     equal(name42, 'polly');
     me('coll.#42', { id: 0, name: 'robert' });
     equal(name42, 'polly');
@@ -522,6 +527,8 @@ test('tbone id queries', function () {
     john('name', 'john');
     coll.add(john);
     T.drain();
+    equal(len, 4);
+    equal(me('coll.size'), 4);
     equal(_.keys(me('coll')).length, count + 1);
     john('id', 'awesome');
     T.drain();
@@ -540,6 +547,10 @@ test('tbone id queries', function () {
     coll.remove(0);
     equal(_.keys(me('coll')).length, count - 1);
     equal(coll('#0.name'), undefined);
+
+    equal(len, 4);
+    T.drain();
+    equal(len, 2);
 });
 
 test('denullText', function () {

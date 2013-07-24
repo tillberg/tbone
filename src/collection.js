@@ -53,7 +53,9 @@ var baseCollection = baseModel.extend({
                     lastId = id;
                 }
             };
+            self['increment']('size');
             var remove = function () {
+                self['increment']('size', -1);
                 removed = true;
                 update();
             };
