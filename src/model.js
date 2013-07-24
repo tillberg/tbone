@@ -372,6 +372,33 @@ var localStorageModel = baseModel.extend({
     }
 });
 
+var hashModel = baseModel.extend({
+    /**
+     * Example:
+     * var hash = tbone.models.hash.make();
+     * T(function () {
+     *     console.log('the hash is ' + hash('hash'));
+     * });
+     * hash('hash', '#this-is-the-new-hash');
+     */
+    initialize: function () {
+        var self = this;
+        function updateHash () {
+            self('hash', location.hash);
+        }
+        $(window).bind('hashchange', function () {
+            updateHash();
+        });
+        updateHash();
+
+        self(function () {
+            var hash = self('hash');
+            if (location.hash !== hash) {
+                location.hash = hash;
+            }
+        });
+    }
+});
 
 if (TBONE_DEBUG) {
     baseModel['find'] = function (obj) {
