@@ -32,18 +32,18 @@ def read(name):
         return f.read()
 
 sources = [
-    'header',
+    'snippet/header',
     'init',
-    'scheduler',
-    'sync',
-    'query',
-    'model',
-    'collection',
-    'template',
-    'view',
+    'scheduler/scheduler',
+    'model/fancy/sync',
+    'model/core/query',
+    'model/core/model',
+    'model/core/collection',
+    'dom/template',
+    'dom/view',
     'export',
-    'bbsupport' if backbone else None,
-    'footer'
+    'ext/bbsupport' if backbone else None,
+    'snippet/footer'
 ]
 
 all = '\n'.join([read(name) for name in sources if name])
