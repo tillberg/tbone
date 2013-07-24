@@ -13,21 +13,29 @@ var baseModel = {
     isModel: true,
     make: function (opts) {
         var self = this;
-        var modelInstance = function TBoneModel (arg0, arg1, arg2) {
+        // Each TBone model/collection is an augmented copy of this TBoneModel function
+        var instance = function TBoneModel (arg0, arg1, arg2) {
             if (typeof arg0 === 'function') {
                 return autorun(arg0, arg1, arg2);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
-                return modelInstance['query'](arg0, self.extend(arg1).make());
+                return instance['query'](arg0, self.extend(arg1).make());
             } else {
-                return (arguments.length === 1 ? modelInstance['query'](arg0) :
-                        arguments.length === 2 ? modelInstance['query'](arg0, arg1) :
-                                                 modelInstance['query'](arg0, arg1, arg2));
+                return (arguments.length === 1 ? instance['query'](arg0) :
+                        arguments.length === 2 ? instance['query'](arg0, arg1) :
+                                                 instance['query'](arg0, arg1, arg2));
             }
         };
-        _.extend(modelInstance, self, opts || {});
-        modelInstance.construct();
-        modelInstance['initialize']();
-        return modelInstance;
+        _.extend(instance, self, opts || {});
+
+        // Initialize the model instance
+        delete instance['tboneid'];
+        delete instance['attributes'];
+        instance._events = {};
+        instance._removeCallbacks = {};
+        uniqueId(instance);
+        instance['initialize']();
+
+        return instance;
     },
     'extend': function (subclass) {
         return _.extend({}, this, typeof subclass === 'function' ? { 'state': subclass } : subclass);
@@ -101,20 +109,13 @@ var baseModel = {
         }
     },
 
-    construct: function () {
-        delete this['tboneid'];
-        delete this['attributes'];
-        this._events = {};
-        this._removeCallbacks = {};
-    },
-
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
      */
     'initialize': function () {
         var self = this;
-        uniqueId(self);
+
         var isAsync = self.sleeping = self.isAsync();
         var priority = isAsync ? BASE_PRIORITY_MODEL_ASYNC : BASE_PRIORITY_MODEL_SYNC;
         /**
