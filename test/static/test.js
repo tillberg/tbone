@@ -605,3 +605,22 @@ asyncTest('async model abort', function () {
         src('prop', 36);
     }, 1);
 });
+
+test('model increment', function () {
+    var me = tbone.make();
+    me('num', 7);
+    var num;
+    T(function () {
+        num = me('num');
+    });
+    equal(num, 7);
+    equal(me('num'), 7);
+    me.increment('num');
+    T.drain();
+    equal(num, 8);
+    equal(me('num'), 8);
+    me.increment('num', 34);
+    T.drain();
+    equal(num, 42);
+    equal(me('num'), 42);
+});

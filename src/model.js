@@ -154,6 +154,10 @@ var baseModel = {
         this['query'](QUERY_UNSET, prop);
     },
 
+    'increment': function (prop, value) {
+        this['query'](QUERY_INCREMENT, prop, value != null ? value : 1);
+    },
+
     'clear': function () {
         this['query']('', undefined);
     },

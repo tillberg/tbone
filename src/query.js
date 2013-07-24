@@ -46,6 +46,11 @@ var QUERY_TOGGLE = 7;
 var QUERY_UNSET = 8;
 
 /**
+ * @const
+ */
+var QUERY_INCREMENT = 9;
+
+/**
  * If you want to select the root, you can either pass __self__ or just an empty
  * string; __self__ is converted to an empty string and this "flag" is used to
  * check for whether we are selecting either.
@@ -217,10 +222,11 @@ function query(flag, prop, value) {
     var isRemoveFirst = flag === QUERY_REMOVE_FIRST;
     var isRemoveLast = flag === QUERY_REMOVE_LAST;
     var isToggle = flag === QUERY_TOGGLE;
+    var isIncrement = flag === QUERY_INCREMENT;
     var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
     var isUnset = flag === QUERY_UNSET;
     var hasValue = arguments.length === 3;
-    var isSet = isListOp || isToggle || isUnset || hasValue;
+    var isSet = isListOp || isToggle || isUnset || hasValue || isIncrement;
     if (typeof flag !== 'number') {
         /**
          * If no flag provided, shift the prop and value over.  We do it this way instead
@@ -398,6 +404,8 @@ function query(flag, prop, value) {
             delete last_data[setprop];
         } else if (isToggle) {
             value = last_data[setprop] = !_data;
+        } else if (isIncrement) {
+            value = last_data[setprop] = _data + value;
         } else {
             last_data[setprop] = value;
         }
