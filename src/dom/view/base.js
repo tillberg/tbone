@@ -219,11 +219,6 @@ var baseView = {
         return isSet ? this.rootObj(flag, prop, value) : this.rootObj(flag, prop);
     },
 
-    // deprecated
-    'lookup': function (query) {
-        return this['query'](query);
-    },
-
     'parentRoot': function () {
         return this.domParentView && this.domParentView.root();
     },
