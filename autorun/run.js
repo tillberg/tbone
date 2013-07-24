@@ -25,7 +25,7 @@ var tasks = [
       info('JSHinting...');
       var files = fs.readdirSync('src/');
       files = _.filter(files, function (f) {
-        return f !== 'footer.js' && f !== 'header.js';
+        return !f.match(/snippet/);
       });
       files = _.map(files, function (f) {
         return 'src/' + f;
