@@ -442,7 +442,6 @@ function query(flag, prop, value) {
                 return memo;
             }, {});
         }
-
     }
     return _data;
 }

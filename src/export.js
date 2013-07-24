@@ -28,10 +28,18 @@ tbone['noConflict'] = function () {
     root['tbone'] = orig_tbone;
 };
 
+/**
+ * Core models
+ */
 models['base'] = baseModel;
 models['bound'] = boundModel;
 models['async'] = asyncModel;
+
+/**
+ * Fancy models
+ */
 models['ajax'] = ajaxModel;
+models['localStorage'] = localStorageModel;
 
 collections['base'] = baseCollection;
 views['base'] = baseView;
