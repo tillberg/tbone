@@ -40,7 +40,7 @@ models['async'] = asyncModel;
  */
 models['ajax'] = ajaxModel;
 models['localStorage'] = localStorageModel;
-models['hash'] = hashModel;
+models['location'] = locationModel;
 
 collections['base'] = baseCollection;
 views['base'] = baseView;

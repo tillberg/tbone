@@ -372,14 +372,14 @@ var localStorageModel = baseModel.extend({
     }
 });
 
-var hashModel = baseModel.extend({
+var locationModel = baseModel.extend({
     /**
      * Example:
-     * var hash = tbone.models.hash.make();
+     * var loc = tbone.models.location.make();
      * T(function () {
-     *     console.log('the hash is ' + hash('hash'));
+     *     console.log('the hash is ' + loc('hash'));
      * });
-     * hash('hash', '#this-is-the-new-hash');
+     * loc('hash', '#this-is-the-new-hash');
      */
     initialize: function () {
         var self = this;
