@@ -103,12 +103,12 @@ test('create model instance', function () {
 });
 
 
-var thingsType = tbone.collections.base.make();
+var thingsType = tbone.models.base.make();
 var things = T('things', thingsType.make());
-things.add({ number: 2 });
-things.add({ number: 3 });
-things.add({ number: 7 });
-things.add({ number: 42 });
+things.push({ number: 2 });
+things.push({ number: 3 });
+things.push({ number: 7 });
+things.push({ number: 42 });
 
 test('tbone.lookup', function () {
     equal(tbone.lookup('lights').count, 4);
@@ -176,7 +176,7 @@ test('tbone.set', function () {
     equal(T('thing.count'), undefined);
 
     var morethings = T('morethings', thingsType.make());
-    morethings.add({ number: 6 });
+    morethings.push({ number: 6 });
     equal(T('morethings.0.number'), 6);
     equal(T('morethings.0.number', 100), 100);
     equal(T('morethings.0.number'), 100);
@@ -213,10 +213,10 @@ function numbersRender(arr) {
 
 test('collection binding', function () {
     var things2 = T('things2', thingsType.make());
-    things2.add({ number: 2 });
+    things2.push({ number: 2 });
     var $el = tmpl('numbers2', 'things2');
     equal($el.text(), arrRender([2]));
-    things2.add({ number: 3 });
+    things2.push({ number: 3 });
     drain();
     equal($el.text(), arrRender([2, 3]));
     // XXX should this keep the reset name from Backbone and reset be changed to
@@ -228,7 +228,7 @@ test('collection binding', function () {
 
     // model inside collection
     var things4 = T('things4', thingsType.make());
-    things4.add({ number: 2 });
+    things4.push({ number: 2 });
     var $el = tmpl(templates.numbers.replace(/things/g, 'things4'));
     equal($el.text(), numbersRender([2]));
     T('things4.0.number', 5);
@@ -369,8 +369,8 @@ test('template render with tb-root', function () {
     equal(text('number', 'things.3'), '[42]');
     equal(text('numbers2', 'things'), arrRender([2, 3, 7, 42]));
     var thingsroot = T('thingsroot', thingsType.make());
-    thingsroot.add({ number: 10 });
-    thingsroot.add({ number: 20 });
+    thingsroot.push({ number: 10 });
+    thingsroot.push({ number: 20 });
     var $el = tmpl('numbers2', 'thingsroot');
     equal($el.text(), arrRender([10, 20]));
     T('thingsroot.0.number', 11);
@@ -395,14 +395,14 @@ test('ready called once per view render', function () {
 
     counter_counter = 0;
     var things5 = T('things5', thingsType.make());
-    things5.add({ number: 2 });
-    things5.add({ number: 3 });
+    things5.push({ number: 2 });
+    things5.push({ number: 3 });
     $el = tmpl('countercoll', 'things5');
     equal(counter_counter, 2);
     equal($el.find('.counter-1').length, 2);
 
     counter_counter = 0;
-    things5.add({ number: 4 });
+    things5.push({ number: 4 });
     T.drain();
     equal(counter_counter, 1); // only the { number: 4 } model needs to be rendered anew
     equal($el.find('.counter-1').length, 3);
@@ -486,9 +486,7 @@ test('tbone model with simultaneous changes to bound properties', function () {
 });
 
 test('tbone id queries', function () {
-    var coll = tbone.collections.base.make({
-        lookupById: true
-    });
+    var coll = tbone.collections.base.make();
     var me = tbone.models.base.make();
     me('coll', coll);
     coll.add({ id: 7, name: 'bob' });

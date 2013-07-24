@@ -9,12 +9,11 @@ var baseCollection = baseModel.extend({
     isModel: true,
     'model': baseModel,
 
-    'lookupById': false,
-
     'add': function (data) {
         var self = this;
         var child;
         var lastId;
+
         /**
          * If data is already a queryable (presumably an instance of baseModel), then
          * use that.  Otherwise, instantiate a model and initialize it with data.
@@ -25,62 +24,55 @@ var baseCollection = baseModel.extend({
             child = self['model'].make();
             child['query']('', data);
         }
-        if (self['lookupById']) {
-            /**
-             * If this collection has lookupById set, then watch the child model's
-             * idAttribute, updating its location in this collection (which will be
-             * an object, not an array) in case the child's id changes.  The latter is
-             * mostly useful in case the ID is not set initially.  In this case, we
-             * assign a temporary ID so that it gets included when iterating over the
-             * collection.
-             */
-            var removed;
-            var update = function () {
-                if (lastId != null) {
-                    self['unset'](lastId, null);
-                    self['trigger']('change:' + lastId);
-                    delete self._removeCallbacks[lastId];
+
+        /**
+         * Watch the child model's idAttribute, updating its location in this
+         * collection (which is an object, not an array) in case the child's id
+         * changes.  The latter is mostly useful in case the ID is not set
+         * initially.  In this case, we assign a temporary ID so that it gets
+         * included when iterating over the collection.
+         */
+        var removed;
+        var update = function () {
+            if (lastId != null) {
+                self['unset'](lastId, null);
+                self['trigger']('change:' + lastId);
+                delete self._removeCallbacks[lastId];
+            }
+            if (!removed) {
+                var id = child['queryId']();
+                if (id == null) {
+                    id = '__unidentified' + (nextTempId++);
                 }
-                if (!removed) {
-                    var id = child['queryId']();
-                    if (id == null) {
-                        id = '__unidentified' + (nextTempId++);
-                    }
-                    id = '#' + id;
-                    self['query'](id, child);
-                    self['trigger']('change:' + id);
-                    self._removeCallbacks[id] = remove;
-                    lastId = id;
-                }
-            };
-            self['increment']('size');
-            var remove = function () {
-                self['increment']('size', -1);
-                removed = true;
-                update();
-            };
-            autorun(update);
-        } else {
-            /**
-             * Otherwise, the collection will act as a simple array of models.
-             */
-            self['push'](child);
-        }
+                id = '#' + id;
+                self['query'](id, child);
+                self['trigger']('change:' + id);
+                self._removeCallbacks[id] = remove;
+                lastId = id;
+            }
+        };
+        self['increment']('size');
+        var remove = function () {
+            self['increment']('size', -1);
+            removed = true;
+            update();
+        };
+        autorun(update);
     },
 
     /**
-     * Remove a model by ID or by model instance.
-     *
-     * ** This is only supported currently when lookupById is set. **
+     * It might be helpful to override `push` with a null or with a function
+     * that logs an error in dev mode to avoid confusion with cases where
+     * the user could be steered to use a model as a simple list.
      */
-    'remove': function (model) {
-        if (!this['lookupById']) {
-            log(ERROR, this, 'removeNotSupported', 'collection.remove is only supported ' +
-                'with lookupById set to true.');
-        }
-        var id = '#' + (isQueryable(model) ? model['queryId']() : model);
-        if (this._removeCallbacks[id]) {
-            this._removeCallbacks[id]();
+
+    /**
+     * Remove a model by ID or by model instance.
+     */
+    'remove': function (modelOrId) {
+        modelOrId = '#' + (isQueryable(modelOrId) ? modelOrId['queryId']() : modelOrId);
+        if (this._removeCallbacks[modelOrId]) {
+            this._removeCallbacks[modelOrId]();
         }
     }
 });
