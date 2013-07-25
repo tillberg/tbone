@@ -189,7 +189,11 @@ if (TBONE_DEBUG) {
             if (o === obj) {
                 return [];
             }
-            if (o !== null && typeof o === 'object') {
+            if (isQueryable(o)) {
+                if (!!(result = recurse(o.attributes, depth + 1))) {
+                    return result;
+                }
+            } else if (o !== null && typeof o === 'object') {
                 var result;
                 if (o.push) {
                     for (var i = 0; i < o.length; i++) {

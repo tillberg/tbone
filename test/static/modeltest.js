@@ -161,18 +161,32 @@
                 var me = base.make();
                 T('me', me);
                 (function () {
-                    var fired = 0;
-                    T('me.name', { first: 'sally', last: 'smith' });
+                    var fired1 = 0;
+                    var fired2 = 0;
                     T(function () {
                         T('me.name');
-                        fired++;
+                        fired1++;
                     });
-                    T('me.name', { first: 'sally', last: 'smith' });
+                    T(function () {
+                        T('me.name.last');
+                        fired2++;
+                    });
+                    T('me.name', { first: null, last: 0 });
                     T.drain();
-                    equal(fired, 1);
+                    equal(fired1, 2);
+                    equal(fired2, 2);
+                    T('me', { name: { first: 0, last: '' } });
+                    T.drain();
+                    equal(fired1, 3);
+                    equal(fired2, 3);
+                    T('me.name.first', 'bob');
+                    T.drain();
+                    equal(fired1, 4);
+                    equal(fired2, 3);
                     T('me.name', { first: 'sally', last: 'rogers' });
                     T.drain();
-                    equal(fired, 2);
+                    equal(fired1, 5);
+                    equal(fired2, 4);
                 }());
             });
         }

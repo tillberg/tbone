@@ -73,8 +73,8 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
         return true;
     }
     evs = evs || {};
-    curr = curr || {};
-    prev = prev || {};
+    curr = curr;
+    prev = prev;
     if (isQueryable(prev) || isQueryable(curr)) {
         // The only reason either prev or curr should be queryable is if
         // we're setting a model where there previous was none (or vice versa).
@@ -98,7 +98,8 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
                 }
             }
         } else {
-            changed = recursiveDiff(self, evs[k], curr[k], prev[k], false, depth + 1, fireAll) || changed;
+            changed = recursiveDiff(
+                self, evs[k], curr && curr[k], prev && prev[k], false, depth + 1, fireAll) || changed;
         }
     }
     if (exhaustive && !changed) {
@@ -138,10 +139,9 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
                 }
             }
         } else if (prev !== curr) {
-            // prev and curr are primitives (i.e. not arrays/objects)
-            // and they are different.  thus, we've found a change and
-            // will pass this outward so that we know to fire all
-            // parent callbacks
+            // at least one of prev and curr is a primitive (i.e. not arrays/objects)
+            // and they are different.  thus, we've found a change and will pass this
+            // outward so that we know to fire all parent callbacks
             changed = true;
         }
     }
