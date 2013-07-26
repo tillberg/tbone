@@ -100,19 +100,27 @@ Binds **prop** to the live result of **fn**
 `T` (or `tbone`) is just a TBone model.  You can make more!
 
 - `tbone.models.base`: Base TBone Model
+- `tbone.models.bound`: The base class for models that are bound to source data
+  via a function.  This is used to implement `T(prop, fn)`.
+- `tbone.models.async`: Asynchronous version of the bound model.  Prevents callbacks
+  from setting data for out-of-date updates.
+- `tbone.models.ajax`: Binds to an ajax endpoint specified by the **url** function
+  you define.  Only makes ajax requests when a View depends on this data either
+  directly or through a chain of bound models.
 - `model.extend(prototypeProperties)`: Creates your very own TBone Model prototype.
 - `model.make(instanceProperties)`: Make a new model instance.
 
 ### Model methods
 
 - `model(...)`: Models are callable, using the Four Tenets of TBone above.
+- `model.query(prop, [value])`: Look up **prop**, and either return the current value
+  or set it to **value** if specified.
+- `model.queryModel(prop)`: Look up **prop** and return the the model found there
+  instead of extracting its data.
 - `model.text(prop)`: read **prop** from the model, except return an empty string
   if the value is not a string, Number other than NaN, or a Date.
 - `model.toggle(prop)`: sets **prop** to !**prop**, i.e. alternate between
   true and false.
-- `model.query(prop, [value])`: Same as get / set value.
-- `model.find(value)`: Search for **value**, and return the prop path of the
-  first match found (using referential equality, ===).
 - `model.push(prop, value)`: Add **value** at the end of the list at **prop**.
 - `model.unshift(prop, value)`: Insert **value** at beginning of the list at
   **prop**.
@@ -120,6 +128,10 @@ Binds **prop** to the live result of **fn**
   like `shift` except that you don't get the value back.
 - `model.removeLast(prop)`: Remove the last item from the list at **prop**,
   like `pop` except that you don't get the value back.
+- `model.unset(prop)`: Delete the specified property.  Practically equivalent
+  to using `model.query(prop, undefined)`.
+- `model.increment(prop, number)`: Adds **number** to **prop**.  Use a negative
+  number to subtract.
 
 ### Model properties
 
@@ -132,10 +144,18 @@ Binds **prop** to the live result of **fn**
 ### Collections
 
 TBone Collections are a subclass of Model.  The main difference is that the
-root data item is an Array instead of an Object.
+root data item is an Array instead of an Object.  Define **model** in a
+subclass to automatically create models of that type via **add**.
 
 - `tbone.collections.base`: Base TBone Collection.
 - `collection.extend`, `collection.make`, etc.: Same as for Models.
+- `collection.add(modelOrData)`: Add a model to the collection.  If raw data
+  is passed instead, a model (of type specified by the **model** property of
+  the collection) is created automatically.
+- `collection.remove(modelOrId)`: Remove a model from the collection.
+
+To query for a model in a collection, use the pound sign (#) followed by the
+ID of the model.  For example, `T('users.#42.name')`.
 
 ## TBone Views
 
@@ -210,15 +230,17 @@ Three properties can be specified in these tbone attributes:
   View/Model/Collection.
 - `tbone.noConflict()`: Reset `T` and `tbone` to what they were before TBone
   loaded.
-- `tbone.isReady()`: There are no pending Model/View updates, including
-  async Models that are waiting for ajax data.  This is helpful for automated
+- `tbone.isReady()`: There are no pending Model/View updates, including ajax
+  models that are waiting for XHRs to finish.  This is helpful for automated
   testing to determine that the page has "settled".
-- `tbone.getListeners(**model**)`: Returns list of all the unique listeners
+- `tbone.getListeners(model)`: Returns list of all the unique listeners
   that [recursively!] depend on **model**.
-- `tbone.hasViewListener(**model**)`: Returns true if a View is listening
+- `tbone.hasViewListener(model)`: Returns true if a View is listening
   either directly or indirectly (i.e. through other model dependencies) for
   changes to **model**.  This is used internally by TBone to prevent loading
   ajax data for any models that are not needed as part of the UI currently.
+- `model.find(value)`: Search for **value**, and return the prop path of the
+  first match found (using referential equality, ===).
 
 ## License
 
