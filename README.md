@@ -44,14 +44,14 @@ Backbone.sync), to [Backbone](http://backbonejs.org/).
 
 ## Download
 
-* [Development version, with comments](http://cdn.tbonejs.org/tbone-v0.3.2.js) *25kB gzipped*
-* [Production version, minified](http://cdn.tbonejs.org/tbone-v0.3.2.min.js) *6.10kB gzipped*
+* [Development version, with comments](http://cdn.tbonejs.org/tbone-v0.4.0.js) *27kiB gzipped*
+* [Production version, minified](http://cdn.tbonejs.org/tbone-v0.4.0.min.js) *7kiB gzipped*
 
 For personal use or low-traffic sites, feel free to use our CDN:
 
 ```html
-Development: <script src="http://cdn.tbonejs.org/tbone-v0.3.2.js"></script>
-Production: <script src="http://cdn.tbonejs.org/tbone-v0.3.2.min.js"></script>
+Development: <script src="http://cdn.tbonejs.org/tbone-v0.4.0.js"></script>
+Production: <script src="http://cdn.tbonejs.org/tbone-v0.4.0.min.js"></script>
 ```
 
 ## Requirements
