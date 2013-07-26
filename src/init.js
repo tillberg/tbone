@@ -11,7 +11,7 @@ if (typeof exports !== 'undefined') {
 
 
 /** @const {boolean} */
-var TBONE_DEBUG = root['TBONE_DEBUG'];
+var TBONE_DEBUG = root['TBONE_DEBUG'] !== false;
 
 var models = {};
 var collections = {};
