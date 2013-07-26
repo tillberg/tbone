@@ -1,5 +1,9 @@
 ## TBone Change Log
 
+### 0.4.1
+
+- Added fancy `localStorage` collection.
+
 ### 0.4.0
 
 - Split base model into base, bound, async, and ajax models.
