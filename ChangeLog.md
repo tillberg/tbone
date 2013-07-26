@@ -3,11 +3,11 @@
 ### 0.4.0
 
 - Split base model into base, bound, async, and ajax models.
-- Collections are now indexed by ID by default and do not supported
+- Collections are now indexed by ID by default and do not support
   simple arrays of models.  Added the `size` live property for
   reading the current number of models in the collection.
   For support of a simple list of models, use a model instead.
-- Templates now use root.denullText instead of root.queryText to
+- Templates now use `root.denullText` instead of `root.queryText` to
   avoid printing non-text values.
 - Added `model.queryModel` to query for models without extracting
   their data.
