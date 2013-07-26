@@ -434,7 +434,7 @@ function query(flag, prop, value) {
          */
         if (isArray(_data)) {
             _data = _.map(_data, function (d) { return d['query'](); });
-        } else {
+        } else if (_data) {
             _data = _.reduce(_.keys(_data), function (memo, k) {
                 if (isQueryable(_data[k])) {
                     memo[k] = _data[k]['query']();
