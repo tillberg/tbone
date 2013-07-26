@@ -47,6 +47,7 @@ sources = [
     'model/fancy/ajax',
     'model/fancy/localstorage',
     'model/fancy/location',
+    'model/fancy/localstoragecoll',
     'dom/template/init',
     'dom/template/render',
     'dom/view/hash',

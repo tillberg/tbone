@@ -43,6 +43,7 @@ models['localStorage'] = localStorageModel;
 models['location'] = locationModel;
 
 collections['base'] = baseCollection;
+collections['localStorage'] = localStorageCollection;
 views['base'] = baseView;
 
 if (TBONE_DEBUG) {
