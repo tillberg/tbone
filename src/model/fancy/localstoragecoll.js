@@ -9,7 +9,7 @@ var localStorageCollection = baseCollection.extend({
         _.each(stored || [], function (modelData) {
             self.add(modelData);
         });
-        self.on('change', function () {
+        autorun(function () {
             localStorage[self.key] = JSON.stringify(self['query']());
         });
     }
