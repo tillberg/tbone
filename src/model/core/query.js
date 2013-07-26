@@ -163,7 +163,7 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
  * This is only ever called if TBONE_DEBUG is true.
  */
 function serializeForComparison(model) {
-    if (opts['aliascheck']) {
+    if (opts['aliasCheck']) {
         try {
             return JSON.stringify(model.attributes, function (key, value) {
                 // If value is an array or object, screen its keys for queryables.
