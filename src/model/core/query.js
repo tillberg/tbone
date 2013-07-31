@@ -165,7 +165,8 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
 function serializeForComparison(model) {
     if (opts['aliasCheck']) {
         try {
-            return JSON.stringify(model.attributes, function (key, value) {
+            var attributes = model.attributes;
+            return JSON.stringify(attributes === undefined ? null : attributes, function (key, value) {
                 // If value is an array or object, screen its keys for queryables.
                 // Queryables track their own changes, so we don't care to
                 // check that they haven't changed without this model knowing.
@@ -188,7 +189,7 @@ function serializeForComparison(model) {
             log(WARN, model, 'aliascheck', 'Failed to serialize attributes to JSON');
         }
     }
-    return null;
+    return "null";
 }
 
 function listDiffs(curr, prev, accum) {
