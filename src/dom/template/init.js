@@ -71,7 +71,7 @@ _.each(('break case catch continue debugger default delete do else finally for f
         'instanceof new return switch this throw try typeof var void while with ' +
         'Array Boolean Date Function Iterator Number Object RegExp String ' +
         'isFinite isNaN parseFloat parseInt Infinity JSON Math NaN undefined true false null ' +
-        '$ _ tbone T'
+        '$ _ tbone T view'
        ).split(' '), function (word) {
     neverLookup[word] = true;
 });
@@ -106,7 +106,7 @@ function withLookupListeners(str, closureVariables) {
                 return [
                     '(',
                     firstArg,
-                    ' && root.isQueryable(',
+                    ' && view.isQueryable(',
                     firstArg,
                     ') ? ',
                     firstArg,
@@ -122,7 +122,7 @@ function withLookupListeners(str, closureVariables) {
                  * Patch the reference to use query.
                  */
                 return [
-                    'root.query(',
+                    'view.query(',
                     ITERATE_OVER_MODELS,
                     ', "',
                     expr,
@@ -152,7 +152,7 @@ function initTemplate(string) {
      * As we parse through the template, we identify variables defined as function parameters
      * within the current closure scope; if a variable is defined, we instrument references to
      * that variable so that they use that variable as the lookup root, instead of using the
-     * root context.  We push each new closure scope's variables onto varstack and pop them
+     * view context.  We push each new closure scope's variables onto varstack and pop them
      * off when we reach the end of the closure.
      * @type {Array.<Array.<string>>}
      */
@@ -249,21 +249,21 @@ function initTemplate(string) {
         }) + cs_parsed();
         return '<%' + (
             isDataRef ?
-                ('= root.getHashId(' + newContents + ') ') :
+                ('= view.getHashId(' + newContents + ') ') :
                 textOp ?
                     // if this is a text op (= or -), pass it through denullText
-                    (textOp + 'root.denullText(' + newContents + ')') :
+                    (textOp + 'view.denullText(' + newContents + ')') :
                     newContents
             ) + '%>';
 
     });
 
     /**
-     * Pass the template to _.template.  It will create a function that takes a single "root"
-     * parameter.  On render, we'll pass either a model/collection or tbone itself as the root.
+     * Pass the template to _.template.  It will create a function that takes a single "view"
+     * parameter.  On render, we'll pass either a model/collection or tbone itself as the view.
      * @type {Function}
      */
-    var fn = _.template(parsed, null, { 'variable': 'root' });
+    var fn = _.template(parsed, null, { 'variable': 'view' });
 
     if (TBONE_DEBUG) {
         /**
