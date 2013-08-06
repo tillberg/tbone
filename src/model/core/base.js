@@ -6,7 +6,18 @@
  * @type {RegExp}
  * @const
  */
-var rgxEventSplitter = /[. :]+/;
+var rgxEventSplitter = /[.]+/;
+
+/**
+ * Split name parameter into components (used in .on() and .trigger())
+ *
+ * For compatibility with backbone, we support using the colon as the
+ * separator between "change" and the remainder of the terms, but only
+ * dots after that.
+ */
+function splitName (name) {
+    return name.replace(/^change:/, 'change.').split(rgxEventSplitter);
+}
 
 /**
  * baseModel
@@ -46,7 +57,7 @@ var baseModel = {
     },
     'initialize': noop,
     'on': function (name, callback, context) {
-        var parts = name.split(rgxEventSplitter);
+        var parts = splitName(name);
         var events = this._events;
         var arg;
 
@@ -97,7 +108,7 @@ var baseModel = {
     'trigger': function (name) {
         var self = this;
         var events = self._events;
-        var parts = name.split(rgxEventSplitter);
+        var parts = splitName(name);
         var arg;
         while ((arg = parts.shift()) != null) {
             if (arg === '') {
