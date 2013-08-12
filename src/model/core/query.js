@@ -409,6 +409,12 @@ function query(flag, prop, value) {
             value = last_data[setprop] = (_data || 0) + value;
         } else {
             last_data[setprop] = value;
+            // XXX Kludge Alert.  In practice, gives many models a Name that otherwise
+            // wouldn't have one by using the first prop name it is set to.  Works for
+            // the typical T('modelName', model.make()) case.
+            if (TBONE_DEBUG && isQueryable(value) && value.Name == null) {
+                value.Name = prop;
+            }
         }
 
         if (parentCallbacks.length) {
