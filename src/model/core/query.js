@@ -61,7 +61,7 @@ var QUERY_SELF = '';
 /**
  * @const
  */
-var MAX_RECURSIVE_DIFF_DEPTH = 8;
+var MAX_RECURSIVE_DIFF_DEPTH = 16;
 
 function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
     // Kludge alert: if the objects are too deep, just assume there is
@@ -69,6 +69,9 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
     if (depth > MAX_RECURSIVE_DIFF_DEPTH) {
         log(WARN, self, 'recurseLimit', 'hit recursion depth limit of <%=limit%>', {
             limit: MAX_RECURSIVE_DIFF_DEPTH
+        }, {
+            curr: curr,
+            prev: prev
         });
         return true;
     }
