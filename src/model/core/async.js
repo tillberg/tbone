@@ -18,9 +18,6 @@ var asyncModel = boundModel.extend({
             // allowing updates from the current generation, allow updates
             // greater than or equal to the generation of the last update?
             var generation = self.generation = (self.generation || 0) + 1;
-            if (self.abortCallback) {
-                self.abortCallback();
-            }
             var opts = self['state'](function (value) {
                 if (generation === self.generation) {
                     self.abortCallback = null;
@@ -28,6 +25,12 @@ var asyncModel = boundModel.extend({
                 }
             });
             self.abortCallback = opts && opts['onAbort'];
+        }
+    },
+
+    'abortPrevious': function () {
+        if (this.abortCallback) {
+            this.abortCallback();
         }
     },
 

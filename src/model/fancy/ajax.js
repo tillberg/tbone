@@ -21,6 +21,7 @@ var ajaxModel = asyncModel.extend({
              * parameters are set.
              **/
             self.fetchedUrl = url;
+            self['abortPrevious']();
             if (self['clearOnFetch']) {
                 self.clear();
             }

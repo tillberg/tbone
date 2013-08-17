@@ -596,12 +596,12 @@ asyncTest('async model', function () {
 });
 
 asyncTest('async model abort', function () {
-    expect( 2 );
-
+    expect(1);
     var src = tbone.make();
     src('prop', 42);
     var me = tbone.models.async.make(function (cb) {
         src('prop');
+        this.abortPrevious();
         return {
             onAbort: function () {
                 ok(true, 'called onAbort');
@@ -609,7 +609,6 @@ asyncTest('async model abort', function () {
             }
         }
     });
-    equal(me('asyncprop'), undefined);
     setTimeout(function () {
         src('prop', 36);
     }, 1);
