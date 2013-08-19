@@ -45,6 +45,9 @@ var baseModel = {
         // Initialize the model instance
         delete instance['tboneid'];
         delete instance['attributes'];
+        if (TBONE_DEBUG) {
+            delete instance.prevJson;
+        }
         instance._events = {};
         instance._removeCallbacks = {};
         uniqueId(instance);
