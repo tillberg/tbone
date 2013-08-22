@@ -1,5 +1,5 @@
 
-var tbone = baseModel.make();
+var tbone = baseModel.make({ 'Name': 'tbone' });
 
 var orig_tbone = root['tbone'];
 var orig_T = root['T'];

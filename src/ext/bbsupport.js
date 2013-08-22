@@ -180,7 +180,7 @@ if (Backbone) {
              */
             queueExec({
                 execute: function () {
-                    self.scope = autorun(self.update, self, priority, 'model_' + self.Name,
+                    self.scope = autorun(self.update, self, priority, 'model_' + self['Name'],
                                          self.onScopeExecute, self);
                 },
                 priority: priority + PRIORITY_INIT_DELTA

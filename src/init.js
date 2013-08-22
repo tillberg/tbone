@@ -164,7 +164,7 @@ function log () {
  * @param  {Object=}                                   data    Relevant data
  */
 function logconsole (level, context, event, msg, data, moredata) {
-    var name = isString(context) ? context : context.Name;
+    var name = isString(context) ? context : context['Name'];
     var type = (isString(context) ? context :
                 context.isModel ? 'model' :
                 context.isView ? 'view' :
@@ -174,7 +174,7 @@ function logconsole (level, context, event, msg, data, moredata) {
                              logLevels.type[type] || 0) || logLevels.base;
     if (event === 'lookups') {
         msg = _.reduce(msg, function(memo, map, id) {
-            memo[map.__obj__.Name || ('tboneid-' + map.__obj__.tboneid)] = map;
+            memo[map.__obj__['Name'] || ('tboneid-' + map.__obj__.tboneid)] = map;
             return memo;
         }, {});
     }

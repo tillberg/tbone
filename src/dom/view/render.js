@@ -88,15 +88,15 @@ function render($els, parent, subViews) {
              * Also add a class for each of the parent views, if any.
              */
             var parentView = myView.parentView;
-            while (parentView && parentView.Name) {
-                $this.addClass(parentView.Name);
+            while (parentView && parentView['Name']) {
+                $this.addClass(parentView['Name']);
                 parentView = parentView.parentView;
             }
 
             var rootObj = hashedObjectCache[root] || tbone;
 
             var opts = {
-                Name: name,
+                'Name': name,
                 origOuterHTML: outerHTML,
                 'el': el,
                 templateId: templateId,

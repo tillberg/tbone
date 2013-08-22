@@ -26,7 +26,7 @@ var baseView = {
         self['$el'] = $(self['el']);
         self['el']['view'] = self;
         self.priority = self.domParentView ? self.domParentView.priority - 1 : BASE_PRIORITY_VIEW;
-        self.scope = autorun(self.render, self, self.priority, 'view_' + self.Name,
+        self.scope = autorun(self.render, self, self.priority, 'view_' + self['Name'],
                              self.onScopeExecute, self, true);
     },
 
@@ -41,7 +41,7 @@ var baseView = {
      */
     destroy: function (destroyRoot) {
         var self = this;
-        log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot.Name);
+        log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot['Name']);
         self.destroyed = true;
         self.scope.destroy();
         _.each(self.subViews || [], function (view) {

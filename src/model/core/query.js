@@ -288,7 +288,7 @@ function query(flag, prop, value) {
     var arg;
     var doSubQuery;
     var parentCallbacks = [];
-    var events = isSet && self._events['change'];
+    var events = isSet && self['_events']['change'];
 
     while (true) {
         if (_data == null && !isSet) {
@@ -415,8 +415,8 @@ function query(flag, prop, value) {
             // XXX Kludge Alert.  In practice, gives many models a Name that otherwise
             // wouldn't have one by using the first prop name it is set to.  Works for
             // the typical T('modelName', model.make()) case.
-            if (TBONE_DEBUG && isQueryable(value) && value.Name == null) {
-                value.Name = prop;
+            if (TBONE_DEBUG && isQueryable(value) && value['Name'] == null) {
+                value['Name'] = prop;
             }
         }
 

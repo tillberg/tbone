@@ -15,7 +15,7 @@ var boundModel = baseModel.extend({
          * or _.defer because that could possibly fire after drainQueue.
          */
         self.scope = autorun(self.update, self, self.scopePriority,
-                             'model_' + self.Name, self.onScopeExecute, self);
+                             'model_' + self['Name'], self.onScopeExecute, self);
     },
 
     scopePriority: BASE_PRIORITY_MODEL_SYNC,

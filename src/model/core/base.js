@@ -48,7 +48,7 @@ var baseModel = {
         if (TBONE_DEBUG) {
             delete instance.prevJson;
         }
-        instance._events = {};
+        instance['_events'] = {};
         instance._removeCallbacks = {};
         uniqueId(instance);
         instance['initialize']();
@@ -61,7 +61,7 @@ var baseModel = {
     'initialize': noop,
     'on': function (name, callback, context) {
         var parts = splitName(name);
-        var events = this._events;
+        var events = this['_events'];
         var arg;
 
         while ((arg = parts.shift()) != null) {
@@ -88,7 +88,7 @@ var baseModel = {
     'off': function (name, callback, context) {
         // XXX name & callback not supported.
         // XXX doesn't clean up when callbacks list goes to zero length
-        var stack = [ this._events ];
+        var stack = [ this['_events'] ];
         var next, callbacks, k;
 
         while (!!(next = stack.pop())) {
@@ -110,7 +110,7 @@ var baseModel = {
     },
     'trigger': function (name) {
         var self = this;
-        var events = self._events;
+        var events = self['_events'];
         var parts = splitName(name);
         var arg;
         while ((arg = parts.shift()) != null) {
