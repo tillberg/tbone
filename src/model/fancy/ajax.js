@@ -58,6 +58,8 @@ var ajaxModel = asyncModel.extend({
         };
     },
 
+    'parse': identity,
+
     /**
      * By default, async models will use $.ajax to fetch data; override this
      * with something else if desired.
