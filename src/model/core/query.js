@@ -396,7 +396,15 @@ function query(flag, prop, value) {
             }
         }
 
+        // XXX Kludge Alert.  In practice, gives many models a Name that otherwise
+        // wouldn't have one by using the first prop name it is set to.  Works for
+        // the typical T('modelName', model.make()) and T.push cases.
+        var nameProp;
+
         if (isPush) {
+            if (TBONE_DEBUG) {
+                nameProp = prop + '.' + _data.length;
+            }
             _data.push(value);
         } else if (isUnshift) {
             _data.unshift(value);
@@ -412,12 +420,13 @@ function query(flag, prop, value) {
             value = last_data[setprop] = (_data || 0) + value;
         } else {
             last_data[setprop] = value;
-            // XXX Kludge Alert.  In practice, gives many models a Name that otherwise
-            // wouldn't have one by using the first prop name it is set to.  Works for
-            // the typical T('modelName', model.make()) case.
-            if (TBONE_DEBUG && isQueryable(value) && value['Name'] == null) {
-                value['Name'] = prop;
+            if (TBONE_DEBUG) {
+                nameProp = prop;
             }
+        }
+
+        if (TBONE_DEBUG && isQueryable(value) && value['Name'] == null) {
+            value['Name'] = nameProp;
         }
 
         if (parentCallbacks.length) {
