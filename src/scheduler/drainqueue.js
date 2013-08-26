@@ -113,7 +113,7 @@ function drainQueue () {
         scope.execute();
     }
     if (!remaining) {
-        log(ERROR, 'scheduler', 'drainQueue', 'exceeded max drainQueue iterations');
+        log(WARN, 'scheduler', 'drainQueue', 'exceeded max drainQueue iterations');
     }
     log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
         'duration': now() - queueDrainStartTime
