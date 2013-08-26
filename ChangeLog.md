@@ -1,5 +1,14 @@
 ## TBone Change Log
 
+### 0.4.2
+
+- In dev mode, many models now have Name properties automatically
+  set based on the query path to which each model is first assigned.
+- Only dots may now be used to separate property names in TBone
+  paths.  Previously, colons and spaces were allowed as well.
+- Change template root variable to `view`, and added it to the list
+  of property names not to query-patch when compiling templates.
+
 ### 0.4.1
 
 - Added fancy `localStorage` collection.
