@@ -53,8 +53,22 @@ var boundModel = baseModel.extend({
 
     update: function () {
         var self = this;
-        self['query'](QUERY_SELF, self['state']());
-        log(VERBOSE, self, 'updated', self.attributes);
+        self.sleeping = self['sleepEnabled'] && !hasViewListener(self);
+        if (self.sleeping) {
+            /**
+             * This model will not update itself until there's a view listener
+             * waiting for data (directly or through a chain of other models)
+             * from this model.
+             */
+            log(INFO, self, 'sleep');
+        } else {
+            self._update();
+        }
+    },
+
+    _update: function () {
+        this['query'](QUERY_SELF, this['state']());
+        log(VERBOSE, this, 'updated', this.attributes);
     },
 
     /**
@@ -69,5 +83,7 @@ var boundModel = baseModel.extend({
     /**
      * returns the new state, synchronously
      */
-    'state': noop
+    'state': noop,
+
+    'sleepEnabled': false
 });
