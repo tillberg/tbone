@@ -49,20 +49,38 @@
     while (count--) tbone('unbound.count', count);
   });
 
-  T('bound', {});
+  var bound20 = tbone.models.base.make();
   _.each(_.range(20), function() {
     T(function() {
-      T('bound.count');
+      bound20('count');
     });
   });
 
   JSLitmus.test('T(prop, value) with 20 listeners', function(count) {
-    while (count--) tbone('bound.count', count);
+    while (count--) bound20('count', count);
   });
 
   JSLitmus.test('T(prop, value) with 20 listeners (with drain)', function(count) {
     while (count--) {
-      tbone('bound.count', count);
+      bound20('count', count);
+      T.drain();
+    }
+  });
+
+  var bound2000 = tbone.models.base.make();
+  _.each(_.range(2000), function(i) {
+    T(function() {
+      bound2000('count');
+    });
+  });
+
+  JSLitmus.test('T(prop, value) with 2000 listeners', function(count) {
+    while (count--) bound2000('count', count);
+  });
+
+  JSLitmus.test('T(prop, value) with 2000 listeners (with drain)', function(count) {
+    while (count--) {
+      bound2000('count', count);
       T.drain();
     }
   });
