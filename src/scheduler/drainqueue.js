@@ -100,7 +100,7 @@ function drainQueue () {
     drainQueueTimer = null;
     var queueDrainStartTime = now();
     var scope;
-    var remaining = 1000;
+    var remaining = 5000;
     while (!(TBONE_DEBUG && frozen) && --remaining && !!(scope = pop())) {
         /**
          * Update the scopesQueued map so that this Scope may be requeued.
@@ -114,6 +114,7 @@ function drainQueue () {
     }
     if (!remaining) {
         log(WARN, 'scheduler', 'drainQueue', 'exceeded max drainQueue iterations');
+        drainQueueTimer = _.defer(drainQueue);
     }
     log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
         'duration': now() - queueDrainStartTime
