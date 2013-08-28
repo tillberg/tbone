@@ -3,6 +3,7 @@
  */
 
 var ajaxModel = asyncModel.extend({
+
     'state': function (cb) {
         var self = this;
         var myXhr;
@@ -10,6 +11,7 @@ var ajaxModel = asyncModel.extend({
             if (myXhr) {
                 inflight--;
                 myXhr = null;
+                self['onComplete']();
             }
         }
 
@@ -69,6 +71,8 @@ var ajaxModel = asyncModel.extend({
     },
 
     'postFetch': noop,
+
+    'onComplete': noop,
 
     'clearOnFetch': true, // XXX move to async model
 
