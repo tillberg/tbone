@@ -88,20 +88,25 @@ var baseModel = {
         this.wake({});
     },
     'off': function (name, callback, context) {
-        // XXX name & callback not supported.
+        // XXX only supports use with both name & context.
         // XXX doesn't clean up when callbacks list goes to zero length
-        var stack = [ this['_events'] ];
-        var next, callbacks, k;
-        var contextId = uniqueId(context);
+        var parts = splitName(name);
+        var events = this['_events'];
+        var arg;
 
-        while (!!(next = stack.pop())) {
-            for (k in next) {
-                if (k === '') {
-                    delete next[''][contextId];
-                } else {
-                    stack.push(next[k]);
-                }
+        while ((arg = parts.shift()) != null) {
+            if (arg === '') {
+                continue;
             }
+            if (!events[arg]) {
+                events[arg] = {};
+            }
+            events = events[arg];
+        }
+        var contexts = events[''];
+        if (contexts) {
+            var contextId = uniqueId(context);
+            delete contexts[contextId];
         }
     },
     'trigger': function (name) {

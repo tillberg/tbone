@@ -131,9 +131,15 @@ _.extend(Scope.prototype,
      */
     unbindAll: function () {
         var self = this;
-        _.each(this.lookups || {}, function (propMap) {
-            propMap['obj'].off(null, null, self);
-        });
+        var lookups = self.lookups || {};
+        for (var objId in lookups) {
+            var propMap = lookups[objId];
+            var obj = propMap['obj'];
+            var props = propMap['props'];
+            for (var prop in props) {
+                obj.off('change:' + prop, null, self);
+            }
+        }
     },
 
     /**
