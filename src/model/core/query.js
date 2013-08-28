@@ -369,10 +369,11 @@ function query(flag, prop, value) {
         id = uniqueId(self);
         if (!recentLookups[id]) {
             recentLookups[id] = {
-                '__obj__': self
+                'obj': self,
+                'props': {}
             };
         }
-        recentLookups[id][name_parts.join('.')] = _data;
+        recentLookups[id]['props'][name_parts.join('.')] = _data;
     }
 
     if (doSubQuery) {

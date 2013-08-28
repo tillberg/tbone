@@ -97,10 +97,11 @@ if (Backbone) {
             id = uniqueId(this);
             if (!recentLookups[id]) {
                 recentLookups[id] = {
-                    '__obj__': this
+                    'obj': this,
+                    'props': {}
                 };
             }
-            recentLookups[id][firstprop] = firstdata;
+            recentLookups[id]['props'][firstprop] = firstdata;
         }
 
         // Skip the sub-query if DONT_GET_DATA is set there are no more args
@@ -323,7 +324,7 @@ if (Backbone) {
                  * been woken up.
                  */
                 _.each((this.scope && this.scope.lookups) || [], function (lookup) {
-                    var bindable = lookup.__obj__;
+                    var bindable = lookup['obj'];
                     if (bindable && !woken[uniqueId(bindable)]) {
                         woken[uniqueId(bindable)] = true;
                         bindable.wake(woken);

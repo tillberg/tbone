@@ -39,7 +39,7 @@ var boundModel = baseModel.extend({
          * XXX - how does this work?
          */
         _.each((this.scope && this.scope.lookups) || [], function (lookup) {
-            var bindable = lookup.__obj__;
+            var bindable = lookup['obj'];
             if (bindable && !woken[uniqueId(bindable)]) {
                 woken[uniqueId(bindable)] = true;
                 bindable.wake(woken);

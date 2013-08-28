@@ -86,14 +86,13 @@ _.extend(Scope.prototype,
             }
 
             _.each(recentLookups, function (propMap) {
-                var obj = propMap['__obj__'];
-                if (propMap['']) {
+                var obj = propMap['obj'];
+                var props = propMap['props'];
+                if (props['']) {
                     obj.on('change', self.trigger, self);
                 } else {
-                    for (var prop in propMap) {
-                        if (prop !== '__obj__' && prop !== '__path__') {
-                            obj.on('change:' + prop, self.trigger, self);
-                        }
+                    for (var prop in props) {
+                        obj.on('change:' + prop, self.trigger, self);
                     }
                 }
             });
@@ -133,7 +132,7 @@ _.extend(Scope.prototype,
     unbindAll: function () {
         var self = this;
         _.each(this.lookups || {}, function (propMap) {
-            propMap['__obj__'].off(null, null, self);
+            propMap['obj'].off(null, null, self);
         });
     },
 
