@@ -17,7 +17,6 @@ var models = {};
 var collections = {};
 var templates = {};
 var views = {};
-var recentLookups;
 var opts = TBONE_DEBUG ? { 'aliasCheck': true } : {};
 
 /**

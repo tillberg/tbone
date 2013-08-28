@@ -3,11 +3,13 @@
  */
 
 /**
- * currentParentScope globally tracks the current executing scope, so that subscopes
+ * currentExecutingScope globally tracks the current executing scope, so that subscopes
  * created during its execution (i.e. by tbone.autorun) can register themselves as
  * subscopes of the parent (this is important for recursive destruction of scopes).
  */
-var currentParentScope;
+var currentExecutingScope;
+
+var recentLookups;
 
 /**
  * An autobinding function execution scope.  See autorun for details.
@@ -62,8 +64,8 @@ _.extend(Scope.prototype,
             // onto the top of each stack.
             var oldLookups = recentLookups;
             this.lookups = recentLookups = {};
-            var oldParentScope = currentParentScope;
-            currentParentScope = self;
+            var parentScope = currentExecutingScope;
+            currentExecutingScope = self;
 
             // ** Call the payload function **
             // This function must be synchronous.  Anything that is looked up using
@@ -104,7 +106,7 @@ _.extend(Scope.prototype,
             // Pop our own lookups and parent scope off the stack, restoring them to
             // the values we saved above.
             recentLookups = oldLookups;
-            currentParentScope = oldParentScope;
+            currentExecutingScope = parentScope;
 
             if (TBONE_DEBUG) {
                 var executionTimeMs = myTimer.done();

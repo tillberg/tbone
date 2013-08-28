@@ -22,18 +22,18 @@ function autorun(fn, context, priority, name, onExecuteCb, onExecuteContext, det
     // for destruction by a parent; the parent should have priority so as
     // to execute first.
     if (!priority) {
-        priority = currentParentScope ? currentParentScope.priority - 1 : 0;
+        priority = currentExecutingScope ? currentExecutingScope.priority - 1 : 0;
     }
     if (!name) {
-        name = currentParentScope ? currentParentScope.name + '+' : 'unnamed';
+        name = currentExecutingScope ? currentExecutingScope.name + '+' : 'unnamed';
     }
 
     // Create a new scope for this function
     var scope = new Scope(fn, context, priority, name, onExecuteCb, onExecuteContext);
 
     // If this is a subscope, add it to its parent's list of subscopes.
-    if (!detached && currentParentScope) {
-        currentParentScope.subScopes.push(scope);
+    if (!detached && currentExecutingScope) {
+        currentExecutingScope.subScopes.push(scope);
     }
 
     // Run the associated function (and bind associated models)
