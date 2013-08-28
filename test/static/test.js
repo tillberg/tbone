@@ -651,3 +651,34 @@ test('unbind property on second pass', function () {
     T.drain();
     equal(count, 2);
 });
+
+
+test('ajax sleep', function () {
+    var ajaxModel = tbone.models.ajax.extend({
+        ajax: function (opts) {
+            T('ajaxFetched.' + this.id, true);
+            T.increment('numAjaxReqs');
+            opts.success('\u2603');
+        },
+        url: function () {
+            return '/snowman/' + this.id;
+        }
+    });
+    _.each(_.range(6), function (i) {
+        T.push('ajaxModels', ajaxModel.make({ id: i }));
+        T.push('ajaxFetched', false);
+    });
+    var $el = tmpl('ajaxSleep');
+    T.drain();
+    equal(T('ajaxFetched.0'), false);
+    equal(T('ajaxFetched.1'), true);
+    equal(T('ajaxFetched.2'), true);
+    equal(T('ajaxFetched.3'), false);
+    equal(T('ajaxFetched.4'), false);
+    equal(T('ajaxFetched.5'), false);
+    equal(T('numAjaxReqs'), 2);
+
+    T.unset('ajaxModels');
+    T.unset('ajaxFetched');
+    T.unset('numAjaxReqs');
+});
