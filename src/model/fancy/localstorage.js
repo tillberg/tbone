@@ -15,8 +15,8 @@ var localStorageModel = baseModel.extend({
     initialize: function () {
         var self = this;
         self['query']('', JSON.parse(localStorage[self['key']] || "null"));
-        self['on']('change', function () {
-            localStorage[self['key']] = JSON.stringify(self.attributes);
+        autorun(function () {
+            localStorage[self['key']] = JSON.stringify(self.query(''));
         });
     }
 });
