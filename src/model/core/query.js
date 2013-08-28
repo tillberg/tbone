@@ -381,19 +381,23 @@ function query(flag, prop, value) {
     }
 
     if (isSet) {
-        if (TBONE_DEBUG) {
-            if (self.prevJson) {
-                var json = serializeForComparison(self);
-                if (json !== self.prevJson) {
-                    var before = JSON.parse(self.prevJson);
-                    var after = JSON.parse(json);
-                    var diffs = listDiffs(after, before, []);
-                    log(ERROR, self, 'aliascheck', 'aliased change detected', {}, {
-                        before: before,
-                        after: after,
-                        diffs: diffs
-                    });
-                }
+        /**
+         * Only do prevJson comparisons when setting the root property.
+         * It's kind of complicated to detect and avoid aliasing issues when
+         * setting other properties directly.  But at least this helps detect
+         * aliasing for bound models.
+         */
+        if (TBONE_DEBUG && self.prevJson && !prop) {
+            var json = serializeForComparison(self);
+            if (json !== self.prevJson) {
+                var before = JSON.parse(self.prevJson);
+                var after = JSON.parse(json);
+                var diffs = listDiffs(after, before, []);
+                log(WARN, self, 'aliascheck', 'aliased change detected', {}, {
+                    before: before,
+                    after: after,
+                    diffs: diffs
+                });
             }
         }
 
@@ -444,7 +448,7 @@ function query(flag, prop, value) {
         }
 
         if (TBONE_DEBUG) {
-            self.prevJson = serializeForComparison(self);
+            self.prevJson = prop ? null : serializeForComparison(self);
         }
         return value;
     } else if (!iterateOverModels && self.isCollection && prop === '') {
