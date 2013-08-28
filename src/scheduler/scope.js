@@ -146,9 +146,9 @@ _.extend(Scope.prototype,
      * Destroy any execution scopes that were creation during execution of this function.
      */
     destroySubScopes: function () {
-        _.each(this.subScopes, function (subScope) {
-            subScope.destroy();
-        });
+        for (var i = 0; i < this.subScopes.length; i++) {
+            this.subScopes[i].destroy();
+        }
         this.subScopes = [];
     },
 
