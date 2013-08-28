@@ -632,3 +632,22 @@ test('model increment', function () {
     equal(num, 42);
     equal(me('num'), 42);
 });
+
+test('unbind property on second pass', function () {
+    var me = tbone.make();
+    var count = 0;
+    var runOnce = false;
+    T(function () {
+        if (!runOnce) {
+            T('hello');
+            runOnce = true;
+        }
+        count++;
+    });
+    T.drain();
+    T('hello', 'to');
+    T.drain();
+    T('hello', 'you');
+    T.drain();
+    equal(count, 2);
+});

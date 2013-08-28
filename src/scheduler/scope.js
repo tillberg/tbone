@@ -26,18 +26,22 @@ function Scope(fn, context, priority, name, onExecuteCb, onExecuteContext) {
 }
 
 _.extend(Scope.prototype,
+
     /** @lends {Scope.prototype} */ {
+
     /**
      * Used to identify that an object is a Scope
      * @type {Boolean}
      */
     isScope: true,
+
     /**
      * Queue function execution in the scheduler
      */
     trigger: function () {
         queueExec(this);
     },
+
     /**
      * Execute the wrapped function, tracking all values referenced through lookup(),
      * and binding to those data sources such that the function is re-executed whenever
@@ -119,6 +123,7 @@ _.extend(Scope.prototype,
             }
         }
     },
+
     /**
      * For each model which we've bound, tell it to unbind all events where this
      * scope is the context of the binding.
@@ -129,6 +134,7 @@ _.extend(Scope.prototype,
             propMap['__obj__'].off(null, null, self);
         });
     },
+
     /**
      * Destroy any execution scopes that were creation during execution of this function.
      */
@@ -138,6 +144,7 @@ _.extend(Scope.prototype,
         });
         this.subScopes = [];
     },
+
     /**
      * Destroy this scope.  Which means to unbind everything, destroy scopes recursively,
      * and ignore any execute calls which may already be queued in the scheduler.
