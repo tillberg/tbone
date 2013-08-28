@@ -67,20 +67,22 @@
     });
   });
 
-  var bound400i = tbone.models.base.make();
-  _.each(_.range(400), function(i) {
-    T(function() {
-      bound400i.query('count.' + i);
+  _.each([4, 40, 400], function (numListeners) {
+    var me = tbone.models.base.make();
+    _.each(_.range(numListeners), function(i) {
+      T(function() {
+        me('count.' + i);
+      });
     });
-  });
 
-  JSLitmus.test('T(prop.i, value) with 400 listeners & property changes', function(count) {
-    while (count--) {
-      for (var i = 0; i < 400; i++) {
-        bound400i.query('count.' + i, z++);
+    JSLitmus.test('T(prop.i, value) with ' + numListeners + ' listeners & property changes', function(count) {
+      while (count--) {
+        for (var i = 0; i < numListeners; i++) {
+          me.query('count.' + i, z++);
+        }
+        T.drain();
       }
-      T.drain();
-    }
+    });
   });
 
   JSLitmus.test('tbone.lookup subprop', function(count) {
