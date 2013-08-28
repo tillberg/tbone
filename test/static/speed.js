@@ -49,38 +49,36 @@
     while (count--) tbone('unbound.count', count);
   });
 
-  var bound20 = tbone.models.base.make();
-  _.each(_.range(20), function() {
-    T(function() {
-      bound20('count');
+  var z = 0;
+
+  _.each([20, 200, 2000], function (numListeners) {
+    var me = tbone.models.base.make();
+    _.each(_.range(numListeners), function() {
+      T(function() {
+        me('count');
+      });
+    });
+
+    JSLitmus.test('T(prop, value) with ' + numListeners + ' listeners', function(count) {
+      while (count--) {
+        me.query('count', z++);
+        T.drain();
+      }
     });
   });
 
-  JSLitmus.test('T(prop, value) with 20 listeners', function(count) {
-    while (count--) bound20('count', count);
-  });
-
-  JSLitmus.test('T(prop, value) with 20 listeners (with drain)', function(count) {
-    while (count--) {
-      bound20('count', count);
-      T.drain();
-    }
-  });
-
-  var bound2000 = tbone.models.base.make();
-  _.each(_.range(2000), function(i) {
+  var bound400i = tbone.models.base.make();
+  _.each(_.range(400), function(i) {
     T(function() {
-      bound2000('count');
+      bound400i.query('count.' + i);
     });
   });
 
-  JSLitmus.test('T(prop, value) with 2000 listeners', function(count) {
-    while (count--) bound2000('count', count);
-  });
-
-  JSLitmus.test('T(prop, value) with 2000 listeners (with drain)', function(count) {
+  JSLitmus.test('T(prop.i, value) with 400 listeners & property changes', function(count) {
     while (count--) {
-      bound2000('count', count);
+      for (var i = 0; i < 400; i++) {
+        bound400i.query('count.' + i, z++);
+      }
       T.drain();
     }
   });
