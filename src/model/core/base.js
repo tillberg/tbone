@@ -60,6 +60,7 @@ var baseModel = {
     },
     'initialize': noop,
     'on': function (name, callback, context) {
+        // XXX callback is not supported.  assumes context.trigger is the callback
         var parts = splitName(name);
         var events = this['_events'];
         var arg;
@@ -73,11 +74,12 @@ var baseModel = {
             }
             events = events[arg];
         }
-        var callbacks = events[''];
-        if (!callbacks) {
-            callbacks = events[''] = [];
+        var contexts = events[''];
+        if (!contexts) {
+            contexts = events[''] = {};
         }
-        callbacks.push({ callback: callback, context: context });
+        var contextId = uniqueId(context);
+        contexts[contextId] = context;
 
         /**
          * Wake up and reset this and other models that may be sleeping because
@@ -90,18 +92,12 @@ var baseModel = {
         // XXX doesn't clean up when callbacks list goes to zero length
         var stack = [ this['_events'] ];
         var next, callbacks, k;
+        var contextId = uniqueId(context);
 
         while (!!(next = stack.pop())) {
             for (k in next) {
                 if (k === '') {
-                    var newCallbacks = [];
-                    callbacks = next[''];
-                    for (var i = 0; i < next[k].length; i++) {
-                        if (callbacks[i].context !== context) {
-                            newCallbacks.push(callbacks[i]);
-                        }
-                    }
-                    next[''] = newCallbacks;
+                    delete next[''][contextId];
                 } else {
                     stack.push(next[k]);
                 }
@@ -122,9 +118,9 @@ var baseModel = {
             }
             events = events[arg];
         }
-        var callbacks = events[QUERY_SELF] || [];
-        for (var i = 0; i < callbacks.length; i++) {
-            callbacks[i].callback.call(callbacks[i].context);
+        var contexts = events[QUERY_SELF] || {};
+        for (var contextId in contexts) {
+            contexts[contextId].trigger.call(contexts[contextId]);
         }
     },
 

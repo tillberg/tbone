@@ -149,9 +149,9 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
         }
     }
     if (changed) {
-        var callbacks = evs[QUERY_SELF] || [];
-        for (n = 0; n < callbacks.length; n++) {
-            callbacks[n].callback.call(callbacks[n].context);
+        var contexts = evs[QUERY_SELF] || {};
+        for (var contextId in contexts) {
+            contexts[contextId].trigger.call(contexts[contextId]);
         }
     }
     return changed;
@@ -287,7 +287,7 @@ function query(flag, prop, value) {
     var id;
     var arg;
     var doSubQuery;
-    var parentCallbacks = [];
+    var parentCallbackContexts = {};
     var events = isSet && self['_events']['change'];
 
     while (true) {
@@ -360,7 +360,7 @@ function query(flag, prop, value) {
 
         _data = _data[arg];
         if (events) {
-            parentCallbacks = parentCallbacks.concat(events[QUERY_SELF] || []);
+            _.extend(parentCallbackContexts, events[QUERY_SELF] || {});
             events = events[arg];
         }
     }
@@ -430,13 +430,13 @@ function query(flag, prop, value) {
             value['Name'] = nameProp;
         }
 
-        if (parentCallbacks.length) {
+        if (!_.isEmpty(parentCallbackContexts)) {
             // If there are any changes at all, then we need to fire one or more
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
             if (recursiveDiff(self, events, _data, value, true, 0, false)) {
-                for (i = 0; i < parentCallbacks.length; i++) {
-                    parentCallbacks[i].callback.call(parentCallbacks[i].context);
+                for (var contextId in parentCallbackContexts) {
+                    parentCallbackContexts[contextId].trigger.call(parentCallbackContexts[contextId]);
                 }
             }
         } else {
