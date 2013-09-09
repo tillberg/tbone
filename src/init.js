@@ -132,16 +132,6 @@ var events = [];
 
 var viewRenders = 0;
 
-/**
- * Dynamic counter of how many ajax requests are inflight.
- * @type {Number}
- */
-var inflight = 0;
-
-function isReady () {
-    return !inflight && !schedulerQueue.length;
-}
-
 var logCallbacks = [];
 
 function log () {

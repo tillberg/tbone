@@ -63,6 +63,27 @@ function pop() {
 var drainQueueTimer;
 
 /**
+ * Dynamic counter of how many ajax requests are inflight.
+ * @type {Number}
+ */
+var inflight = 0;
+
+function isReady () {
+    return !inflight && !drainQueueTimer;
+}
+
+var isReadyTimer;
+
+function updateIsReady () {
+    if (!isReadyTimer) {
+        isReadyTimer = setTimeout(function () {
+            tbone['query']('__isReady__', isReady());
+            isReadyTimer = null;
+        }, 20);
+    }
+}
+
+/**
  * Queue the specified Scope for execution if it is not already queued.
  * @param  {Scope}   scope
  */
@@ -86,6 +107,7 @@ function queueExec (scope) {
          * If a timer to draing the queue is not already set, set one.
          */
         if (!drainQueueTimer && !(TBONE_DEBUG && frozen)) {
+            updateIsReady();
             drainQueueTimer = _.defer(drainQueue);
         }
     }
@@ -122,6 +144,7 @@ function drainQueue () {
     log(VERBOSE, 'scheduler', 'viewRenders', 'rendered <%=viewRenders%> total', {
         'viewRenders': viewRenders
     });
+    updateIsReady();
 }
 /**
  * Drain to the tbone drainQueue, executing all queued Scopes immediately.
