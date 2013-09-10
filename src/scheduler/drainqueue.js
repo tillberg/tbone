@@ -116,9 +116,50 @@ function queueExec (scope) {
 var frozen = false;
 
 /**
+ * Attempt to restore scrollTop around drainQueue calls.
+ *
+ * The basic problem is that removing and re-adding elements to the page
+ * will force the scroll up to the minimum height that the page gets to
+ * in the midst of that operation.
+ *
+ * This is really kind of kludgy... Is there a cleaner way to accomplish
+ * the same thing?
+
+ * Only supported for JQuery / when scrollTop is available on $.
+ */
+
+var $window = $(window);
+var origScrollTop = $.fn && $.fn.scrollTop;
+var scrollTopChangedProgrammatically;
+
+if (origScrollTop) {
+    /**
+     * Avoid clobbering intentional programmatic scrollTop changes that
+     * occur inside T-functions.  This is not foolproof, and only preserves
+     * changes made through $.fn.scrollTop.
+     *
+     * XXX This could frustrate users that try to change it some other way,
+     * only to find that somehow, mysteriously, the scrollTop change gets
+     * reverted.
+     */
+    $.fn.scrollTop = function (value) {
+        if (value) {
+            scrollTopChangedProgrammatically = true;
+        }
+        return origScrollTop.apply(this, arguments);
+    };
+}
+
+function queryScrollTop (value) {
+    return origScrollTop && (value ? $window.scrollTop(value) : $window.scrollTop());
+}
+
+/**
  * Drain the Scope execution queue, in priority order.
  */
 function drainQueue () {
+    scrollTopChangedProgrammatically = false;
+    var scrollTop = queryScrollTop();
     drainQueueTimer = null;
     var queueDrainStartTime = now();
     var scope;
@@ -145,7 +186,11 @@ function drainQueue () {
         'viewRenders': viewRenders
     });
     updateIsReady();
+    if (scrollTop && !scrollTopChangedProgrammatically && scrollTop !== queryScrollTop()) {
+        queryScrollTop(scrollTop);
+    }
 }
+
 /**
  * Drain to the tbone drainQueue, executing all queued Scopes immediately.
  * This is useful both for testing and MAYBE also for optimizing responsiveness by
