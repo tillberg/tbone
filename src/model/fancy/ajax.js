@@ -4,7 +4,7 @@
 
 var ajaxModel = asyncModel.extend({
 
-    'state': function (cb) {
+    'state': function (dataCallback) {
         var self = this;
         var myXhr;
         function complete() {
@@ -30,10 +30,16 @@ var ajaxModel = asyncModel.extend({
             sync('read', self, {
                 'dataType': 'text',
                 'success': function (resp) {
-                    cb(self.parse(resp));
-                    self['postFetch']();
-                    self.trigger('fetch');
-                    log(INFO, self, 'updated', self.attributes);
+                    /**
+                     * dataCallback returns true if this update was accepted (i.e.
+                     * is of the current async update generation).  So only fire
+                     * the postFetch callback, etc, when the update actually sticks.
+                     */
+                    if (dataCallback(self.parse(resp))) {
+                        self['postFetch']();
+                        self.trigger('fetch');
+                        log(INFO, self, 'updated', self.attributes);
+                    }
                 },
                 'complete': complete,
                 'beforeSend': function (xhr) {

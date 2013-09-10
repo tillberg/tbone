@@ -13,7 +13,9 @@ var asyncModel = boundModel.extend({
             if (generation === self.generation) {
                 self.abortCallback = null;
                 self['query']('', value);
+                return true;
             }
+            return undefined;
         });
         self.abortCallback = opts && opts['onAbort'];
     },
