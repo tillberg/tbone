@@ -17,7 +17,7 @@ var models = {};
 var collections = {};
 var templates = {};
 var views = {};
-var opts = TBONE_DEBUG ? { 'aliasCheck': true } : {};
+var opts = TBONE_DEBUG ? { 'aliasCheck': false } : {};
 
 /**
  * Scheduling priority constants
