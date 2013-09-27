@@ -20,5 +20,6 @@
   "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/appneta/tbone/issues"
-  }
+  },
+  "dependencies": {}
 }
