@@ -1,5 +1,24 @@
 ## TBone Change Log
 
+### 0.5.0
+
+- Event binding performance significantly improved in some cases.
+- TBone now binds scope contexts to property changes instead of
+  arbitrary functions.  This enables significant performance scaling
+  improvements with a large number of scopes bound to a model by
+  using the ID of the scope context to index those bindings.
+- Fixed a bug where drainQueue would not always eventually execute
+  all pending scopes if there were too many queued.
+- Bound models may now take naps by setting sleepEnabled to true.
+- Added a kludge to attempt to maintain the window scrollTop
+  position around drainQueue operations.  This may help prevent
+  "scrolling up" when content is temporary replaced/re-rendered,
+  modifying temporarily the total body height.
+- Added trackable T('__isReady__') property.  This can be used to
+  track whether there are any outstanding tbone model ajax requests.
+- (dev only) Alias-checking is now turned off by default.  Enable
+  by setting tbone.opts.aliasCheck to true.
+
 ### 0.4.2
 
 - In dev mode, many models now have Name properties automatically
