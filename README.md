@@ -60,7 +60,7 @@ Production: <script src="http://cdn.tbonejs.org/tbone-v0.5.0.min.js"></script>
 Modern browsers are best.  All unit tests pass in IE7+, though some parts, especially
 View updates, should be considered experimental for IE8 and older.
 
-## The Four Tenets of TBone
+## The Three (or Four) Tenets of TBone
 
 ### run: `T(fn)`
 
@@ -110,7 +110,7 @@ Binds **prop** to the live result of **fn**
 
 ### Model methods
 
-- `model(...)`: Models are callable, using the Four Tenets of TBone above.
+- `model(...)`: Models are callable, using the Three (or Four) Tenets of TBone above.
 - `model.query(prop, [value])`: Look up **prop**, and either return the current value
   or set it to **value** if specified.
 - `model.queryModel(prop)`: Look up **prop** and return the the model found there
