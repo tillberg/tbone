@@ -459,7 +459,7 @@ test('fire change event when adding a model', function () {
         count++;
     });
     T('mysub', function () {
-        return { else: 4 };
+        return { 'else': 4 };
     });
     T.drain();
     equal(count, 2);
