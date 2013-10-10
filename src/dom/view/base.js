@@ -81,8 +81,14 @@ var baseView = {
                     // XXX for IE compatibility, this might work:
                     // http://the-stickman.com/web-development/javascript/ ...
                     // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
-                    selectionStart = activeElement.selectionStart;
-                    selectionEnd = activeElement.selectionEnd;
+                    // Only try to get the selectionStart and selectionEnd for inputs that have
+                    // text in them.  I don't know if submit/button types are the only ones that
+                    // will fail here, so maybe it'd just be either to wrap this in a try/catch.
+                    var inputType = activeElement.getAttribute('type');
+                    if (inputType !== 'submit' && inputType !== 'button') {
+                        selectionStart = activeElement.selectionStart;
+                        selectionEnd = activeElement.selectionEnd;
+                    }
                 }
 
                 var $old = $('<div>').append(this.$el.children());
