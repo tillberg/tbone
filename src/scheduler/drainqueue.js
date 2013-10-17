@@ -78,6 +78,7 @@ function updateIsReady () {
     if (!isReadyTimer) {
         isReadyTimer = setTimeout(function () {
             tbone['query']('__isReady__', isReady());
+            tbone['query']('__ajaxInflight__', inflight);
             isReadyTimer = null;
         }, 20);
     }
