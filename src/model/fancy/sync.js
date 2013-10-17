@@ -21,8 +21,8 @@
 
     // Default options, unless specified.
     _.defaults(options || (options = {}), {
-      emulateHTTP: Backbone.emulateHTTP,
-      emulateJSON: Backbone.emulateJSON
+      emulateHTTP: tbone.emulateHTTP,
+      emulateJSON: tbone.emulateJSON
     });
 
     // Default JSON-request options.
