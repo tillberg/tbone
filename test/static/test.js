@@ -682,3 +682,16 @@ test('ajax sleep', function () {
     T.unset('ajaxFetched');
     T.unset('numAjaxReqs');
 });
+
+test('update date to same time', function () {
+    var me = tbone.make();
+    var count = 0;
+    me('date', new Date(1383851885098));
+    T(function () {
+        me('date');
+        count++;
+    });
+    me('date', new Date(1383851885098));
+    T.drain();
+    equal(count, 1);
+});
