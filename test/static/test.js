@@ -694,4 +694,8 @@ test('update date to same time', function () {
     me('date', new Date(1383851885098));
     T.drain();
     equal(count, 1);
+    // sanity check:
+    me('date', new Date(1383851885099));
+    T.drain();
+    equal(count, 2);
 });

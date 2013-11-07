@@ -96,6 +96,8 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
                 // something to a deep copy of itself.
                 if (isObject(prev) && isObject(curr)) {
                     exhaustive = true;
+                } else if (isDate(prev) && isDate(curr)) {
+                    changed = (prev.getTime() !== curr.getTime()) || changed;
                 } else {
                     changed = true;
                 }
@@ -141,6 +143,8 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
                     }
                 }
             }
+        } else if (isDate(prev) && isDate(curr)) {
+            changed = prev.getTime() !== curr.getTime();
         } else if (prev !== curr) {
             // at least one of prev and curr is a primitive (i.e. not arrays/objects)
             // and they are different.  thus, we've found a change and will pass this
