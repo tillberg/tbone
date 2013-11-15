@@ -434,8 +434,13 @@ function query(flag, prop, value) {
             }
         }
 
-        if (TBONE_DEBUG && isQueryable(value) && value['Name'] == null) {
-            value['Name'] = nameProp;
+        if (TBONE_DEBUG && isQueryable(value)) {
+            if (value['Name'] == null) {
+                value['Name'] = nameProp;
+            }
+            if (value.scope && value.scope['Name'] == null) {
+                value.scope['Name'] = 'model_' + nameProp;
+            }
         }
 
         if (!_.isEmpty(parentCallbackContexts)) {

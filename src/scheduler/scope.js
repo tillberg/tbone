@@ -20,7 +20,7 @@ function Scope(fn, context, priority, name, onExecuteCb, onExecuteContext) {
         fn: fn,
         context: context,
         priority: priority,
-        name: name,
+        'Name': name,
         onExecuteCb: onExecuteCb,
         onExecuteContext: onExecuteContext,
         subScopes: []
@@ -81,7 +81,7 @@ _.extend(Scope.prototype,
                      * This could be improved.  But it's better than not being able
                      * to see the errors at all.
                      */
-                    tbone.push('__errors__.' + self.name, (ex && ex.stack || ex) + '');
+                    tbone.push('__errors__.' + self['Name'], (ex && ex.stack || ex) + '');
                 }
             }
 
@@ -109,15 +109,15 @@ _.extend(Scope.prototype,
 
             if (TBONE_DEBUG) {
                 var executionTimeMs = myTimer.done();
-                log(VERBOSE, 'scheduler', 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
                     'priority': self.priority,
-                    'name': self.name,
+                    'name': self['Name'],
                     'duration': executionTimeMs
                 });
                 if (executionTimeMs > 10) {
-                    log(VERBOSE, 'scheduler', 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                    log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
                         'priority': self.priority,
-                        'name': self.name,
+                        'name': self['Name'],
                         'duration': executionTimeMs
                     });
                 }
