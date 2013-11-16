@@ -129,8 +129,8 @@ var frozen = false;
  * Only supported for JQuery / when scrollTop is available on $.
  */
 
-var $window = $(window);
-var origScrollTop = $.fn && $.fn.scrollTop;
+var origScrollTop = this.$ && $.fn && $.fn.scrollTop;
+var $window = origScrollTop && $(window);
 var scrollTopChangedProgrammatically;
 
 if (origScrollTop) {
