@@ -71,7 +71,7 @@ _.each(('break case catch continue debugger default delete do else finally for f
         'instanceof new return switch this throw try typeof var void while with ' +
         'Array Boolean Date Function Iterator Number Object RegExp String ' +
         'isFinite isNaN parseFloat parseInt Infinity JSON Math NaN undefined true false null ' +
-        '$ _ tbone T view'
+        '$ _ tbone T view window'
        ).split(' '), function (word) {
     neverLookup[word] = true;
 });
