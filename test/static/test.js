@@ -699,3 +699,15 @@ test('update date to same time', function () {
     T.drain();
     equal(count, 2);
 });
+
+test('runOnlyOnce', function () {
+    var me = tbone.make();
+    var count = 0;
+    T.runOnlyOnce(function () {
+        count += 1;
+        me('prop');
+    });
+    me('prop', 10);
+    T.drain();
+    equal(count, 1);
+});

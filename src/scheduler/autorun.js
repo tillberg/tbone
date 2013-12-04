@@ -43,3 +43,13 @@ function autorun(fn, context, priority, name, onExecuteCb, onExecuteContext, det
     // scopes when the associated view is destroyed.
     return scope;
 }
+
+function runOnlyOnce (fn) {
+    var alreadyRun;
+    autorun(function () {
+        if (!alreadyRun) {
+            fn();
+        }
+    });
+    alreadyRun = true;
+}

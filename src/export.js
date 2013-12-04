@@ -19,6 +19,8 @@ tbone['dontPatch'] = dontPatch;
 tbone['render'] = render;
 tbone['denullText'] = denullText;
 
+tbone['runOnlyOnce'] = runOnlyOnce;
+
 // Included in minified source, but intended for TESTING only:
 tbone['drain'] = drain;
 tbone['isReady'] = isReady;
