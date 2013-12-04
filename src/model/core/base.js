@@ -129,10 +129,21 @@ var baseModel = {
         }
     },
 
+    'runOnlyOnce': runOnlyOnce,
+
     'query': query,
 
     'queryModel': function (prop) {
         return this['query'](DONT_GET_DATA, prop);
+    },
+
+    // query `prop` without binding to changes in its value
+    'readSilent': function (prop) {
+        var tmp = recentLookups;
+        recentLookups = null;
+        var rval = this['query'](prop);
+        recentLookups = tmp;
+        return rval;
     },
 
     'idAttribute': 'id',

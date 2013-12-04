@@ -711,3 +711,15 @@ test('runOnlyOnce', function () {
     T.drain();
     equal(count, 1);
 });
+
+test('readSilent', function () {
+    var me = tbone.make();
+    var prop;
+    me('prop', 20);
+    T(function () {
+        prop = me.readSilent('prop');
+    });
+    me('prop', 30);
+    T.drain();
+    equal(prop, 20);
+});
