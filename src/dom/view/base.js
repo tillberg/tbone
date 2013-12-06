@@ -2,6 +2,8 @@
  * dom/view/base.js
  */
 
+var renderDepth = 0;
+
 var baseView = {
     make: function (opts) {
         var instance = {};
@@ -61,6 +63,9 @@ var baseView = {
         // This view may get a reset call at the same instant that another
         // view gets created to replace it.
         if (!self.destroyed) {
+            logRender(self);
+            renderDepth++;
+
             /**
              * Move all this view's children to another temporary DOM element.  This will be used as the
              * pseudo-parent element for the destroyDOM call.
@@ -144,6 +149,8 @@ var baseView = {
             }
             self['postRender']();
             viewRenders++;
+
+            renderDepth--;
         }
     },
 

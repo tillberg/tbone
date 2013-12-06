@@ -48,6 +48,7 @@ views['base'] = baseView;
 
 if (TBONE_DEBUG) {
     tbone['watchLog'] = watchLog;
+    tbone['showRenderTrees'] = showRenderTrees;
     tbone['getListeners'] = getListeners;
     tbone['hasViewListener'] = hasViewListener;
     tbone['onLog'] = onLog;

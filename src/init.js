@@ -128,6 +128,17 @@ function watchLog (name, level) {
     logLevels.event[name] = VERBOSE;
 }
 
+var _showRenderTrees = false;
+function showRenderTrees () {
+    _showRenderTrees = true;
+}
+
+function logRender (obj) {
+    if (TBONE_DEBUG && _showRenderTrees) {
+        console.log('render ' + _.times(renderDepth, function () { return '.'; }).join('') + obj.Name);
+    }
+}
+
 var events = [];
 
 var viewRenders = 0;
