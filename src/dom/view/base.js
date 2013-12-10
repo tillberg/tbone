@@ -28,7 +28,7 @@ var baseView = {
         self['$el'] = $(self['el']);
         self['el']['view'] = self;
         self.priority = self.domParentView ? self.domParentView.priority - 1 : BASE_PRIORITY_VIEW;
-        self.scope = autorun(self.render, self, self.priority, 'view_' + self['Name'],
+        self.scope = autorun(self.render, self.priority, self, 'view_' + self['Name'],
                              self.onScopeExecute, self, true);
     },
 

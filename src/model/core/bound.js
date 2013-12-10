@@ -14,7 +14,7 @@ var boundModel = baseModel.extend({
          * is loaded but before anything else gets updated.  We can't do that with setTimeout
          * or _.defer because that could possibly fire after drainQueue.
          */
-        self.scope = autorun(self.update, self, self.scopePriority,
+        self.scope = autorun(self.update, self.scopePriority, self,
                              self['Name'] && 'model_' + self['Name'],
                              self.onScopeExecute, self);
     },

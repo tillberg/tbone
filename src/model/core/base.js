@@ -30,7 +30,7 @@ var baseModel = {
         // Each TBone model/collection is an augmented copy of this TBoneModel function
         var instance = function TBoneModel (arg0, arg1, arg2) {
             if (typeof arg0 === 'function') {
-                return autorun(arg0, arg1, arg2);
+                return autorun(arg0, arg1);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
                 return instance['query'](arg0, boundModel.extend({ 'state': arg1 }).make());
             } else {

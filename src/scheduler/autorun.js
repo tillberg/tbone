@@ -11,12 +11,12 @@
  * block of code to repeat when its own referenced properties are updated, without
  * needing to re-render the entire view.
  * @param  {Function}                       fn        Function to invoke
- * @param  {Backbone.Model|Backbone.View}   context   Context to pass on invocation
  * @param  {number}                         priority  Scheduling priority - higher = sooner
+ * @param  {Backbone.Model|Backbone.View}   context   Context to pass on invocation
  * @param  {string}                         name      Name for debugging purposes
  * @return {Scope}                                    A new Scope created to wrap this function
  */
-function autorun(fn, context, priority, name, onExecuteCb, onExecuteContext, detached) {
+function autorun(fn, priority, context, name, onExecuteCb, onExecuteContext, detached) {
     // Default priority and name if not specified.  Priority is important in
     // preventing unnecessary refreshes of views/subscopes that may be slated
     // for destruction by a parent; the parent should have priority so as
