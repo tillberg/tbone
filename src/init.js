@@ -40,7 +40,7 @@ var BASE_PRIORITY_VIEW = 2000;
 /** @const */
 var BASE_PRIORITY_MODEL_ASYNC = 1000;
 
-var priorities = {
+var priority = {
     'highest': 10000,
     'bound': BASE_PRIORITY_MODEL_SYNC,
     'beforeViews': BASE_PRIORITY_VIEW + 500,
