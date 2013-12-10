@@ -111,13 +111,13 @@ _.extend(Scope.prototype,
                 var executionTimeMs = myTimer.done();
                 log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
                     'priority': self.priority,
-                    'name': self['Name'],
+                    'Name': self['Name'],
                     'duration': executionTimeMs
                 });
                 if (executionTimeMs > 10) {
                     log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
                         'priority': self.priority,
-                        'name': self['Name'],
+                        'Name': self['Name'],
                         'duration': executionTimeMs
                     });
                 }
