@@ -18,6 +18,7 @@ tbone['addTemplate'] = addTemplate;
 tbone['dontPatch'] = dontPatch;
 tbone['render'] = render;
 tbone['denullText'] = denullText;
+tbone['priorities'] = priorities;
 
 // Included in minified source, but intended for TESTING only:
 tbone['drain'] = drain;

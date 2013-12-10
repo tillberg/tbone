@@ -40,6 +40,16 @@ var BASE_PRIORITY_VIEW = 2000;
 /** @const */
 var BASE_PRIORITY_MODEL_ASYNC = 1000;
 
+var priorities = {
+    'highest': 10000,
+    'bound': BASE_PRIORITY_MODEL_SYNC,
+    'beforeViews': BASE_PRIORITY_VIEW + 500,
+    'view': BASE_PRIORITY_VIEW,
+    'afterViews': BASE_PRIORITY_VIEW - 500,
+    'async': BASE_PRIORITY_MODEL_ASYNC,
+    'lowest': 0
+};
+
 /**
  * We also use the drainQueue to initialize models & views.  By adding this delta
  * to priorities for initialization, we ensure that initialization happens in the
