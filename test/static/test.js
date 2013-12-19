@@ -723,3 +723,29 @@ test('readSilent', function () {
     T.drain();
     equal(prop, 20);
 });
+
+test('create bound model inside T-function', function () {
+    // bound models should run their own T-functions as top-level
+    // T-functions, not as children of any T-function that may have
+    // created them.
+    var me = tbone.make();
+    var val;
+    me('num', 3);
+    T(function () {
+        var num = me('num');
+        me('sub.' + num, function () {
+            return num * me('num');
+        });
+    });
+    T.drain();
+    equal(me('sub.3'), 3 * 3);
+    me('num', 5);
+    T.drain();
+    equal(me('sub.3'), 3 * 5);
+    equal(me('sub.5'), 5 * 5);
+    me('num', 7);
+    T.drain();
+    equal(me('sub.3'), 3 * 7);
+    equal(me('sub.5'), 5 * 7);
+    equal(me('sub.7'), 7 * 7);
+});

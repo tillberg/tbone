@@ -16,7 +16,7 @@ var boundModel = baseModel.extend({
          */
         self.scope = autorun(self.update, self.scopePriority, self,
                              self['Name'] && 'model_' + self['Name'],
-                             self.onScopeExecute, self);
+                             self.onScopeExecute, self, true);
     },
 
     scopePriority: BASE_PRIORITY_MODEL_SYNC,
