@@ -749,3 +749,22 @@ test('create bound model inside T-function', function () {
     equal(me('sub.5'), 5 * 7);
     equal(me('sub.7'), 7 * 7);
 });
+
+test('model destroy', function () {
+    var me = tbone.make();
+    var val;
+    me('num', 42);
+    me('prop', function () {
+        val = me('num');
+        return val;
+    });
+    var prop = me.queryModel('prop');
+    equal(val, 42);
+    T.drain();
+    equal(me('prop'), 42);
+    prop.destroy();
+    me('num', 43);
+    T.drain();
+    equal(val, 42);
+    equal(me('prop'), undefined);
+});

@@ -81,6 +81,13 @@ var boundModel = baseModel.extend({
         }
     },
 
+    'destroy': function () {
+        if (this.scope) {
+            this.scope.destroy();
+        }
+        this['unset'](QUERY_SELF);
+    },
+
     /**
      * returns the new state, synchronously
      */
