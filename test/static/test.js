@@ -768,3 +768,29 @@ test('model destroy', function () {
     equal(val, 42);
     equal(me('prop'), undefined);
 });
+
+test('async model with rolling update', function () {
+    var callbacks = [];
+    var me = tbone.make();
+    var model = tbone.models.async.make({
+        state: function (cb) {
+            me('prop');
+            callbacks.push(cb);
+        }
+    });
+    equal(callbacks.length, 1);
+    equal(model(''), null);
+    me('prop', 1);
+    T.drain();
+    me('prop', 2);
+    T.drain();
+    equal(callbacks.length, 3);
+    callbacks[0]('hello'); // accepted - newer generation than last update
+    equal(model(''), 'hello');
+
+    callbacks[2]('yo');
+    equal(model(''), 'yo');
+
+    callbacks[1]('hi'); // rejected - old generation
+    equal(model(''), 'yo');
+});

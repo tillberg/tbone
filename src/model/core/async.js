@@ -5,12 +5,14 @@
 var asyncModel = boundModel.extend({
     _update: function () {
         var self = this;
-        // XXX do we want to allow rolling updates?  i.e., instead of only
-        // allowing updates from the current generation, allow updates
-        // greater than or equal to the generation of the last update?
-        var generation = self.generation = (self.generation || 0) + 1;
+        // Allow updates that are as new or newer than the last *update* generation.
+        // This allows rolling updates, where the model may have one or more requests
+        // in flight for newer data, yet it will still accept earlier-generation
+        // data that arrives as long as it is newer than what it had before.
+        var reqGeneration = self.reqGeneration = (self.reqGeneration || 0) + 1;
         var opts = self['state'](function (value) {
-            if (generation === self.generation) {
+            if (reqGeneration >= (self.updateGeneration || 0)) {
+                self.updateGeneration = reqGeneration;
                 self.abortCallback = null;
                 self['query']('', value);
                 return true;
