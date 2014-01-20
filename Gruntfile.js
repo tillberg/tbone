@@ -19,9 +19,9 @@ module.exports = function(grunt) {
       src: {
         src: ['src/**/*.js']
       },
-      test: {
-        src: ['test/**/*.js']
-      }
+      //test: {
+      //  src: ['test/**/*.js']
+      //}
     },
 
     concat: {
@@ -95,7 +95,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-recess');
 
   // Default task(s).
-  grunt.registerTask('default', ['clean', 'jshint', 'concat', 'qunit', 'uglify']);
+  grunt.registerTask('default', ['clean', 'jshint', 'qunit', 'concat', 'uglify']);
   grunt.registerTask('server', ['default', 'connect']);
 
 };
