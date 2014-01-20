@@ -1,23 +1,33 @@
 {
   "name": "tbone",
   "version": "0.3.4",
+  "author": "Dan Tillberg <dan@tillberg.us>",
   "description": "Automagic event-binding for Backbone",
-  "main": "build/tbone.debug.js",
+  "license": "MIT",
+
+  "main": "dist/tbone.js",
+
   "directories": {
     "doc": "docs",
     "example": "examples",
     "test": "test"
   },
+
   "repository": {
     "type": "git",
     "url": "git://github.com/appneta/tbone.git"
   },
-  "author": "Dan Tillberg <dan@tillberg.us>",
-  "license": "MIT",
-  "readmeFilename": "README.md",
+
   "bugs": {
     "url": "https://github.com/appneta/tbone/issues"
   },
+
+  "dependencies": {
+    "jquery": "~1.8.3",
+    "underscore": "~1.4.4",
+    "backbone": "~0.9.2",
+  },
+
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-clean": "~0.5.0",
@@ -26,8 +36,8 @@
     "grunt-contrib-jshint": "~0.7.2",
     "grunt-contrib-qunit": "~0.3.0",
     "grunt-contrib-uglify": "~0.2.7",
-    "grunt-recess": "~0.4.0"
   },
+
   "scripts": {
     "test": "grunt"
   }
