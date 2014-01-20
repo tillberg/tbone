@@ -86,16 +86,14 @@ module.exports = function(grunt) {
   });
 
   // These plugins provide necessary tasks.
-  grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.loadNpmTasks('grunt-contrib-connect');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-qunit');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-recess');
+  require('load-grunt-tasks')(grunt);
+
+  // Load custom build tasks
+  grunt.loadTasks("build");
 
   // Default task(s).
-  grunt.registerTask('default', ['clean', 'jshint', 'concat', 'qunit', 'uglify']);
+  grunt.registerTask('test', ['templates', 'qunit']);
+  grunt.registerTask('default', ['clean', 'jshint', 'concat', 'test', 'uglify']);
   grunt.registerTask('server', ['default', 'connect']);
 
 };
