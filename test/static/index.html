@@ -4,23 +4,20 @@
   <meta charset='utf8'>
   <title>TBone Test Suite</title>
   <link rel="stylesheet" href="lib/qunit.css" type="text/css" media="screen">
+
+  <!-- dependencies -->
   <script src="lib/json2.js"></script>
-  <script>
-    document.write('<script src=lib/' +
-    ('__proto__' in {} ? 'zepto' : 'jquery-1.8.3') +
-    '.js><\/script>')
-  </script>
+  <script src="lib/jquery-1.8.3.js"></script>
   <script src="lib/qunit.js"></script>
   <script src="lib/jslitmus.js"></script>
   <script src="lib/underscore.js"></script>
   <script src="lib/underscore.string.js"></script>
   <script src="lib/backbone.js"></script>
-  <script type="text/javascript">
-    var TBONE_DEBUG = true;
-    var release = !!location.href.match(/mode=release/);
-    document.write('<script src="tbone' + (release ? '.min' : '') + '.js"><\/script>');
-  </script>
+
+  <!-- tbone -->
+  <script src="../../dist/tbone.js"></script>
   <script src="templates.js"></script>
+
   <script type="text/javascript">
     var jslitmus_tests = [];
     if (navigator.userAgent.match(/PhantomJS/)) {
@@ -59,8 +56,11 @@
   <br>
   <h1 id="qunit-header"><a href="#">TBone Speed Suite</a></h1>
   <div id="jslitmus_container" style="margin: 20px 10px;"></div>
+
+  <!-- tests -->
   <script src="test.js"></script>
   <script src="modeltest.js"></script>
   <script src="speed.js"></script>
+
 </body>
 </html>
