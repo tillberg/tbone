@@ -8,9 +8,6 @@
     "example": "examples",
     "test": "test"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git://github.com/appneta/tbone.git"
@@ -21,5 +18,17 @@
   "bugs": {
     "url": "https://github.com/appneta/tbone/issues"
   },
-  "dependencies": {}
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-connect": "~0.5.0",
+    "grunt-contrib-jshint": "~0.7.2",
+    "grunt-contrib-qunit": "~0.3.0",
+    "grunt-contrib-uglify": "~0.2.7",
+    "grunt-recess": "~0.4.0"
+  },
+  "scripts": {
+    "test": "grunt"
+  }
 }
