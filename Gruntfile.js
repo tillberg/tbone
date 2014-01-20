@@ -62,6 +62,7 @@ module.exports = function(grunt) {
 
     uglify: {
       options: {
+        sourceMap: 'dist/<%= pkg.name %>.js.map',
         banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
       },
       build: {
