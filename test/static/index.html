@@ -3,21 +3,21 @@
 <head>
   <meta charset='utf8'>
   <title>TBone Test Suite</title>
-  <link rel="stylesheet" href="lib/qunit.css" type="text/css" media="screen">
 
   <!-- dependencies -->
-  <script src="lib/json2.js"></script>
-  <script src="lib/jquery-1.8.3.js"></script>
-  <script src="lib/qunit.js"></script>
-  <script src="lib/jslitmus.js"></script>
-  <script src="lib/underscore.js"></script>
-  <script src="lib/underscore.string.js"></script>
-  <script src="lib/backbone.js"></script>
+  <link rel="stylesheet" href="vendor/qunit.css" type="text/css" media="screen">
+  <script src="vendor/jquery-1.8.3.js"></script>
+  <script src="vendor/qunit.js"></script>
+  <script src="vendor/jslitmus.js"></script>
+  <script src="vendor/underscore.js"></script>
+  <script src="vendor/underscore.string.js"></script>
+  <script src="vendor/backbone.js"></script>
 
   <!-- tbone -->
   <script src="../../dist/tbone.js"></script>
   <script src="templates.js"></script>
 
+  <!-- not sure what this is doing -->
   <script type="text/javascript">
     var jslitmus_tests = [];
     if (navigator.userAgent.match(/PhantomJS/)) {
@@ -45,6 +45,7 @@
     }
   </script>
 </head>
+
 <body>
   <div id="qunit"></div>
   <div id="qunit-fixture">
@@ -58,9 +59,9 @@
   <div id="jslitmus_container" style="margin: 20px 10px;"></div>
 
   <!-- tests -->
-  <script src="test.js"></script>
-  <script src="modeltest.js"></script>
-  <script src="speed.js"></script>
+  <script src="test_core.js"></script>
+  <script src="test_model.js"></script>
+  <script src="test_speed.js"></script>
 
 </body>
 </html>
