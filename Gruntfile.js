@@ -53,7 +53,7 @@ module.exports = function(grunt) {
           'src/dom/view/render.js',
           'src/dom/view/create.js',
           'src/export.js',
-          //'src/ext/bbsupport.js' if backbone else None,
+          'src/ext/bbsupport.js',
           'src/snippet/footer.js'
         ],
         dest: 'dist/<%= pkg.name %>.js',
@@ -62,16 +62,16 @@ module.exports = function(grunt) {
 
     uglify: {
       options: {
-        banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+        banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
       },
       build: {
-        src: 'js/<%= pkg.name %>.js',
-        dest: 'dist/js/<%= pkg.name %>.min.js'
+        src: 'dist/<%= pkg.name %>.js',
+        dest: 'dist/<%= pkg.name %>.min.js'
       }
     },
 
     qunit: {
-      files: ['js/tests/*.html']
+      files: ['test/static/index.html']
     },
 
     connect: {
@@ -95,7 +95,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-recess');
 
   // Default task(s).
-  grunt.registerTask('default', ['clean', 'jshint', 'qunit', 'concat', 'uglify']);
+  grunt.registerTask('default', ['clean', 'jshint', 'concat', 'qunit', 'uglify']);
   grunt.registerTask('server', ['default', 'connect']);
 
 };
