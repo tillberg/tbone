@@ -10,7 +10,7 @@
  * @return {string}     Unique ID assigned to this object
  */
 function uniqueId(obj) {
-    return obj['tboneid'] = obj['tboneid'] || nextId++;
+    return obj['tboneid'] = obj['tboneid'] || nextId++; // jshint ignore:line
 }
 var nextId = 1;
 
