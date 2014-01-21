@@ -9,9 +9,8 @@ if (typeof exports !== 'undefined') {
     _ = root['_'];
 }
 
-
 /** @const {boolean} */
-var TBONE_DEBUG = root['TBONE_DEBUG'] !== false;
+var TBONE_DEBUG = !TBONE_BUILD_RELEASE && !!root['TBONE_DEBUG'];
 
 var models = {};
 var collections = {};
