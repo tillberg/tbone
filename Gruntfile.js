@@ -84,6 +84,13 @@ module.exports = function(grunt) {
       }
     },
 
+    watch: {
+      scripts: {
+        files: ['src/**/*.js'],
+        tasks: ['jshint']
+      },
+    }
+
   });
 
   // These plugins provide necessary tasks.
