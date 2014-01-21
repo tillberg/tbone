@@ -62,8 +62,9 @@ module.exports = function(grunt) {
 
     uglify: {
       options: {
+        report: 'min',
         sourceMap: 'dist/<%= pkg.name %>.js.map',
-        banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+        banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */'
       },
       build: {
         src: 'dist/<%= pkg.name %>.js',
@@ -85,9 +86,13 @@ module.exports = function(grunt) {
     },
 
     watch: {
-      scripts: {
+      code: {
         files: ['src/**/*.js'],
         tasks: ['jshint']
+      },
+      test: {
+        files: ['test/**/*.js'],
+        tasks: ['test']
       },
     }
 
