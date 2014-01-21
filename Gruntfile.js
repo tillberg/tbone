@@ -72,6 +72,24 @@ module.exports = function(grunt) {
       }
     },
 
+    'closure-compiler': {
+      all: {
+        closurePath: 'build/closure_compiler',
+        js: 'dist/<%= pkg.name %>.js',
+        jsOutputFile: 'dist/<%= pkg.name %>.min.js',
+        options: {
+          compilation_level: 'ADVANCED_OPTIMIZATIONS',
+          externs: 'build/closure_compiler/externs/*.js',
+          define: [
+            '"TBONE_BUILD_RELEASE=true"'
+          ],
+          create_source_map: 'dist/<%= pkg.name %>.js.map',
+          source_map_format: 'v3',
+        },
+        noreport: true,
+      }
+    },
+
     qunit: {
       files: ['test/static/index.html']
     },
@@ -106,7 +124,7 @@ module.exports = function(grunt) {
 
   // Default task(s).
   grunt.registerTask('test', ['templates', 'qunit']);
-  grunt.registerTask('default', ['clean', 'jshint', 'concat', 'test', 'uglify']);
+  grunt.registerTask('default', ['clean', 'jshint', 'concat', 'test', 'closure-compiler']);
   grunt.registerTask('server', ['default', 'connect']);
 
 };
