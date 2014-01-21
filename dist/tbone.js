@@ -1,3 +1,6 @@
+/** @define {boolean} */
+var TBONE_BUILD_RELEASE = false;
+
 /* jshint ignore:start */
 (function(){
 /* jshint ignore:end */
@@ -13,9 +16,8 @@ if (typeof exports !== 'undefined') {
     _ = root['_'];
 }
 
-
 /** @const {boolean} */
-var TBONE_DEBUG = root['TBONE_DEBUG'] !== false;
+var TBONE_DEBUG = !TBONE_BUILD_RELEASE && !!root['TBONE_DEBUG'];
 
 var models = {};
 var collections = {};
@@ -2866,7 +2868,6 @@ if (Backbone) {
              * For set operations, we only want to look up the parent of the property we
              * are modifying; pop the final property we're setting from args and save it
              * for later.
-             * @type {string}
              */
             setprop = args[args.length - 1];
         }
