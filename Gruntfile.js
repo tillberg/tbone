@@ -106,11 +106,14 @@ module.exports = function(grunt) {
     watch: {
       code: {
         files: ['src/**/*.js'],
-        tasks: ['jshint']
+        tasks: ['default']
       },
       test: {
-        files: ['test/**/*.js'],
+        files: ['test/**/*'],
         tasks: ['test']
+      },
+      options: {
+        atBegin: true
       },
     }
 
