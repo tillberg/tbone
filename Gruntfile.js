@@ -102,7 +102,7 @@ module.exports = function(grunt) {
   require('load-grunt-tasks')(grunt);
 
   // Load custom build tasks
-  grunt.loadTasks("tasks");
+  grunt.loadTasks("build/tasks");
 
   // Default task(s).
   grunt.registerTask('test', ['templates', 'qunit']);
