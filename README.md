@@ -274,6 +274,6 @@ Three properties can be specified in these tbone attributes:
 
 ## License
 
-Copyright (c) 2012-2013 Dan Tillberg, AppNeta
+Copyright (c) 2012-2014 Dan Tillberg, AppNeta
 
 TBone is freely redistributable under the MIT License.  See LICENSE for details.
