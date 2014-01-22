@@ -111,7 +111,11 @@ module.exports = function(grunt) {
       qunit: {
         src: 'dist/*',
         dest: 'test/'
-      }
+      },
+      external: process.env.TARGET_DIR ? {
+        src: ['dist/*', '!dist/*.gz'],
+        dest: process.env.TARGET_DIR,
+      } : {}
     },
 
     qunit: {
@@ -140,7 +144,7 @@ module.exports = function(grunt) {
     watch: {
       code: {
         files: ['src/**/*.js', 'test/**/*'],
-        tasks: ['_build_with_tests']
+        tasks: ['_build_with_tests', 'copy:external']
       },
       options: {
         atBegin: true
@@ -159,7 +163,9 @@ module.exports = function(grunt) {
   grunt.registerTask('compile', ['get_closure', 'closureCompiler']);
   grunt.registerTask('test_debug', ['templates', 'copy:qunit', 'qunit:debug']);
   grunt.registerTask('test_release', ['templates', 'copy:qunit', 'qunit:release']);
-  grunt.registerTask('build', ['clean', 'jshint', 'concat', 'compile', 'compress:release']);
+  grunt.registerTask('build', [
+    'clean', 'jshint', 'concat', 'compile', 'compress:release', 'copy:external'
+  ]);
   grunt.registerTask('_build_with_tests', [
     'clean', 'jshint', 'concat', 'test_debug', 'compile', 'test_release', 'compress:release'
   ]);
