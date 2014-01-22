@@ -17,7 +17,7 @@ module.exports = function(grunt) {
         src: 'Gruntfile.js'
       },
       src: {
-        src: ['src/**/*.js']
+        src: ['src/**/*.js', '!src/snippet/*']
       },
       //test: {
       //  src: ['test/**/*.js']
