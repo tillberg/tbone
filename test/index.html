@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf8'>
+  <title>TBone Test Suite</title>
+
+  <!-- dependencies -->
+  <link rel="stylesheet" href="vendor/qunit.css" type="text/css" media="screen">
+  <script src="vendor/jquery-1.8.3.js"></script>
+  <script src="vendor/qunit.js"></script>
+  <script src="vendor/jslitmus.js"></script>
+  <script src="vendor/underscore.js"></script>
+  <script src="vendor/underscore.string.js"></script>
+  <script src="vendor/backbone.js"></script>
+
+  <!-- tbone -->
+  <script type="text/javascript">
+    // Disable console messages when running via Grunt
+    var TBONE_DEBUG = !navigator.userAgent.match(/PhantomJS/);
+    var release = !!location.href.match(/mode=release/);
+    document.write('<scr' + 'ipt src="dist/tbone' + (release ? '.min' : '') + '.js"><\/scr' + 'ipt>');
+  </script>
+</head>
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+  <br>
+  <br>
+  <h1 id="qunit-header"><a href="#">TBone Speed Suite</a></h1>
+  <div id="jslitmus_container" style="margin: 20px 10px;"></div>
+
+  <!-- test assets -->
+  <script src="templates.js"></script>
+
+  <!-- tests -->
+  <script src="test_core.js"></script>
+  <script src="test_model.js"></script>
+  <script src="test_speed.js"></script>
+</body>
+</html>

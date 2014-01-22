@@ -60,5 +60,5 @@ function createView(name, base, fn, opts) {
             fn.call(this);
         };
     }
-    return views[name] = base.extend(opts);
+    return views[name] = base.extend(opts); // jshint ignore:line
 }

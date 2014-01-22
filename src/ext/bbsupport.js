@@ -40,7 +40,6 @@ if (Backbone) {
              * For set operations, we only want to look up the parent of the property we
              * are modifying; pop the final property we're setting from args and save it
              * for later.
-             * @type {string}
              */
             setprop = args[args.length - 1];
         }
