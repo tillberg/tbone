@@ -74,7 +74,7 @@ module.exports = function(grunt) {
 
     closureCompiler: {
       options: {
-        compilerFile: 'build/closure_compiler/build/compiler.jar',
+        compilerFile: 'build/closure_compiler/google/compiler.jar',
         checkModified: true,
         compilerOpts: {
           compilation_level: 'ADVANCED_OPTIMIZATIONS',
@@ -156,11 +156,12 @@ module.exports = function(grunt) {
   grunt.loadTasks("build/tasks");
 
   // Default task(s).
+  grunt.registerTask('compile', ['get_closure', 'closureCompiler']);
   grunt.registerTask('test_debug', ['templates', 'copy:qunit', 'qunit:debug']);
   grunt.registerTask('test_release', ['templates', 'copy:qunit', 'qunit:release']);
-  grunt.registerTask('build', ['clean', 'jshint', 'concat', 'closureCompiler', 'compress:release']);
+  grunt.registerTask('build', ['clean', 'jshint', 'concat', 'compile', 'compress:release']);
   grunt.registerTask('_build_with_tests', [
-    'clean', 'jshint', 'concat', 'test_debug', 'closureCompiler', 'test_release', 'compress:release'
+    'clean', 'jshint', 'concat', 'test_debug', 'compile', 'test_release', 'compress:release'
   ]);
   grunt.registerTask('live', ['connect', 'watch']);
   grunt.registerTask('build_with_tests', ['connect', '_build_with_tests']);

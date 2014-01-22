@@ -4,7 +4,7 @@
 
 module.exports = function( grunt ) {
   grunt.registerTask('get_closure', 'Task to download closure compiler JAR', function() {
-    if (!require('fs').existsSync('build/closure_compiler/build/compiler.jar')) {
+    if (!require('fs').existsSync('build/closure_compiler/google/compiler.jar')) {
       grunt.log.writeln('Fetching closure compiler...');
       var done = this.async();
       var cmd = [
@@ -13,7 +13,7 @@ module.exports = function( grunt ) {
         'rm compiler-20131014.tar.gz'
       ].join(';');
       var proc = require('child_process')
-        .spawn('sh', ['-c', cmd], { cwd: 'build/closure_compiler/build/' });
+        .spawn('sh', ['-c', cmd], { cwd: 'build/closure_compiler/google/' });
       proc.on('close', function () {
         grunt.log.writeln('Closure compiler download complete.');
         done();
