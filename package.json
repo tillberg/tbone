@@ -17,6 +17,7 @@
   "bugs": {
     "url": "https://github.com/appneta/tbone/issues"
   },
+  "dependencies": {},
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-clean": "~0.5.0",
