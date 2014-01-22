@@ -1,9 +1,7 @@
+;
 /** @define {boolean} */
 var TBONE_BUILD_RELEASE = false;
-
-/* jshint ignore:start */
 (function(){
-/* jshint ignore:end */
 
 var root;
 var _;
@@ -3192,6 +3190,4 @@ if (Backbone) {
     });
 }
 
-/* jshint ignore:start */
 }());
-/* jshint ignore:end */
