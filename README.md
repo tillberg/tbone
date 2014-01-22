@@ -60,6 +60,38 @@ Production: <script src="http://cdn.tbonejs.org/tbone-v0.5.0.min.js"></script>
 Modern browsers are best.  All unit tests pass in IE7+, though some parts, especially
 View updates, should be considered experimental for IE8 and older.
 
+## Contribute
+
+Bugfix?  Cool new feature?  Alternate style?  Send us a pull request!
+
+Below are some instructions for developing with TBone:
+
+1. Make sure [Node.js](http://nodejs.org/) is installed. We recommend you use [NVM](https://github.com/creationix/nvm).
+
+1. Clone TBone
+
+    ```bash
+    $ git clone git@github.com:appneta/tbone.git
+    $ cd tbone
+    ```
+
+1. We use [Grunt](http://gruntjs.com/) to develop, test, and compile TBone
+   into `/dist`:
+
+    ```bash
+    $ cd tbone
+    $ npm install -g grunt-cli
+    $ npm install
+    $ grunt
+    ```
+
+1. Create a feature branch and make some code changes
+
+1. Add unit tests (in `/test`) and ensure your tests pass by running
+   `grunt`.
+
+1. Send us a detailed pull request explaining your changes.
+
 ## The Three (or Four) Tenets of TBone
 
 ### run: `T(fn)`
