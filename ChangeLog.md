@@ -1,5 +1,22 @@
 ## TBone Change Log
 
+### 0.6.0
+
+- Refactored build & packaging process to use Grunt.
+- Async models now support rolling updates.
+- Add tbone.runOnlyOnce and model.readSilent functions to more
+  easily enable stateful behavior when desired.
+- No longer fire change events when overwriting a Date with
+  an equivalent Date.
+- Bound models' scopes now run detached from any T-function they
+  may be declared in.
+- Add model.destroy function to destroy the model's scope.
+- Expose tbone.priority and make priority the second (optional)
+  argument to autorun / T(fn, ...).
+- Add __ajaxReady__ and __numAjaxInFlight__ live properties.
+- Add tbone.showRenderTrees to aid in debugging render performance.
+- Fixed many instances of auto-`Name`ing objects in debug mode.
+
 ### 0.5.0
 
 - Event binding performance significantly improved in some cases.
