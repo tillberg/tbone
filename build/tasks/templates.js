@@ -17,9 +17,9 @@ module.exports = function( grunt ) {
     });
 
     var templatesJS = 'var templates = ' + JSON.stringify(templates) + ';';
-    fs.writeFileSync('test/static/templates.js', templatesJS);
+    fs.writeFileSync('test/templates.js', templatesJS);
 
-    grunt.log.writeln('File "test/static/templates.js" created.');
+    grunt.log.writeln('File "test/templates.js" created.');
   });
 
 }

@@ -90,32 +90,45 @@ module.exports = function(grunt) {
       }
     },
 
+    copy: {
+      qunit: {
+        src: 'dist/*',
+        dest: 'test/'
+      }
+    },
+
     qunit: {
-      files: ['test/static/index.html']
+      debug: {
+        options: {
+          urls: ['http://localhost:9238/index.html']
+        }
+      },
+      release: {
+        options: {
+          urls: ['http://localhost:9238/index.html?mode=release']
+        }
+      }
     },
 
     connect: {
       server: {
         options: {
-          keepalive: true,
-          port: 3000,
+          hostname: '*',
+          port: 9238,
+          base: 'test/',
         }
       }
     },
 
     watch: {
       code: {
-        files: ['src/**/*.js'],
-        tasks: ['default']
-      },
-      test: {
-        files: ['test/**/*'],
-        tasks: ['test']
+        files: ['src/**/*.js', 'test/**/*'],
+        tasks: ['_build_with_tests']
       },
       options: {
         atBegin: true
-      },
-    }
+      }
+    },
 
   });
 
@@ -126,8 +139,13 @@ module.exports = function(grunt) {
   grunt.loadTasks("build/tasks");
 
   // Default task(s).
-  grunt.registerTask('test', ['templates', 'qunit']);
-  grunt.registerTask('default', ['clean', 'jshint', 'concat', 'test', 'closure-compiler']);
-  grunt.registerTask('server', ['default', 'connect']);
-
+  grunt.registerTask('test_debug', ['templates', 'copy:qunit', 'qunit:debug']);
+  grunt.registerTask('test_release', ['templates', 'copy:qunit', 'qunit:release']);
+  grunt.registerTask('build', ['clean', 'jshint', 'concat', 'closure-compiler']);
+  grunt.registerTask('_build_with_tests', [
+    'clean', 'jshint', 'concat', 'test_debug', 'closure-compiler', 'test_release',
+  ]);
+  grunt.registerTask('live', ['connect', 'watch']);
+  grunt.registerTask('build_with_tests', ['connect', '_build_with_tests']);
+  grunt.registerTask('default', ['build']);
 };

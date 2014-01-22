@@ -14,54 +14,27 @@
   <script src="vendor/backbone.js"></script>
 
   <!-- tbone -->
-  <script src="../../dist/tbone.js"></script>
-  <script src="templates.js"></script>
-
-  <!-- not sure what this is doing -->
   <script type="text/javascript">
-    var jslitmus_tests = [];
-    if (navigator.userAgent.match(/PhantomJS/)) {
-      QUnit.done(function( details ) {
-        window.qunit_results = _.extend(details, {
-          failures: _.map($('#qunit-tests > .fail'), function(el) {
-            var $fail = $(el);
-            return [
-              $fail.find('.test-name').text(),
-              $fail.find('.fail > span').text(),
-              $fail.find('.fail > table').text()
-            ].join('\n');
-          })
-        });
-        // if (release) { JSLitmus.runAll(); }
-      });
-
-      /** Disable the regular UI for PhantomJS, since it makes API calls to google
-       * and tinyurl that nobody will care about.
-       */
-      JSLitmus.renderAll = JSLitmus.renderTest = function() { };
-      JSLitmus.renderChart = function() {
-        window.jslitmus_done = true;
-      };
-    }
+    // Disable console messages when running via Grunt
+    var TBONE_DEBUG = !navigator.userAgent.match(/PhantomJS/);
+    var release = !!location.href.match(/mode=release/);
+    document.write('<scr' + 'ipt src="dist/tbone' + (release ? '.min' : '') + '.js"><\/scr' + 'ipt>');
   </script>
 </head>
-
 <body>
   <div id="qunit"></div>
-  <div id="qunit-fixture">
-    <div id='testElement'>
-      <h1>Test</h1>
-    </div>
-  </div>
+  <div id="qunit-fixture"></div>
   <br>
   <br>
   <h1 id="qunit-header"><a href="#">TBone Speed Suite</a></h1>
   <div id="jslitmus_container" style="margin: 20px 10px;"></div>
 
+  <!-- test assets -->
+  <script src="templates.js"></script>
+
   <!-- tests -->
   <script src="test_core.js"></script>
   <script src="test_model.js"></script>
   <script src="test_speed.js"></script>
-
 </body>
 </html>
