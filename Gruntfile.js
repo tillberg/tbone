@@ -6,7 +6,7 @@ module.exports = function(grunt) {
 
     // Task Configuration
     clean: {
-      dist: ['dist']
+      dist: ['dist', 'test/dist']
     },
 
     jshint: {
@@ -72,21 +72,38 @@ module.exports = function(grunt) {
       }
     },
 
-    'closure-compiler': {
-      all: {
-        closurePath: 'build/closure_compiler',
-        js: 'dist/<%= pkg.name %>.js',
-        jsOutputFile: 'dist/<%= pkg.name %>.min.js',
-        options: {
+    closureCompiler: {
+      options: {
+        compilerFile: 'build/closure_compiler/build/compiler.jar',
+        checkModified: true,
+        compilerOpts: {
           compilation_level: 'ADVANCED_OPTIMIZATIONS',
-          externs: 'build/closure_compiler/externs/*.js',
-          define: [
-            '"TBONE_BUILD_RELEASE=true"'
-          ],
+          externs: ['build/closure_compiler/externs/*.js'],
+          define: ["'TBONE_BUILD_RELEASE=true'"],
           create_source_map: 'dist/<%= pkg.name %>.js.map',
           source_map_format: 'v3',
+          // warning_level: 'verbose',
+          // jscomp_off: ['checkTypes', 'fileoverviewTags'],
+          // summary_detail_level: 3,
+          // output_wrapper: '"(function(){%output%}).call(this);"'
+        }
+      },
+      all: {
+        src: 'dist/<%= pkg.name %>.js',
+        dest: 'dist/<%= pkg.name %>.min.js',
+      }
+    },
+
+    compress: {
+      release: {
+        options: {
+          mode: 'gzip',
+          level: 9,
         },
-        noreport: true,
+        pretty: true,
+        expand: true,
+        src: 'dist/tbone.min.js',
+        dest: './',
       }
     },
 
@@ -141,9 +158,9 @@ module.exports = function(grunt) {
   // Default task(s).
   grunt.registerTask('test_debug', ['templates', 'copy:qunit', 'qunit:debug']);
   grunt.registerTask('test_release', ['templates', 'copy:qunit', 'qunit:release']);
-  grunt.registerTask('build', ['clean', 'jshint', 'concat', 'closure-compiler']);
+  grunt.registerTask('build', ['clean', 'jshint', 'concat', 'closureCompiler', 'compress:release']);
   grunt.registerTask('_build_with_tests', [
-    'clean', 'jshint', 'concat', 'test_debug', 'closure-compiler', 'test_release',
+    'clean', 'jshint', 'concat', 'test_debug', 'closureCompiler', 'test_release', 'compress:release'
   ]);
   grunt.registerTask('live', ['connect', 'watch']);
   grunt.registerTask('build_with_tests', ['connect', '_build_with_tests']);
