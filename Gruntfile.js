@@ -80,12 +80,11 @@ module.exports = function(grunt) {
           compilation_level: 'ADVANCED_OPTIMIZATIONS',
           externs: ['build/closure_compiler/externs/*.js'],
           define: ["'TBONE_BUILD_RELEASE=true'"],
-          create_source_map: 'dist/<%= pkg.name %>.js.map',
+          create_source_map: 'dist/<%= pkg.name %>.min.js.map',
           source_map_format: 'v3',
           // warning_level: 'verbose',
           // jscomp_off: ['checkTypes', 'fileoverviewTags'],
           // summary_detail_level: 3,
-          // output_wrapper: '"(function(){%output%}).call(this);"'
         }
       },
       all: {
