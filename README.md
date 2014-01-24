@@ -1,4 +1,4 @@
-TBone
+TBone [![GitHub version](https://badge.fury.io/gh/appneta%2Ftbone.png)](http://badge.fury.io/gh/appneta%2Ftbone)
 =====
 
 ### Declarative programming in Javascript
