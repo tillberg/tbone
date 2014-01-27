@@ -1,4 +1,4 @@
-TBone [![GitHub version](https://badge.fury.io/gh/appneta%2Ftbone.png)](http://badge.fury.io/gh/appneta%2Ftbone) [![Build Status](https://travis-ci.org/appneta/tbone.png?branch=bonus-round)](https://travis-ci.org/appneta/tbone)
+TBone [![GitHub version](https://badge.fury.io/gh/appneta%2Ftbone.png)](https://badge.fury.io/gh/appneta%2Ftbone) [![Build Status](https://travis-ci.org/appneta/tbone.png)](https://travis-ci.org/appneta/tbone)
 =====
 
 ### Declarative programming in Javascript
