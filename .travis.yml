@@ -1,0 +1,13 @@
+language: node_js
+node_js:
+  - "0.11.8"
+  - "0.10"
+before_script:
+  - npm install -g grunt-cli
+notifications:
+  email:
+    recipients:
+      - dan@tillberg.us
+      - driti@appneta.com
+    on_success: change
+    on_failure: always
