@@ -1,15 +1,5 @@
 
-var tbone = baseModel.make({ 'Name': 'tbone' });
-
-var orig_tbone = root['tbone'];
-var orig_T = root['T'];
-
-root['tbone'] = tbone;
-root['T'] = tbone;
-
-tbone['models'] = models;
 tbone['views'] = views;
-tbone['collections'] = collections;
 tbone['templates'] = templates;
 
 tbone['createView'] = createView;
@@ -20,31 +10,6 @@ tbone['render'] = render;
 tbone['denullText'] = denullText;
 tbone['priority'] = priority;
 
-// Included in minified source, but intended for TESTING only:
-tbone['drain'] = drain;
-tbone['isReady'] = isReady;
-
-tbone['noConflict'] = function () {
-    root['T'] = orig_T;
-    root['tbone'] = orig_tbone;
-};
-
-/**
- * Core models
- */
-models['base'] = baseModel;
-models['bound'] = boundModel;
-models['async'] = asyncModel;
-
-/**
- * Fancy models
- */
-models['ajax'] = ajaxModel;
-models['localStorage'] = localStorageModel;
-models['location'] = locationModel;
-
-collections['base'] = baseCollection;
-collections['localStorage'] = localStorageCollection;
 views['base'] = baseView;
 
 if (TBONE_DEBUG) {

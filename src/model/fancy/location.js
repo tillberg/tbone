@@ -2,7 +2,7 @@
  * model/fancy/location.js
  */
 
-var locationModel = baseModel.extend({
+models['location'] = baseModel.extend({
     /**
      * Example:
      * var loc = tbone.models.location.make();

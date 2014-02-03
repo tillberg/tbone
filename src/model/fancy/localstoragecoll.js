@@ -2,7 +2,7 @@
  * model/fancy/localstoragecoll.js
  */
 
-var localStorageCollection = baseCollection.extend({
+collections['localStorage'] = baseCollection.extend({
     initialize: function () {
         var self = this;
         var stored = JSON.parse(localStorage[self.key] || "null");

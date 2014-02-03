@@ -55,13 +55,6 @@ var rgxUnquoted = /([^'"]+)('[^']+'|"[^"]+")?/g;
 var rgxLookupableRef = regexp('(\\. )?(([\\w$_]+)(\\.[\\w$_]+)*)', 'g');
 
 /**
- * Use to test whether a string is in fact a number literal.  We don't want to instrument those.
- * @type {RegExp}
- * @const
- */
-var rgxNumber = /^\d+$/;
-
-/**
  * Hashmap of properties to never try to tbone.lookup when instrumenting a template.
  * @type {Object.<string, Boolean>}
  */

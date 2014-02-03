@@ -6,7 +6,7 @@ module.exports = function(grunt) {
 
     // Task Configuration
     clean: {
-      dist: ['dist', 'test/dist']
+      dist: ['dist/*.js', 'dist/*.gz', 'dist/*.map','test/dist']
     },
 
     jshint: {
@@ -28,17 +28,29 @@ module.exports = function(grunt) {
       //options: {
       //  separator: ';',
       //},
-      dist: {
+      coreTmp: {
         src: [
-          'src/snippet/header.js',
           'src/init.js',
+          'src/model/core/base.js',
           'src/scheduler/timer.js',
           'src/scheduler/autorun.js',
           'src/scheduler/scope.js',
           'src/scheduler/drainqueue.js',
           'src/model/core/query.js',
-          'src/model/core/base.js',
           'src/model/core/bound.js',
+        ],
+        dest: 'dist/tmp/core.js'
+      },
+      core: {
+        src: [
+          'src/snippet/header.js',
+          'dist/tmp/core.js',
+          'src/snippet/footer.js'
+        ],
+        dest: 'dist/<%= pkg.name %>.core.js',
+      },
+      extTmp: {
+        src: [
           'src/model/core/async.js',
           'src/model/core/collection.js',
           'src/model/fancy/sync.js',
@@ -46,6 +58,23 @@ module.exports = function(grunt) {
           'src/model/fancy/localstorage.js',
           'src/model/fancy/location.js',
           'src/model/fancy/localstoragecoll.js',
+        ],
+        dest: 'dist/tmp/core_ext.js'
+      },
+      ext: {
+        src: [
+          'src/snippet/header.js',
+          'dist/tmp/core.js',
+          'dist/tmp/core_ext.js',
+          'src/snippet/footer.js'
+        ],
+        dest: 'dist/<%= pkg.name %>.core_ext.js',
+      },
+      dist: {
+        src: [
+          'src/snippet/header.js',
+          'dist/tmp/core.js',
+          'dist/tmp/core_ext.js',
           'src/dom/template/init.js',
           'src/dom/template/render.js',
           'src/dom/view/hash.js',
@@ -87,18 +116,38 @@ module.exports = function(grunt) {
           // summary_detail_level: 3,
         }
       },
-      all: {
+      core: {
+        src: 'dist/<%= pkg.name %>.core.js',
+        dest: 'dist/<%= pkg.name %>.core.min.js',
+      },
+      core_ext: {
+        src: 'dist/<%= pkg.name %>.core_ext.js',
+        dest: 'dist/<%= pkg.name %>.core_ext.min.js',
+      },
+      full: {
         src: 'dist/<%= pkg.name %>.js',
         dest: 'dist/<%= pkg.name %>.min.js',
       }
     },
 
     compress: {
-      release: {
-        options: {
-          mode: 'gzip',
-          level: 9,
-        },
+      options: {
+        mode: 'gzip',
+        level: 9,
+      },
+      core: {
+        pretty: true,
+        expand: true,
+        src: 'dist/tbone.core.min.js',
+        dest: './',
+      },
+      core_ext: {
+        pretty: true,
+        expand: true,
+        src: 'dist/tbone.core_ext.min.js',
+        dest: './',
+      },
+      full: {
         pretty: true,
         expand: true,
         src: 'dist/tbone.min.js',
@@ -125,7 +174,27 @@ module.exports = function(grunt) {
       },
       release: {
         options: {
-          urls: ['http://localhost:9238/index.html?mode=release']
+          urls: ['http://localhost:9238/index.html?min=true']
+        }
+      },
+      core: {
+        options: {
+          urls: ['http://localhost:9238/index.html?variant=core']
+        }
+      },
+      core_release: {
+        options: {
+          urls: ['http://localhost:9238/index.html?variant=core&min=true']
+        }
+      },
+      core_ext: {
+        options: {
+          urls: ['http://localhost:9238/index.html?variant=core_ext']
+        }
+      },
+      core_ext_release: {
+        options: {
+          urls: ['http://localhost:9238/index.html?variant=core_ext&min=true']
         }
       }
     },
@@ -159,16 +228,29 @@ module.exports = function(grunt) {
   grunt.loadTasks("build/tasks");
 
   // Default task(s).
-  grunt.registerTask('compile', ['get_closure', 'closureCompiler']);
+  grunt.registerTask('compile', ['get_closure', 'closureCompiler:full']);
+  grunt.registerTask('compile_all', ['get_closure', 'closureCompiler']);
   grunt.registerTask('test_debug', ['templates', 'copy:qunit', 'qunit:debug']);
   grunt.registerTask('test_release', ['templates', 'copy:qunit', 'qunit:release']);
+  grunt.registerTask('test_core', ['templates', 'copy:qunit', 'qunit:core']);
+  grunt.registerTask('test_core_ext', ['templates', 'copy:qunit', 'qunit:core_ext']);
+  grunt.registerTask('test_core_release', ['templates', 'copy:qunit', 'qunit:core_release']);
+  grunt.registerTask('test_core_ext_release', ['templates', 'copy:qunit', 'qunit:core_ext_release']);
   grunt.registerTask('build', [
-    'clean', 'jshint', 'concat', 'compile', 'compress:release', 'copy:external'
+    'clean', 'jshint', 'concat', 'compile', 'compress:full', 'copy:external'
+  ]);
+  grunt.registerTask('_build_all_with_tests', [
+    'clean', 'jshint', 'concat',
+    'test_core', 'test_core_ext', 'test_debug',
+    'compile_all',
+    'test_core_release', 'test_core_ext_release', 'test_release',
+    'compress'
   ]);
   grunt.registerTask('_build_with_tests', [
     'clean', 'jshint', 'concat', 'test_debug', 'compile', 'test_release', 'compress:release'
   ]);
   grunt.registerTask('live', ['connect', 'watch']);
   grunt.registerTask('build_with_tests', ['connect', '_build_with_tests']);
+  grunt.registerTask('build_all_with_tests', ['connect', '_build_all_with_tests']);
   grunt.registerTask('default', ['build']);
 };

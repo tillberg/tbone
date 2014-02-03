@@ -2,7 +2,7 @@
  * model/core/async.js
  */
 
-var asyncModel = boundModel.extend({
+var asyncModel = models['async'] = boundModel.extend({
     _update: function () {
         var self = this;
         // Allow updates that are as new or newer than the last *update* generation.

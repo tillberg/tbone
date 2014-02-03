@@ -17,8 +17,17 @@
   <script type="text/javascript">
     // Disable console messages when running via Grunt
     var TBONE_DEBUG = !navigator.userAgent.match(/PhantomJS/);
-    var release = !!location.href.match(/mode=release/);
-    document.write('<scr' + 'ipt src="dist/tbone' + (release ? '.min' : '') + '.js"><\/scr' + 'ipt>');
+    var variant = location.href.match(/variant=(\w+)/);
+    variant = variant && variant[1] || '';
+    var min = !!location.href.match(/min=(\w+)/);
+    document.write([
+      '<scr',
+      'ipt src="dist/tbone',
+      variant ? '.' + variant : '',
+      min ? '.min' : '',
+      '.js"><\/scr',
+      'ipt>'
+   ].join(''));
   </script>
 </head>
 <body>
@@ -33,8 +42,29 @@
   <script src="templates.js"></script>
 
   <!-- tests -->
-  <script src="test_core.js"></script>
-  <script src="test_model.js"></script>
-  <script src="test_speed.js"></script>
+  <script>
+    var modules = ['core'];
+    var enabled = {
+      ext: variant === 'core_ext' || !variant,
+      dom: !variant
+    };
+    if (enabled.ext) {
+      modules.push('core_ext');
+    }
+    if (enabled.dom) {
+      modules.push('dom');
+      modules.push('model');
+      modules.push('speed');
+    }
+    _.each(modules, function (module) {
+      document.write([
+        '<scr',
+        'ipt src="test_',
+        module,
+        '.js"><\/scr',
+        'ipt>'
+      ].join(''));
+    });
+  </script>
 </body>
 </html>

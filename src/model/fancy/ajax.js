@@ -2,7 +2,7 @@
  * model/fancy/ajax.js
  */
 
-var ajaxModel = asyncModel.extend({
+models['ajax'] = asyncModel.extend({
 
     'state': function (dataCallback) {
         var self = this;

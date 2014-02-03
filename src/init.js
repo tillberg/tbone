@@ -97,6 +97,13 @@ function isArray(x) {
     return objectToString.call(x) === '[object Array]';
 }
 
+/**
+ * Use to test whether a string is in fact a number literal.  We don't want to instrument those.
+ * @type {RegExp}
+ * @const
+ */
+var rgxNumber = /^\d+$/;
+
 function warn() {
     if (TBONE_DEBUG) {
         console.warn.apply(console, arguments);

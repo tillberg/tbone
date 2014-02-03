@@ -68,9 +68,9 @@ var drainQueueTimer;
  */
 var inflight = 0;
 
-function isReady () {
+var isReady = tbone['isReady'] = function () {
     return !inflight && !drainQueueTimer;
-}
+};
 
 var isReadyTimer;
 
@@ -198,12 +198,12 @@ function drainQueue () {
  * This is useful both for testing and MAYBE also for optimizing responsiveness by
  * draining at the end of a keyboard / mouse event handler.
  */
-function drain () {
+var drain = tbone['drain'] = function () {
     if (drainQueueTimer) {
         clearTimeout(drainQueueTimer);
     }
     drainQueue();
-}
+};
 
 function freeze () {
     frozen = true;

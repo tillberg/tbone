@@ -242,3 +242,20 @@ if (TBONE_DEBUG) {
         return result ? result.join('.') : null;
     };
 }
+
+var tbone = baseModel.make({ 'Name': 'tbone' });
+
+var orig_tbone = root['tbone'];
+var orig_T = root['T'];
+
+root['tbone'] = tbone;
+root['T'] = tbone;
+
+tbone['noConflict'] = function () {
+    root['T'] = orig_T;
+    root['tbone'] = orig_tbone;
+};
+
+tbone['models'] = models;
+
+models['base'] = baseModel;
