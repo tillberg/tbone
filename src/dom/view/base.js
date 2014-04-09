@@ -86,14 +86,13 @@ var baseView = {
                     // XXX for IE compatibility, this might work:
                     // http://the-stickman.com/web-development/javascript/ ...
                     // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
-                    // Only try to get the selectionStart and selectionEnd for inputs that have
-                    // text in them.  I don't know if submit/button types are the only ones that
-                    // will fail here, so maybe it'd just be either to wrap this in a try/catch.
-                    var inputType = activeElement.getAttribute('type');
-                    if (inputType !== 'submit' && inputType !== 'button') {
+                    // The selectionStart and selectionEnd properties are unsupported for
+                    // some input types.  It's easier to just eat the exception than identify
+                    // which cases will and won't work.
+                    try {
                         selectionStart = activeElement.selectionStart;
                         selectionEnd = activeElement.selectionEnd;
-                    }
+                    } catch (e) {}
                 }
 
                 var $old = $('<div>').append(this.$el.children());
@@ -138,8 +137,10 @@ var baseView = {
                     if (newActiveElement) {
                         $(newActiveElement).focus();
                         if (selectionStart != null && selectionEnd != null) {
-                            newActiveElement.selectionStart = selectionStart;
-                            newActiveElement.selectionEnd = selectionEnd;
+                            try {
+                                newActiveElement.selectionStart = selectionStart;
+                                newActiveElement.selectionEnd = selectionEnd;
+                            } catch (e) {}
                         }
                     }
                 }
