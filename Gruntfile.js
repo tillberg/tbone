@@ -152,7 +152,7 @@ module.exports = function(grunt) {
         expand: true,
         src: 'dist/tbone.min.js',
         dest: './',
-      }
+      },
     },
 
     copy: {
@@ -160,9 +160,9 @@ module.exports = function(grunt) {
         src: 'dist/*',
         dest: 'test/'
       },
-      external: process.env.TARGET_DIR ? {
-        src: ['dist/*', '!dist/*.gz'],
-        dest: process.env.TARGET_DIR,
+      external: process.env.TARGET_PATH ? {
+        src: 'dist/tbone.js',
+        dest: process.env.TARGET_PATH,
       } : {}
     },
 
@@ -247,7 +247,7 @@ module.exports = function(grunt) {
     'compress'
   ]);
   grunt.registerTask('_build_with_tests', [
-    'clean', 'jshint', 'concat', 'test_debug', 'compile', 'test_release', 'compress:release'
+    'clean', 'jshint', 'concat', 'test_debug', 'compile', 'test_release', 'compress'
   ]);
   grunt.registerTask('live', ['connect', 'watch']);
   grunt.registerTask('build_with_tests', ['connect', '_build_with_tests']);
