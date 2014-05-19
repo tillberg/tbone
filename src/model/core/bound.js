@@ -68,7 +68,8 @@ var boundModel = models['bound'] = baseModel.extend({
     },
 
     _update: function () {
-        this['query'](QUERY_SELF, this['state']());
+        var flag = this['assumeChanged'] ? QUERY_ASSUME_CHANGED : QUERY_DEFAULT;
+        this['query'](flag, QUERY_SELF, this['state']());
         log(VERBOSE, this, 'updated', this.attributes);
     },
 

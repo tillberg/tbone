@@ -1,5 +1,11 @@
 
 /**
+ * Default flag; passing this has the same effect as omitting the flag parameter.
+ * @const
+ */
+var QUERY_DEFAULT = 0;
+
+/**
  * "Don't Get Data" - Special flag for query to return the model/collection instead
  * of calling toJSON() on it.
  * @const
@@ -49,6 +55,11 @@ var QUERY_UNSET = 8;
  * @const
  */
 var QUERY_INCREMENT = 9;
+
+/**
+ * @const
+ */
+var QUERY_ASSUME_CHANGED = 10;
 
 /**
  * If you want to select the root, you can either pass __self__ or just an empty
@@ -233,6 +244,7 @@ function query(flag, prop, value) {
     var isIncrement = flag === QUERY_INCREMENT;
     var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
     var isUnset = flag === QUERY_UNSET;
+    var assumeChanged = flag === QUERY_ASSUME_CHANGED;
     var hasValue = arguments.length === 3;
     var isSet = isListOp || isToggle || isUnset || hasValue || isIncrement;
     if (typeof flag !== 'number') {
@@ -447,13 +459,13 @@ function query(flag, prop, value) {
             // If there are any changes at all, then we need to fire one or more
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
-            if (recursiveDiff(self, events, _data, value, true, 0, false)) {
+            if (recursiveDiff(self, events, _data, value, true, 0, assumeChanged)) {
                 for (var contextId in parentCallbackContexts) {
                     parentCallbackContexts[contextId].trigger.call(parentCallbackContexts[contextId]);
                 }
             }
         } else {
-            recursiveDiff(self, events, _data, value, false, 0, false);
+            recursiveDiff(self, events, _data, value, false, 0, assumeChanged);
         }
 
         if (TBONE_DEBUG) {
