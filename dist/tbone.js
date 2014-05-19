@@ -102,6 +102,13 @@ function isArray(x) {
     return objectToString.call(x) === '[object Array]';
 }
 
+/**
+ * Use to test whether a string is in fact a number literal.  We don't want to instrument those.
+ * @type {RegExp}
+ * @const
+ */
+var rgxNumber = /^\d+$/;
+
 function warn() {
     if (TBONE_DEBUG) {
         console.warn.apply(console, arguments);
@@ -304,6 +311,268 @@ function hasViewListener(self) {
     }
     return false;
 }
+
+/**
+ * model/core/base.js
+ */
+
+/**
+ * @type {RegExp}
+ * @const
+ */
+var rgxEventSplitter = /[.]+/;
+
+/**
+ * Split name parameter into components (used in .on() and .trigger())
+ *
+ * For compatibility with backbone, we support using the colon as the
+ * separator between "change" and the remainder of the terms, but only
+ * dots after that.
+ */
+function splitName (name) {
+    return name.replace(/^change:/, 'change.').split(rgxEventSplitter);
+}
+
+/**
+ * baseModel
+ * @constructor
+ */
+var baseModel = {
+    isModel: true,
+    make: function (opts) {
+        var self = this;
+        // Each TBone model/collection is an augmented copy of this TBoneModel function
+        var instance = function TBoneModel (arg0, arg1, arg2) {
+            if (typeof arg0 === 'function') {
+                return autorun(arg0, arg1);
+            } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
+                return instance['query'](arg0, boundModel.extend({ 'state': arg1 }).make());
+            } else {
+                return (arguments.length === 0 ? instance['query']() :
+                        arguments.length === 1 ? instance['query'](arg0) :
+                        arguments.length === 2 ? instance['query'](arg0, arg1) :
+                                                 instance['query'](arg0, arg1, arg2));
+            }
+        };
+        _.extend(instance, self, isFunction(opts) ? { 'state': opts } : opts || {});
+
+        // Initialize the model instance
+        delete instance['tboneid'];
+        delete instance['attributes'];
+        if (TBONE_DEBUG) {
+            delete instance.prevJson;
+        }
+        instance['_events'] = {};
+        instance._removeCallbacks = {};
+        uniqueId(instance);
+        instance['initialize']();
+
+        return instance;
+    },
+    'extend': function (subclass) {
+        return _.extend({}, this, subclass);
+    },
+    'initialize': noop,
+    'on': function (name, callback, context) {
+        // XXX callback is not supported.  assumes context.trigger is the callback
+        var parts = splitName(name);
+        var events = this['_events'];
+        var arg;
+
+        while ((arg = parts.shift()) != null) {
+            if (arg === '') {
+                continue;
+            }
+            if (!events[arg]) {
+                events[arg] = {};
+            }
+            events = events[arg];
+        }
+        var contexts = events[''];
+        if (!contexts) {
+            contexts = events[''] = {};
+        }
+        var contextId = uniqueId(context);
+        contexts[contextId] = context;
+
+        /**
+         * Wake up and reset this and other models that may be sleeping because
+         * they did not need to be updated.
+         */
+        this.wake({});
+    },
+    'off': function (name, callback, context) {
+        // XXX only supports use with both name & context.
+        // XXX doesn't clean up when callbacks list goes to zero length
+        var parts = splitName(name);
+        var events = this['_events'];
+        var arg;
+
+        while ((arg = parts.shift()) != null) {
+            if (arg === '') {
+                continue;
+            }
+            if (!events[arg]) {
+                events[arg] = {};
+            }
+            events = events[arg];
+        }
+        var contexts = events[''];
+        if (contexts) {
+            var contextId = uniqueId(context);
+            delete contexts[contextId];
+        }
+    },
+    'trigger': function (name) {
+        var self = this;
+        var events = self['_events'];
+        var parts = splitName(name);
+        var arg;
+        while ((arg = parts.shift()) != null) {
+            if (arg === '') {
+                continue;
+            }
+            if (!events[arg]) {
+                events[arg] = {};
+            }
+            events = events[arg];
+        }
+        var contexts = events[QUERY_SELF] || {};
+        for (var contextId in contexts) {
+            contexts[contextId].trigger.call(contexts[contextId]);
+        }
+    },
+
+    'runOnlyOnce': runOnlyOnce,
+
+    'query': query,
+
+    'queryModel': function (prop) {
+        return this['query'](DONT_GET_DATA, prop);
+    },
+
+    // query `prop` without binding to changes in its value
+    'readSilent': function (prop) {
+        var tmp = recentLookups;
+        recentLookups = null;
+        var rval = this['query'](prop);
+        recentLookups = tmp;
+        return rval;
+    },
+
+    'idAttribute': 'id',
+
+    'queryId': function () {
+        return this['query'](this['idAttribute']);
+    },
+
+    'toggle': function (prop) {
+        this['query'](QUERY_TOGGLE, prop);
+    },
+
+    'push': function (prop, value) {
+        if (arguments.length === 1) {
+            value = prop;
+            prop = '';
+        }
+        this['query'](QUERY_PUSH, prop, value);
+    },
+
+    'unshift': function (prop, value) {
+        if (arguments.length === 1) {
+            value = prop;
+            prop = '';
+        }
+        this['query'](QUERY_UNSHIFT, prop, value);
+    },
+
+    'removeFirst': function (prop) {
+        this['query'](QUERY_REMOVE_FIRST, prop);
+    },
+
+    'removeLast': function (prop) {
+        this['query'](QUERY_REMOVE_LAST, prop);
+    },
+
+    'unset': function (prop) {
+        this['query'](QUERY_UNSET, prop);
+    },
+
+    'increment': function (prop, value) {
+        this['query'](QUERY_INCREMENT, prop, value != null ? value : 1);
+    },
+
+    'clear': function () {
+        this['query']('', undefined);
+    },
+
+    'toJSON': function () {
+        return this.attributes;
+    },
+
+    wake: noop,
+
+    'queryText': queryText, // deprecated
+    'text': queryText, // deprecated
+    'lookup': query, // deprecated
+    'lookupText': queryText, // deprecated
+    'set': query, // deprecated
+    'get': query // deprecated
+};
+
+if (TBONE_DEBUG) {
+    baseModel['find'] = function (obj) {
+        function recurse(o, depth) {
+            if (depth > 10) {
+                return [];
+            }
+            if (o === obj) {
+                return [];
+            }
+            if (isQueryable(o)) {
+                if (!!(result = recurse(o.attributes, depth + 1))) {
+                    return result;
+                }
+            } else if (o !== null && typeof o === 'object') {
+                var result;
+                if (o.push) {
+                    for (var i = 0; i < o.length; i++) {
+                        if (!!(result = recurse(o[i], depth + 1))) {
+                            result.unshift(k);
+                            return result;
+                        }
+                    }
+                } else {
+                    for (var k in o) {
+                        if (!!(result = recurse(o[k], depth + 1))) {
+                            result.unshift(k);
+                            return result;
+                        }
+                    }
+                }
+            }
+        }
+        var result = recurse(this.attributes, 0);
+        return result ? result.join('.') : null;
+    };
+}
+
+var tbone = baseModel.make({ 'Name': 'tbone' });
+
+var orig_tbone = root['tbone'];
+var orig_T = root['T'];
+
+root['tbone'] = tbone;
+root['T'] = tbone;
+
+tbone['noConflict'] = function () {
+    root['T'] = orig_T;
+    root['tbone'] = orig_tbone;
+};
+
+tbone['models'] = models;
+
+models['base'] = baseModel;
 
 /**
  * scheduler/timer.js
@@ -639,9 +908,9 @@ var drainQueueTimer;
  */
 var inflight = 0;
 
-function isReady () {
+var isReady = tbone['isReady'] = function () {
     return !inflight && !drainQueueTimer;
-}
+};
 
 var isReadyTimer;
 
@@ -769,17 +1038,23 @@ function drainQueue () {
  * This is useful both for testing and MAYBE also for optimizing responsiveness by
  * draining at the end of a keyboard / mouse event handler.
  */
-function drain () {
+var drain = tbone['drain'] = function () {
     if (drainQueueTimer) {
         clearTimeout(drainQueueTimer);
     }
     drainQueue();
-}
+};
 
 function freeze () {
     frozen = true;
 }
 
+
+/**
+ * Default flag; passing this has the same effect as omitting the flag parameter.
+ * @const
+ */
+var QUERY_DEFAULT = 0;
 
 /**
  * "Don't Get Data" - Special flag for query to return the model/collection instead
@@ -831,6 +1106,11 @@ var QUERY_UNSET = 8;
  * @const
  */
 var QUERY_INCREMENT = 9;
+
+/**
+ * @const
+ */
+var QUERY_ASSUME_CHANGED = 10;
 
 /**
  * If you want to select the root, you can either pass __self__ or just an empty
@@ -1015,6 +1295,7 @@ function query(flag, prop, value) {
     var isIncrement = flag === QUERY_INCREMENT;
     var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
     var isUnset = flag === QUERY_UNSET;
+    var assumeChanged = flag === QUERY_ASSUME_CHANGED;
     var hasValue = arguments.length === 3;
     var isSet = isListOp || isToggle || isUnset || hasValue || isIncrement;
     if (typeof flag !== 'number') {
@@ -1229,13 +1510,13 @@ function query(flag, prop, value) {
             // If there are any changes at all, then we need to fire one or more
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
-            if (recursiveDiff(self, events, _data, value, true, 0, false)) {
+            if (recursiveDiff(self, events, _data, value, true, 0, assumeChanged)) {
                 for (var contextId in parentCallbackContexts) {
                     parentCallbackContexts[contextId].trigger.call(parentCallbackContexts[contextId]);
                 }
             }
         } else {
-            recursiveDiff(self, events, _data, value, false, 0, false);
+            recursiveDiff(self, events, _data, value, false, 0, assumeChanged);
         }
 
         if (TBONE_DEBUG) {
@@ -1266,255 +1547,10 @@ function queryText(flag, prop) {
 }
 
 /**
- * model/core/base.js
- */
-
-/**
- * @type {RegExp}
- * @const
- */
-var rgxEventSplitter = /[.]+/;
-
-/**
- * Split name parameter into components (used in .on() and .trigger())
- *
- * For compatibility with backbone, we support using the colon as the
- * separator between "change" and the remainder of the terms, but only
- * dots after that.
- */
-function splitName (name) {
-    return name.replace(/^change:/, 'change.').split(rgxEventSplitter);
-}
-
-/**
- * baseModel
- * @constructor
- */
-var baseModel = {
-    isModel: true,
-    make: function (opts) {
-        var self = this;
-        // Each TBone model/collection is an augmented copy of this TBoneModel function
-        var instance = function TBoneModel (arg0, arg1, arg2) {
-            if (typeof arg0 === 'function') {
-                return autorun(arg0, arg1);
-            } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
-                return instance['query'](arg0, boundModel.extend({ 'state': arg1 }).make());
-            } else {
-                return (arguments.length === 0 ? instance['query']() :
-                        arguments.length === 1 ? instance['query'](arg0) :
-                        arguments.length === 2 ? instance['query'](arg0, arg1) :
-                                                 instance['query'](arg0, arg1, arg2));
-            }
-        };
-        _.extend(instance, self, isFunction(opts) ? { 'state': opts } : opts || {});
-
-        // Initialize the model instance
-        delete instance['tboneid'];
-        delete instance['attributes'];
-        if (TBONE_DEBUG) {
-            delete instance.prevJson;
-        }
-        instance['_events'] = {};
-        instance._removeCallbacks = {};
-        uniqueId(instance);
-        instance['initialize']();
-
-        return instance;
-    },
-    'extend': function (subclass) {
-        return _.extend({}, this, subclass);
-    },
-    'initialize': noop,
-    'on': function (name, callback, context) {
-        // XXX callback is not supported.  assumes context.trigger is the callback
-        var parts = splitName(name);
-        var events = this['_events'];
-        var arg;
-
-        while ((arg = parts.shift()) != null) {
-            if (arg === '') {
-                continue;
-            }
-            if (!events[arg]) {
-                events[arg] = {};
-            }
-            events = events[arg];
-        }
-        var contexts = events[''];
-        if (!contexts) {
-            contexts = events[''] = {};
-        }
-        var contextId = uniqueId(context);
-        contexts[contextId] = context;
-
-        /**
-         * Wake up and reset this and other models that may be sleeping because
-         * they did not need to be updated.
-         */
-        this.wake({});
-    },
-    'off': function (name, callback, context) {
-        // XXX only supports use with both name & context.
-        // XXX doesn't clean up when callbacks list goes to zero length
-        var parts = splitName(name);
-        var events = this['_events'];
-        var arg;
-
-        while ((arg = parts.shift()) != null) {
-            if (arg === '') {
-                continue;
-            }
-            if (!events[arg]) {
-                events[arg] = {};
-            }
-            events = events[arg];
-        }
-        var contexts = events[''];
-        if (contexts) {
-            var contextId = uniqueId(context);
-            delete contexts[contextId];
-        }
-    },
-    'trigger': function (name) {
-        var self = this;
-        var events = self['_events'];
-        var parts = splitName(name);
-        var arg;
-        while ((arg = parts.shift()) != null) {
-            if (arg === '') {
-                continue;
-            }
-            if (!events[arg]) {
-                events[arg] = {};
-            }
-            events = events[arg];
-        }
-        var contexts = events[QUERY_SELF] || {};
-        for (var contextId in contexts) {
-            contexts[contextId].trigger.call(contexts[contextId]);
-        }
-    },
-
-    'runOnlyOnce': runOnlyOnce,
-
-    'query': query,
-
-    'queryModel': function (prop) {
-        return this['query'](DONT_GET_DATA, prop);
-    },
-
-    // query `prop` without binding to changes in its value
-    'readSilent': function (prop) {
-        var tmp = recentLookups;
-        recentLookups = null;
-        var rval = this['query'](prop);
-        recentLookups = tmp;
-        return rval;
-    },
-
-    'idAttribute': 'id',
-
-    'queryId': function () {
-        return this['query'](this['idAttribute']);
-    },
-
-    'toggle': function (prop) {
-        this['query'](QUERY_TOGGLE, prop);
-    },
-
-    'push': function (prop, value) {
-        if (arguments.length === 1) {
-            value = prop;
-            prop = '';
-        }
-        this['query'](QUERY_PUSH, prop, value);
-    },
-
-    'unshift': function (prop, value) {
-        if (arguments.length === 1) {
-            value = prop;
-            prop = '';
-        }
-        this['query'](QUERY_UNSHIFT, prop, value);
-    },
-
-    'removeFirst': function (prop) {
-        this['query'](QUERY_REMOVE_FIRST, prop);
-    },
-
-    'removeLast': function (prop) {
-        this['query'](QUERY_REMOVE_LAST, prop);
-    },
-
-    'unset': function (prop) {
-        this['query'](QUERY_UNSET, prop);
-    },
-
-    'increment': function (prop, value) {
-        this['query'](QUERY_INCREMENT, prop, value != null ? value : 1);
-    },
-
-    'clear': function () {
-        this['query']('', undefined);
-    },
-
-    'toJSON': function () {
-        return this.attributes;
-    },
-
-    wake: noop,
-
-    'queryText': queryText, // deprecated
-    'text': queryText, // deprecated
-    'lookup': query, // deprecated
-    'lookupText': queryText, // deprecated
-    'set': query, // deprecated
-    'get': query // deprecated
-};
-
-if (TBONE_DEBUG) {
-    baseModel['find'] = function (obj) {
-        function recurse(o, depth) {
-            if (depth > 10) {
-                return [];
-            }
-            if (o === obj) {
-                return [];
-            }
-            if (isQueryable(o)) {
-                if (!!(result = recurse(o.attributes, depth + 1))) {
-                    return result;
-                }
-            } else if (o !== null && typeof o === 'object') {
-                var result;
-                if (o.push) {
-                    for (var i = 0; i < o.length; i++) {
-                        if (!!(result = recurse(o[i], depth + 1))) {
-                            result.unshift(k);
-                            return result;
-                        }
-                    }
-                } else {
-                    for (var k in o) {
-                        if (!!(result = recurse(o[k], depth + 1))) {
-                            result.unshift(k);
-                            return result;
-                        }
-                    }
-                }
-            }
-        }
-        var result = recurse(this.attributes, 0);
-        return result ? result.join('.') : null;
-    };
-}
-
-/**
  * model/core/bound.js
  */
 
-var boundModel = baseModel.extend({
+var boundModel = models['bound'] = baseModel.extend({
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
@@ -1580,7 +1616,8 @@ var boundModel = baseModel.extend({
     },
 
     _update: function () {
-        this['query'](QUERY_SELF, this['state']());
+        var flag = this['assumeChanged'] ? QUERY_ASSUME_CHANGED : QUERY_DEFAULT;
+        this['query'](flag, QUERY_SELF, this['state']());
         log(VERBOSE, this, 'updated', this.attributes);
     },
 
@@ -1612,7 +1649,7 @@ var boundModel = baseModel.extend({
  * model/core/async.js
  */
 
-var asyncModel = boundModel.extend({
+var asyncModel = models['async'] = boundModel.extend({
     _update: function () {
         var self = this;
         // Allow updates that are as new or newer than the last *update* generation.
@@ -1644,7 +1681,7 @@ var asyncModel = boundModel.extend({
 
 var nextTempId = 1;
 
-var baseCollection = baseModel.extend({
+var baseCollection = collections['base'] = baseModel.extend({
     isCollection: true,
     // The only place isModel is checked is in hasViewListener.
     // For that function's purposes, TBone collections are models.
@@ -1719,6 +1756,8 @@ var baseCollection = baseModel.extend({
         }
     }
 });
+
+tbone['collections'] = collections;
 
   // Backbone.sync
   // -------------
@@ -1813,7 +1852,7 @@ var baseCollection = baseModel.extend({
  * model/fancy/ajax.js
  */
 
-var ajaxModel = asyncModel.extend({
+models['ajax'] = asyncModel.extend({
 
     'state': function (dataCallback) {
         var self = this;
@@ -1901,7 +1940,7 @@ var ajaxModel = asyncModel.extend({
  * model/fancy/localstorage.js
  */
 
-var localStorageModel = baseModel.extend({
+models['localStorage'] = baseModel.extend({
     /**
      * To use, extend this model and specify key as a property.
      *
@@ -1924,7 +1963,7 @@ var localStorageModel = baseModel.extend({
  * model/fancy/location.js
  */
 
-var locationModel = baseModel.extend({
+models['location'] = baseModel.extend({
     /**
      * Example:
      * var loc = tbone.models.location.make();
@@ -1956,7 +1995,7 @@ var locationModel = baseModel.extend({
  * model/fancy/localstoragecoll.js
  */
 
-var localStorageCollection = baseCollection.extend({
+collections['localStorage'] = baseCollection.extend({
     initialize: function () {
         var self = this;
         var stored = JSON.parse(localStorage[self.key] || "null");
@@ -2024,13 +2063,6 @@ var rgxUnquoted = /([^'"]+)('[^']+'|"[^"]+")?/g;
  * @const
  */
 var rgxLookupableRef = regexp('(\\. )?(([\\w$_]+)(\\.[\\w$_]+)*)', 'g');
-
-/**
- * Use to test whether a string is in fact a number literal.  We don't want to instrument those.
- * @type {RegExp}
- * @const
- */
-var rgxNumber = /^\d+$/;
 
 /**
  * Hashmap of properties to never try to tbone.lookup when instrumenting a template.
@@ -2399,14 +2431,13 @@ var baseView = {
                     // XXX for IE compatibility, this might work:
                     // http://the-stickman.com/web-development/javascript/ ...
                     // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
-                    // Only try to get the selectionStart and selectionEnd for inputs that have
-                    // text in them.  I don't know if submit/button types are the only ones that
-                    // will fail here, so maybe it'd just be either to wrap this in a try/catch.
-                    var inputType = activeElement.getAttribute('type');
-                    if (inputType !== 'submit' && inputType !== 'button') {
+                    // The selectionStart and selectionEnd properties are unsupported for
+                    // some input types.  It's easier to just eat the exception than identify
+                    // which cases will and won't work.
+                    try {
                         selectionStart = activeElement.selectionStart;
                         selectionEnd = activeElement.selectionEnd;
-                    }
+                    } catch (e) {}
                 }
 
                 var $old = $('<div>').append(this.$el.children());
@@ -2451,8 +2482,10 @@ var baseView = {
                     if (newActiveElement) {
                         $(newActiveElement).focus();
                         if (selectionStart != null && selectionEnd != null) {
-                            newActiveElement.selectionStart = selectionStart;
-                            newActiveElement.selectionEnd = selectionEnd;
+                            try {
+                                newActiveElement.selectionStart = selectionStart;
+                                newActiveElement.selectionEnd = selectionEnd;
+                            } catch (e) {}
                         }
                     }
                 }
@@ -2759,17 +2792,7 @@ function createView(name, base, fn, opts) {
 }
 
 
-var tbone = baseModel.make({ 'Name': 'tbone' });
-
-var orig_tbone = root['tbone'];
-var orig_T = root['T'];
-
-root['tbone'] = tbone;
-root['T'] = tbone;
-
-tbone['models'] = models;
 tbone['views'] = views;
-tbone['collections'] = collections;
 tbone['templates'] = templates;
 
 tbone['createView'] = createView;
@@ -2780,31 +2803,6 @@ tbone['render'] = render;
 tbone['denullText'] = denullText;
 tbone['priority'] = priority;
 
-// Included in minified source, but intended for TESTING only:
-tbone['drain'] = drain;
-tbone['isReady'] = isReady;
-
-tbone['noConflict'] = function () {
-    root['T'] = orig_T;
-    root['tbone'] = orig_tbone;
-};
-
-/**
- * Core models
- */
-models['base'] = baseModel;
-models['bound'] = boundModel;
-models['async'] = asyncModel;
-
-/**
- * Fancy models
- */
-models['ajax'] = ajaxModel;
-models['localStorage'] = localStorageModel;
-models['location'] = locationModel;
-
-collections['base'] = baseCollection;
-collections['localStorage'] = localStorageCollection;
 views['base'] = baseView;
 
 if (TBONE_DEBUG) {

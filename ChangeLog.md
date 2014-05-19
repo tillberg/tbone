@@ -1,5 +1,17 @@
 ## TBone Change Log
 
+### 0.7.0
+
+- Refactored into three modules: core, core_ext, and full:
+  - core includes base/bound models; this is intended for
+    use where minimal footprint is needed (~3K gzipped)
+  - core_ext adds async/ajax models, collections, and a few
+    other "fancy" models; this is best for node apps (~4K gzipped)
+  - full adds views and live templates (~7K gzipped)
+- Add Travis CI support
+- Add assumeChanged flag to optimize bound model updates by
+  avoiding recursiveDiff if not needed.
+
 ### 0.6.0
 
 - Refactored build & packaging process to use Grunt.
