@@ -162,9 +162,10 @@ function queryScrollTop (value) {
 function drainQueue () {
     scrollTopChangedProgrammatically = false;
     var scrollTop = queryScrollTop();
-    drainQueueTimer = null;
     var queueDrainStartTime = now();
     var scope;
+    drainQueueTimer = null;
+    drainQueueTimer = schedulerQueue.length ? _.defer(drainQueue) : null;
     var remaining = 5000;
     while (!(TBONE_DEBUG && frozen) && --remaining && !!(scope = pop())) {
         /**
@@ -179,7 +180,6 @@ function drainQueue () {
     }
     if (!remaining) {
         log(WARN, 'scheduler', 'drainQueueOverflow', 'exceeded max drainQueue iterations');
-        drainQueueTimer = _.defer(drainQueue);
     }
     log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
         'duration': now() - queueDrainStartTime

@@ -71,57 +71,48 @@ _.extend(Scope.prototype,
             // This function must be synchronous.  Anything that is looked up using
             // tbone.lookup before this function returns (that is not inside a subscope)
             // will get bound below.
-            if (TBONE_DEBUG) {
+            try {
                 self.fn.call(self.context);
-            } else {
-                try {
-                    self.fn.call(self.context);
-                } catch (ex) {
-                    /**
-                     * This could be improved.  But it's better than not being able
-                     * to see the errors at all.
-                     */
-                    tbone.push('__errors__.' + self['Name'], (ex && ex.stack || ex) + '');
-                }
-            }
-
-            _.each(recentLookups, function (propMap) {
-                var obj = propMap['obj'];
-                var props = propMap['props'];
-                if (props['']) {
-                    obj.on('change', self.trigger, self);
-                } else {
-                    for (var prop in props) {
-                        obj.on('change:' + prop, self.trigger, self);
+            } finally {
+                _.each(recentLookups, function (propMap) {
+                    var obj = propMap['obj'];
+                    var props = propMap['props'];
+                    if (props['']) {
+                        obj.on('change', self.trigger, self);
+                    } else {
+                        for (var prop in props) {
+                            obj.on('change:' + prop, self.trigger, self);
+                        }
                     }
-                }
-            });
-
-            // This is intended primarily for diagnostics.
-            if (self.onExecuteCb) {
-                self.onExecuteCb.call(self.onExecuteContext, this);
-            }
-
-            // Pop our own lookups and parent scope off the stack, restoring them to
-            // the values we saved above.
-            recentLookups = oldLookups;
-            currentExecutingScope = parentScope;
-
-            if (TBONE_DEBUG) {
-                var executionTimeMs = myTimer.done();
-                log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
-                    'priority': self.priority,
-                    'Name': self['Name'],
-                    'duration': executionTimeMs
                 });
-                if (executionTimeMs > 10) {
-                    log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
+
+                // This is intended primarily for diagnostics.
+                if (self.onExecuteCb) {
+                    self.onExecuteCb.call(self.onExecuteContext, this);
+                }
+
+                // Pop our own lookups and parent scope off the stack, restoring them to
+                // the values we saved above.
+                recentLookups = oldLookups;
+                currentExecutingScope = parentScope;
+
+                if (TBONE_DEBUG) {
+                    var executionTimeMs = myTimer.done();
+                    log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
                         'priority': self.priority,
                         'Name': self['Name'],
                         'duration': executionTimeMs
                     });
+                    if (executionTimeMs > 10) {
+                        log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                            'priority': self.priority,
+                            'Name': self['Name'],
+                            'duration': executionTimeMs
+                        });
+                    }
                 }
             }
+
         }
     },
 

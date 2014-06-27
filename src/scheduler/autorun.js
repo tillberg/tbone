@@ -16,7 +16,7 @@
  * @param  {string}                         name      Name for debugging purposes
  * @return {Scope}                                    A new Scope created to wrap this function
  */
-function autorun(fn, priority, context, name, onExecuteCb, onExecuteContext, detached) {
+function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, detached) {
     // Default priority and name if not specified.  Priority is important in
     // preventing unnecessary refreshes of views/subscopes that may be slated
     // for destruction by a parent; the parent should have priority so as

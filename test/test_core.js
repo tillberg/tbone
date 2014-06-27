@@ -307,3 +307,54 @@ test('model destroy', function () {
     equal(val, 42);
     equal(me('prop'), undefined);
 });
+
+asyncTest('autorun js error handling', function () {
+    // autorun should not intercept JS errors -- they should break all the way
+    // out past scope.execute and drainqueue -- but we should still continue to
+    // execute other scopes after a setTimeout.
+    expect( 7 );
+    var me = tbone.make();
+    me('prop', 10);
+    var ranFirst = false;
+    var ranSecond = false;
+    var threwException = false;
+    try {
+        me(function () {
+            me('prop');
+            ranFirst = true;
+            me.nonExistent.prop = 'boom';
+        }, 2);
+    } catch (e) {
+        threwException = true;
+    }
+    equal(threwException, true, 'exception bubbles out of autorun invocation');
+    me(function () {
+        me('prop');
+        ranSecond = true;
+    }, 1);
+    equal(ranFirst, true, 'first function ran');
+    equal(ranSecond, true, 'second function ran');
+    me('prop', 20);
+    threwException = false;
+    ranFirst = false;
+    ranSecond = false;
+    try {
+        T.drain();
+    } catch (e) {
+        threwException = true;
+    }
+    equal(threwException, true, 'exception bubbles out of drain invocation');
+    equal(ranFirst, true, 'first function ran second time');
+    equal(ranSecond, false, 'second function should not have run yet');
+    var checksLeft = 10;
+    function check () {
+        if (ranSecond || !checksLeft) {
+            equal(ranSecond, true, 'second function ran second time');
+            QUnit.start();
+        } else {
+            checksLeft--;
+            setTimeout(check, 1);
+        }
+    }
+    check();
+});
