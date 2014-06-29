@@ -1,11 +1,6 @@
 (function(){
 
   T('count', {});
-  var count = 0;
-
-  function increment() {
-    tbone.set('count.er', ++count);
-  }
 
   T('counter', function() {
     return {
@@ -95,7 +90,7 @@
 
   JSLitmus.test('Bound model update', function(count) {
     while (count--) {
-      increment();
+      tbone.increment('count.er');
       tbone.drain();
     }
   });

@@ -242,7 +242,6 @@
       } else {
         jsl.status('');
         me.onStop(me);
-        window.jslitmus_tests.push(this);
       }
 
       // Finish up
