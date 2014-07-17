@@ -1,5 +1,6 @@
 var root;
 var _;
+var $;
 // Export TBone for Node.js or for the browser
 if (typeof exports !== 'undefined') {
     _ = require('underscore')['_'];
@@ -7,6 +8,7 @@ if (typeof exports !== 'undefined') {
 } else {
     root = window;
     _ = root['_'];
+    $ = root['$'];
 }
 
 /** @const {boolean} */
