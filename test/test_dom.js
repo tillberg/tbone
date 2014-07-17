@@ -2,25 +2,13 @@ _.each(templates, function(template, id) {
     tbone.addTemplate(id, template);
 });
 
-
-function tmpl(name, root) {
-    var tmplId = name;
-    var attrs = [];
-    var inline = !(/^\w+$/).test(name);
-    if (inline) {
-        // name is actually just an anonymous template
-        tmplId = 'tmpl' + (nextId++);
-        // attrs.push('inline:' + tmplId);
-        attrs.push('tmpl:' + tmplId);
-        tbone.addTemplate(tmplId, name);
-    } else {
-        attrs.push('tmpl:' + tmplId);
-    }
-    if (root) {
-        attrs.push(', root:' + root);
-    }
-    var $el = $('<div>').attr('tbone', attrs.join(', '));
-    if (inline) {
+function _render (opts) {
+    var tboneAttr = _.reduce(opts.attrs, function (agg, v, k) {
+        agg.push(k + ': ' + v);
+        return agg;
+    }, []).join(', ');
+    var $el = $('<div>').attr('tbone', tboneAttr);
+    if (opts.inline) {
         $el.html(name);
     }
     render($el);
@@ -28,9 +16,39 @@ function tmpl(name, root) {
     return $el;
 }
 
-function text(name, root) {
+function tmpl(name, root) {
+    var tmplId = name;
+    var attrs = {};
+    var inline = !(/^\w+$/).test(name);
+    if (inline) {
+        // name is actually just an anonymous template
+        tmplId = 'tmpl' + (nextId++);
+        // attrs.push('inline:' + tmplId);
+        attrs['tmpl'] = tmplId;
+        tbone.addTemplate(tmplId, name);
+    } else {
+        attrs['tmpl'] = tmplId;
+    }
+    if (root) {
+        attrs['root'] = root;
+    }
+    return _render({
+        attrs: attrs,
+        inline: inline
+    });
+}
+
+function text (name, root) {
     var $el = tmpl(name, root);
     return $el.text();
+}
+
+function view (name) {
+    return _render({
+        attrs: {
+            view: name
+        }
+    });
 }
 
 test('token render', function () {
@@ -349,4 +367,15 @@ test('denullText', function () {
     equal(tbone.denullText({ some: 'prop' }), '');
     equal(tbone.denullText([]), '');
     equal(tbone.denullText([42, 100]), '');
+});
+
+test('view with subview', function () {
+    tbone.createView('test1', function () {
+        this.$el.html('<div tbone="view test2"></div>');
+    });
+    tbone.createView('test2', function () {
+        this.$el.html('hello world');
+    });
+    var $el = view('test1');
+    equal($el.text(), 'hello world');
 });

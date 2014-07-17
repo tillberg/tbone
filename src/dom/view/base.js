@@ -60,6 +60,8 @@ var baseView = {
      */
     render: function () {
         var self = this;
+        var $old, activeElementSelector, activeElementIndex, selectionStart, selectionEnd;
+
         // This view may get a reset call at the same instant that another
         // view gets created to replace it.
         if (self.destroyed) { return; }
@@ -75,7 +77,6 @@ var baseView = {
              * now; see the URL below for possible IE compatibility.
              */
             var activeElement = document.activeElement;
-            var activeElementSelector, activeElementIndex, selectionStart, selectionEnd;
             if (_.contains($(activeElement).parents(), self.el)) {
                 // XXX this could be improved to pick up on IDs/classes/attributes or something?
                 activeElementSelector = 'input';
@@ -96,35 +97,37 @@ var baseView = {
              * Move all this view's children to another temporary DOM element.  This will be used as the
              * pseudo-parent element for the destroyDOM call.
              */
-            var $old = $('<div>').append(this.$el.children());
+            $old = $('<div>').append(this.$el.children());
             var newHtml = renderTemplate(self.templateId, self);
             log(INFO, self, 'newhtml', newHtml);
             self.$el.html(newHtml);
+        }
 
-            /**
-             * Execute the "fragment ready" callback.
-             */
-            self['ready']();
-            self['postReady']();
+        /**
+         * Execute the "fragment ready" callback.
+         */
+        self['ready']();
+        self['postReady']();
 
-            /**
-             * (Re-)create sub-views for each descendent element with a tbone attribute.
-             * On re-renders, the pre-existing list of sub-views is passed to render, which
-             * attempts to pair already-rendered views with matching elements in this view's
-             * newly re-rendered template.  Matching views are transferred to the new DOM
-             * hierarchy without disruption.
-             */
-            var oldSubViews = self.subViews || [];
-            self.subViews = render(self.$('[tbone]'), self, oldSubViews);
-            var obsoleteSubViews = _.difference(oldSubViews, self.subViews);
+        /**
+         * (Re-)create sub-views for each descendent element with a tbone attribute.
+         * On re-renders, the pre-existing list of sub-views is passed to render, which
+         * attempts to pair already-rendered views with matching elements in this view's
+         * newly re-rendered template.  Matching views are transferred to the new DOM
+         * hierarchy without disruption.
+         */
+        var oldSubViews = self.subViews || [];
+        self.subViews = render(self.$('[tbone]'), self, oldSubViews);
+        var obsoleteSubViews = _.difference(oldSubViews, self.subViews);
 
-            /**
-             * Destroy all of the sub-views that were not reused.
-             */
-            _.each(obsoleteSubViews, function (view) {
-                view.destroy(self);
-            });
+        /**
+         * Destroy all of the sub-views that were not reused.
+         */
+        _.each(obsoleteSubViews, function (view) {
+            view.destroy(self);
+        });
 
+        if (self.templateId) {
             /**
              * Call destroyDOM with the the pseudo-parent created above.  This DOM fragment contains all
              * of the previously-rendered (if any) DOM structure of this view and subviews, minus any
@@ -147,9 +150,6 @@ var baseView = {
                     }
                 }
             }
-        } else {
-            self['ready']();
-            self['postReady']();
         }
 
         self['postRender']();
