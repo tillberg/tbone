@@ -1,5 +1,14 @@
 ## TBone Change Log
 
+### 0.7.1
+
+- No longer suppresses JS errors during Scope execution, either
+  in debug or release mode.
+- Set default autorun/T-function priority higher than the
+  default view/model priorities.
+- Support auto-rendering subviews of views (you no longer need
+  to explicitly call tbone.render).
+
 ### 0.7.0
 
 - Refactored into three modules: core, core_ext, and full:

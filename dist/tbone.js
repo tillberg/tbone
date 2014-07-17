@@ -5,6 +5,7 @@ var TBONE_BUILD_RELEASE = false;
 
 var root;
 var _;
+var $;
 // Export TBone for Node.js or for the browser
 if (typeof exports !== 'undefined') {
     _ = require('underscore')['_'];
@@ -12,6 +13,7 @@ if (typeof exports !== 'undefined') {
 } else {
     root = window;
     _ = root['_'];
+    $ = root['$'];
 }
 
 /** @const {boolean} */
@@ -37,6 +39,8 @@ var opts = TBONE_DEBUG ? { 'aliasCheck': false } : {};
  * - defer ajax requests until we know that something in the
  *   UI needs its data.
  */
+/** @const */
+var DEFAULT_AUTORUN_PRIORITY = 4000;
 /** @const */
 var BASE_PRIORITY_MODEL_SYNC = 3000;
 /** @const */
@@ -635,13 +639,13 @@ var timers = [ ];
  * @param  {string}                         name      Name for debugging purposes
  * @return {Scope}                                    A new Scope created to wrap this function
  */
-function autorun(fn, priority, context, name, onExecuteCb, onExecuteContext, detached) {
+function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, detached) {
     // Default priority and name if not specified.  Priority is important in
     // preventing unnecessary refreshes of views/subscopes that may be slated
     // for destruction by a parent; the parent should have priority so as
     // to execute first.
     if (!priority) {
-        priority = currentExecutingScope ? currentExecutingScope.priority - 1 : 0;
+        priority = currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY;
     }
     if (!name && currentExecutingScope) {
         name = currentExecutingScope.Name + '+';
@@ -746,57 +750,48 @@ _.extend(Scope.prototype,
             // This function must be synchronous.  Anything that is looked up using
             // tbone.lookup before this function returns (that is not inside a subscope)
             // will get bound below.
-            if (TBONE_DEBUG) {
+            try {
                 self.fn.call(self.context);
-            } else {
-                try {
-                    self.fn.call(self.context);
-                } catch (ex) {
-                    /**
-                     * This could be improved.  But it's better than not being able
-                     * to see the errors at all.
-                     */
-                    tbone.push('__errors__.' + self['Name'], (ex && ex.stack || ex) + '');
-                }
-            }
-
-            _.each(recentLookups, function (propMap) {
-                var obj = propMap['obj'];
-                var props = propMap['props'];
-                if (props['']) {
-                    obj.on('change', self.trigger, self);
-                } else {
-                    for (var prop in props) {
-                        obj.on('change:' + prop, self.trigger, self);
+            } finally {
+                _.each(recentLookups, function (propMap) {
+                    var obj = propMap['obj'];
+                    var props = propMap['props'];
+                    if (props['']) {
+                        obj.on('change', self.trigger, self);
+                    } else {
+                        for (var prop in props) {
+                            obj.on('change:' + prop, self.trigger, self);
+                        }
                     }
-                }
-            });
-
-            // This is intended primarily for diagnostics.
-            if (self.onExecuteCb) {
-                self.onExecuteCb.call(self.onExecuteContext, this);
-            }
-
-            // Pop our own lookups and parent scope off the stack, restoring them to
-            // the values we saved above.
-            recentLookups = oldLookups;
-            currentExecutingScope = parentScope;
-
-            if (TBONE_DEBUG) {
-                var executionTimeMs = myTimer.done();
-                log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
-                    'priority': self.priority,
-                    'Name': self['Name'],
-                    'duration': executionTimeMs
                 });
-                if (executionTimeMs > 10) {
-                    log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
+
+                // This is intended primarily for diagnostics.
+                if (self.onExecuteCb) {
+                    self.onExecuteCb.call(self.onExecuteContext, this);
+                }
+
+                // Pop our own lookups and parent scope off the stack, restoring them to
+                // the values we saved above.
+                recentLookups = oldLookups;
+                currentExecutingScope = parentScope;
+
+                if (TBONE_DEBUG) {
+                    var executionTimeMs = myTimer.done();
+                    log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
                         'priority': self.priority,
                         'Name': self['Name'],
                         'duration': executionTimeMs
                     });
+                    if (executionTimeMs > 10) {
+                        log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                            'priority': self.priority,
+                            'Name': self['Name'],
+                            'duration': executionTimeMs
+                        });
+                    }
                 }
             }
+
         }
     },
 
@@ -1002,9 +997,10 @@ function queryScrollTop (value) {
 function drainQueue () {
     scrollTopChangedProgrammatically = false;
     var scrollTop = queryScrollTop();
-    drainQueueTimer = null;
     var queueDrainStartTime = now();
     var scope;
+    drainQueueTimer = null;
+    drainQueueTimer = schedulerQueue.length ? _.defer(drainQueue) : null;
     var remaining = 5000;
     while (!(TBONE_DEBUG && frozen) && --remaining && !!(scope = pop())) {
         /**
@@ -1019,7 +1015,6 @@ function drainQueue () {
     }
     if (!remaining) {
         log(WARN, 'scheduler', 'drainQueueOverflow', 'exceeded max drainQueue iterations');
-        drainQueueTimer = _.defer(drainQueue);
     }
     log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
         'duration': now() - queueDrainStartTime
@@ -2405,99 +2400,101 @@ var baseView = {
      */
     render: function () {
         var self = this;
+        var $old, activeElementSelector, activeElementIndex, selectionStart, selectionEnd;
+
         // This view may get a reset call at the same instant that another
         // view gets created to replace it.
-        if (!self.destroyed) {
-            logRender(self);
-            renderDepth++;
+        if (self.destroyed) { return; }
+
+        logRender(self);
+        renderDepth++;
+
+        if (self.templateId) {
+            /**
+             * If the DOM fragment to be removed has an active (focused) element, we attempt
+             * to restore that focus after refreshing this DOM fragment.  We also attempt
+             * to restore the selection start/end, which only works in Webkit/Gecko right
+             * now; see the URL below for possible IE compatibility.
+             */
+            var activeElement = document.activeElement;
+            if (_.contains($(activeElement).parents(), self.el)) {
+                // XXX this could be improved to pick up on IDs/classes/attributes or something?
+                activeElementSelector = 'input';
+                activeElementIndex = _.indexOf(self.$(activeElementSelector), activeElement);
+                // XXX for IE compatibility, this might work:
+                // http://the-stickman.com/web-development/javascript/ ...
+                // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
+                // The selectionStart and selectionEnd properties are unsupported for
+                // some input types.  It's easier to just eat the exception than identify
+                // which cases will and won't work.
+                try {
+                    selectionStart = activeElement.selectionStart;
+                    selectionEnd = activeElement.selectionEnd;
+                } catch (e) {}
+            }
 
             /**
              * Move all this view's children to another temporary DOM element.  This will be used as the
              * pseudo-parent element for the destroyDOM call.
              */
-            if (self.templateId) {
-                /**
-                 * If the DOM fragment to be removed has an active (focused) element, we attempt
-                 * to restore that focus after refreshing this DOM fragment.  We also attempt
-                 * to restore the selection start/end, which only works in Webkit/Gecko right
-                 * now; see the URL below for possible IE compatibility.
-                 */
-                var activeElement = document.activeElement;
-                var activeElementSelector, activeElementIndex, selectionStart, selectionEnd;
-                if (_.contains($(activeElement).parents(), self.el)) {
-                    // XXX this could be improved to pick up on IDs/classes/attributes or something?
-                    activeElementSelector = 'input';
-                    activeElementIndex = _.indexOf(self.$(activeElementSelector), activeElement);
-                    // XXX for IE compatibility, this might work:
-                    // http://the-stickman.com/web-development/javascript/ ...
-                    // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
-                    // The selectionStart and selectionEnd properties are unsupported for
-                    // some input types.  It's easier to just eat the exception than identify
-                    // which cases will and won't work.
-                    try {
-                        selectionStart = activeElement.selectionStart;
-                        selectionEnd = activeElement.selectionEnd;
-                    } catch (e) {}
-                }
+            $old = $('<div>').append(this.$el.children());
+            var newHtml = renderTemplate(self.templateId, self);
+            log(INFO, self, 'newhtml', newHtml);
+            self.$el.html(newHtml);
+        }
 
-                var $old = $('<div>').append(this.$el.children());
-                var newHtml = renderTemplate(self.templateId, self);
-                log(INFO, self, 'newhtml', newHtml);
-                self.$el.html(newHtml);
+        /**
+         * Execute the "fragment ready" callback.
+         */
+        self['ready']();
+        self['postReady']();
 
-                /**
-                 * Execute the "fragment ready" callback.
-                 */
-                self['ready']();
-                self['postReady']();
+        /**
+         * (Re-)create sub-views for each descendent element with a tbone attribute.
+         * On re-renders, the pre-existing list of sub-views is passed to render, which
+         * attempts to pair already-rendered views with matching elements in this view's
+         * newly re-rendered template.  Matching views are transferred to the new DOM
+         * hierarchy without disruption.
+         */
+        var oldSubViews = self.subViews || [];
+        self.subViews = render(self.$('[tbone]'), self, oldSubViews);
+        var obsoleteSubViews = _.difference(oldSubViews, self.subViews);
 
-                /**
-                 * (Re-)create sub-views for each descendent element with a tbone attribute.
-                 * On re-renders, the pre-existing list of sub-views is passed to render, which
-                 * attempts to pair already-rendered views with matching elements in this view's
-                 * newly re-rendered template.  Matching views are transferred to the new DOM
-                 * hierarchy without disruption.
-                 */
-                var oldSubViews = self.subViews || [];
-                self.subViews = render(self.$('[tbone]'), self, oldSubViews);
-                var obsoleteSubViews = _.difference(oldSubViews, self.subViews);
-                /**
-                 * Destroy all of the sub-views that were not reused.
-                 */
-                _.each(obsoleteSubViews, function (view) {
-                    view.destroy(self);
-                });
-                /**
-                 * Call destroyDOM with the the pseudo-parent created above.  This DOM fragment contains all
-                 * of the previously-rendered (if any) DOM structure of this view and subviews, minus any
-                 * subviews that are being reused (which have already been moved to the new parent).
-                 */
-                self['destroyDOM']($old);
+        /**
+         * Destroy all of the sub-views that were not reused.
+         */
+        _.each(obsoleteSubViews, function (view) {
+            view.destroy(self);
+        });
 
-                /**
-                 * If we saved it above, restore the active element focus and selection.
-                 */
-                if (activeElementSelector) {
-                    var newActiveElement = self.$(activeElementSelector)[activeElementIndex];
-                    if (newActiveElement) {
-                        $(newActiveElement).focus();
-                        if (selectionStart != null && selectionEnd != null) {
-                            try {
-                                newActiveElement.selectionStart = selectionStart;
-                                newActiveElement.selectionEnd = selectionEnd;
-                            } catch (e) {}
-                        }
+        if (self.templateId) {
+            /**
+             * Call destroyDOM with the the pseudo-parent created above.  This DOM fragment contains all
+             * of the previously-rendered (if any) DOM structure of this view and subviews, minus any
+             * subviews that are being reused (which have already been moved to the new parent).
+             */
+            self['destroyDOM']($old);
+
+            /**
+             * If we saved it above, restore the active element focus and selection.
+             */
+            if (activeElementSelector) {
+                var newActiveElement = self.$(activeElementSelector)[activeElementIndex];
+                if (newActiveElement) {
+                    $(newActiveElement).focus();
+                    if (selectionStart != null && selectionEnd != null) {
+                        try {
+                            newActiveElement.selectionStart = selectionStart;
+                            newActiveElement.selectionEnd = selectionEnd;
+                        } catch (e) {}
                     }
                 }
-            } else {
-                self['ready']();
-                self['postReady']();
             }
-            self['postRender']();
-            viewRenders++;
-
-            renderDepth--;
         }
+
+        self['postRender']();
+        viewRenders++;
+        renderDepth--;
     },
 
     /**
@@ -2639,90 +2636,95 @@ function render($els, parent, subViews) {
     return _.map($els, function (el) {
         var $this = $(el);
         var outerHTML = el.outerHTML;
-        if (subViewMap[outerHTML] && subViewMap[outerHTML].length) {
-            /**
-             * If we have a pre-rendered view available with matching outerHTML (i.e. nothing in
-             * the parent template has changed for this subview's root element), then just swap
-             * the pre-existing element in place along with its undisturbed associated View.
-             */
-            var subView = subViewMap[outerHTML].shift();
-            log(VERBOSE, parent || 'render', 'reuse', subView);
-            $this.replaceWith(subView.el);
-            return subView;
-        } else {
-            /**
-             * Otherwise, read the tbone attribute from the element and use it to instantiate
-             * a new View.
-             */
-            var props = {};
-            ($this.attr('tbone') || '').replace(rgxTBoneAttribute, function(__, prop, value) {
-                props[prop] = value;
-            });
-            var inlineTemplateId = props['inline'];
-            if (inlineTemplateId) {
+        var view = el['__tboneview__'];
+        if (!view) {
+            if (subViewMap[outerHTML] && subViewMap[outerHTML].length) {
                 /**
-                 * XXX what's the best way to get the original html back?
+                 * If we have a pre-rendered view available with matching outerHTML (i.e. nothing in
+                 * the parent template has changed for this subview's root element), then just swap
+                 * the pre-existing element in place along with its undisturbed associated View.
                  */
-                var origTemplateHtml = $this.html()
-                    .replace(/&lt;/g, '<')
-                    .replace(/&gt;/g, '>')
-                    .replace(/&amp;/g, '&');
-                addTemplate(inlineTemplateId, origTemplateHtml);
+                var subView = subViewMap[outerHTML].shift();
+                log(VERBOSE, parent || 'render', 'reuse', subView);
+                $this.replaceWith(subView.el);
+                view = subView;
+            } else {
+                /**
+                 * Otherwise, read the tbone attribute from the element and use it to instantiate
+                 * a new View.
+                 */
+                var props = {};
+                ($this.attr('tbone') || '').replace(rgxTBoneAttribute, function(__, prop, value) {
+                    props[prop] = value;
+                });
+                var inlineTemplateId = props['inline'];
+                if (inlineTemplateId) {
+                    /**
+                     * XXX what's the best way to get the original html back?
+                     */
+                    var origTemplateHtml = $this.html()
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&amp;/g, '&');
+                    addTemplate(inlineTemplateId, origTemplateHtml);
+                }
+                var templateId = inlineTemplateId || props['tmpl'];
+                var viewId = props['view'];
+                var root = props['root'];
+
+                /**
+                 * Use either the view or template attributes as the `name` of the view.
+                 */
+                var name = viewId || templateId;
+                if (!name) {
+                    error('No view or template was specified for this element: ', el);
+                }
+
+                /**
+                 * Find the corresponding view matching the name (`viewId` or `templateId`) to the
+                 * name passed to `createView.`  If there is no view matching that name, then use
+                 * the default view.  You can set the default view using `tbone.defaultView().`
+                 * @type {function(new:Backbone.View, Object)}
+                 */
+                var myView = views[name] || defaultView;
+
+                /**
+                 * Add a class matching the view name for CSS.
+                 */
+                $this.addClass(name);
+
+                /**
+                 * Also add a class for each of the parent views, if any.
+                 */
+                var parentView = myView.parentView;
+                while (parentView && parentView['Name']) {
+                    $this.addClass(parentView['Name']);
+                    parentView = parentView.parentView;
+                }
+
+                var rootObj = hashedObjectCache[root] || tbone;
+
+                var opts = {
+                    'Name': name,
+                    origOuterHTML: outerHTML,
+                    'el': el,
+                    templateId: templateId,
+                    domParentView: parent,
+                    rootObj: rootObj,
+                    rootStr: hashedObjectCache[root] ? '' : root
+                };
+
+                // This could potentially miss some cached objects (e.g.
+                // if the subview was removed during view-ready execution)
+                // Might be simpler just to clear hashedObjectCache when
+                // the drainQueue finishes?
+                delete hashedObjectCache[root];
+
+                view = myView.make(opts);
             }
-            var templateId = inlineTemplateId || props['tmpl'];
-            var viewId = props['view'];
-            var root = props['root'];
-
-            /**
-             * Use either the view or template attributes as the `name` of the view.
-             */
-            var name = viewId || templateId;
-            if (!name) {
-                error('No view or template was specified for this element: ', el);
-            }
-
-            /**
-             * Find the corresponding view matching the name (`viewId` or `templateId`) to the
-             * name passed to `createView.`  If there is no view matching that name, then use
-             * the default view.  You can set the default view using `tbone.defaultView().`
-             * @type {function(new:Backbone.View, Object)}
-             */
-            var myView = views[name] || defaultView;
-
-            /**
-             * Add a class matching the view name for CSS.
-             */
-            $this.addClass(name);
-
-            /**
-             * Also add a class for each of the parent views, if any.
-             */
-            var parentView = myView.parentView;
-            while (parentView && parentView['Name']) {
-                $this.addClass(parentView['Name']);
-                parentView = parentView.parentView;
-            }
-
-            var rootObj = hashedObjectCache[root] || tbone;
-
-            var opts = {
-                'Name': name,
-                origOuterHTML: outerHTML,
-                'el': el,
-                templateId: templateId,
-                domParentView: parent,
-                rootObj: rootObj,
-                rootStr: hashedObjectCache[root] ? '' : root
-            };
-
-            // This could potentially miss some cached objects (e.g.
-            // if the subview was removed during view-ready execution)
-            // Might be simpler just to clear hashedObjectCache when
-            // the drainQueue finishes?
-            delete hashedObjectCache[root];
-
-            return myView.make(opts);
+            el['__tboneview__'] = view;
         }
+        return view;
     });
 }
 
@@ -2819,7 +2821,7 @@ if (TBONE_DEBUG) {
 // This is used by BBVis to hook into the base model/collection/view
 // before they are modified.  You can, too.
 try{
-    dispatchEvent(new CustomEvent('tbone_loaded'));
+    root['dispatchEvent'](new root['CustomEvent']('tbone_loaded'));
 } catch(e) {}
 
 
