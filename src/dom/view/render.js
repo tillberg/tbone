@@ -29,89 +29,94 @@ function render($els, parent, subViews) {
     return _.map($els, function (el) {
         var $this = $(el);
         var outerHTML = el.outerHTML;
-        if (subViewMap[outerHTML] && subViewMap[outerHTML].length) {
-            /**
-             * If we have a pre-rendered view available with matching outerHTML (i.e. nothing in
-             * the parent template has changed for this subview's root element), then just swap
-             * the pre-existing element in place along with its undisturbed associated View.
-             */
-            var subView = subViewMap[outerHTML].shift();
-            log(VERBOSE, parent || 'render', 'reuse', subView);
-            $this.replaceWith(subView.el);
-            return subView;
-        } else {
-            /**
-             * Otherwise, read the tbone attribute from the element and use it to instantiate
-             * a new View.
-             */
-            var props = {};
-            ($this.attr('tbone') || '').replace(rgxTBoneAttribute, function(__, prop, value) {
-                props[prop] = value;
-            });
-            var inlineTemplateId = props['inline'];
-            if (inlineTemplateId) {
+        var view = el['__tboneview__'];
+        if (!view) {
+            if (subViewMap[outerHTML] && subViewMap[outerHTML].length) {
                 /**
-                 * XXX what's the best way to get the original html back?
+                 * If we have a pre-rendered view available with matching outerHTML (i.e. nothing in
+                 * the parent template has changed for this subview's root element), then just swap
+                 * the pre-existing element in place along with its undisturbed associated View.
                  */
-                var origTemplateHtml = $this.html()
-                    .replace(/&lt;/g, '<')
-                    .replace(/&gt;/g, '>')
-                    .replace(/&amp;/g, '&');
-                addTemplate(inlineTemplateId, origTemplateHtml);
+                var subView = subViewMap[outerHTML].shift();
+                log(VERBOSE, parent || 'render', 'reuse', subView);
+                $this.replaceWith(subView.el);
+                view = subView;
+            } else {
+                /**
+                 * Otherwise, read the tbone attribute from the element and use it to instantiate
+                 * a new View.
+                 */
+                var props = {};
+                ($this.attr('tbone') || '').replace(rgxTBoneAttribute, function(__, prop, value) {
+                    props[prop] = value;
+                });
+                var inlineTemplateId = props['inline'];
+                if (inlineTemplateId) {
+                    /**
+                     * XXX what's the best way to get the original html back?
+                     */
+                    var origTemplateHtml = $this.html()
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&amp;/g, '&');
+                    addTemplate(inlineTemplateId, origTemplateHtml);
+                }
+                var templateId = inlineTemplateId || props['tmpl'];
+                var viewId = props['view'];
+                var root = props['root'];
+
+                /**
+                 * Use either the view or template attributes as the `name` of the view.
+                 */
+                var name = viewId || templateId;
+                if (!name) {
+                    error('No view or template was specified for this element: ', el);
+                }
+
+                /**
+                 * Find the corresponding view matching the name (`viewId` or `templateId`) to the
+                 * name passed to `createView.`  If there is no view matching that name, then use
+                 * the default view.  You can set the default view using `tbone.defaultView().`
+                 * @type {function(new:Backbone.View, Object)}
+                 */
+                var myView = views[name] || defaultView;
+
+                /**
+                 * Add a class matching the view name for CSS.
+                 */
+                $this.addClass(name);
+
+                /**
+                 * Also add a class for each of the parent views, if any.
+                 */
+                var parentView = myView.parentView;
+                while (parentView && parentView['Name']) {
+                    $this.addClass(parentView['Name']);
+                    parentView = parentView.parentView;
+                }
+
+                var rootObj = hashedObjectCache[root] || tbone;
+
+                var opts = {
+                    'Name': name,
+                    origOuterHTML: outerHTML,
+                    'el': el,
+                    templateId: templateId,
+                    domParentView: parent,
+                    rootObj: rootObj,
+                    rootStr: hashedObjectCache[root] ? '' : root
+                };
+
+                // This could potentially miss some cached objects (e.g.
+                // if the subview was removed during view-ready execution)
+                // Might be simpler just to clear hashedObjectCache when
+                // the drainQueue finishes?
+                delete hashedObjectCache[root];
+
+                view = myView.make(opts);
             }
-            var templateId = inlineTemplateId || props['tmpl'];
-            var viewId = props['view'];
-            var root = props['root'];
-
-            /**
-             * Use either the view or template attributes as the `name` of the view.
-             */
-            var name = viewId || templateId;
-            if (!name) {
-                error('No view or template was specified for this element: ', el);
-            }
-
-            /**
-             * Find the corresponding view matching the name (`viewId` or `templateId`) to the
-             * name passed to `createView.`  If there is no view matching that name, then use
-             * the default view.  You can set the default view using `tbone.defaultView().`
-             * @type {function(new:Backbone.View, Object)}
-             */
-            var myView = views[name] || defaultView;
-
-            /**
-             * Add a class matching the view name for CSS.
-             */
-            $this.addClass(name);
-
-            /**
-             * Also add a class for each of the parent views, if any.
-             */
-            var parentView = myView.parentView;
-            while (parentView && parentView['Name']) {
-                $this.addClass(parentView['Name']);
-                parentView = parentView.parentView;
-            }
-
-            var rootObj = hashedObjectCache[root] || tbone;
-
-            var opts = {
-                'Name': name,
-                origOuterHTML: outerHTML,
-                'el': el,
-                templateId: templateId,
-                domParentView: parent,
-                rootObj: rootObj,
-                rootStr: hashedObjectCache[root] ? '' : root
-            };
-
-            // This could potentially miss some cached objects (e.g.
-            // if the subview was removed during view-ready execution)
-            // Might be simpler just to clear hashedObjectCache when
-            // the drainQueue finishes?
-            delete hashedObjectCache[root];
-
-            return myView.make(opts);
+            el['__tboneview__'] = view;
         }
+        return view;
     });
 }
