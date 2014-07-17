@@ -35,6 +35,8 @@ var opts = TBONE_DEBUG ? { 'aliasCheck': false } : {};
  *   UI needs its data.
  */
 /** @const */
+var DEFAULT_AUTORUN_PRIORITY = 4000;
+/** @const */
 var BASE_PRIORITY_MODEL_SYNC = 3000;
 /** @const */
 var BASE_PRIORITY_VIEW = 2000;

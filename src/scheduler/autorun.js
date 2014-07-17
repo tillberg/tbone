@@ -22,7 +22,7 @@ function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, de
     // for destruction by a parent; the parent should have priority so as
     // to execute first.
     if (!priority) {
-        priority = currentExecutingScope ? currentExecutingScope.priority - 1 : 0;
+        priority = currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY;
     }
     if (!name && currentExecutingScope) {
         name = currentExecutingScope.Name + '+';
