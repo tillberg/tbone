@@ -62,97 +62,99 @@ var baseView = {
         var self = this;
         // This view may get a reset call at the same instant that another
         // view gets created to replace it.
-        if (!self.destroyed) {
-            logRender(self);
-            renderDepth++;
+        if (self.destroyed) { return; }
+
+        logRender(self);
+        renderDepth++;
+
+        if (self.templateId) {
+            /**
+             * If the DOM fragment to be removed has an active (focused) element, we attempt
+             * to restore that focus after refreshing this DOM fragment.  We also attempt
+             * to restore the selection start/end, which only works in Webkit/Gecko right
+             * now; see the URL below for possible IE compatibility.
+             */
+            var activeElement = document.activeElement;
+            var activeElementSelector, activeElementIndex, selectionStart, selectionEnd;
+            if (_.contains($(activeElement).parents(), self.el)) {
+                // XXX this could be improved to pick up on IDs/classes/attributes or something?
+                activeElementSelector = 'input';
+                activeElementIndex = _.indexOf(self.$(activeElementSelector), activeElement);
+                // XXX for IE compatibility, this might work:
+                // http://the-stickman.com/web-development/javascript/ ...
+                // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
+                // The selectionStart and selectionEnd properties are unsupported for
+                // some input types.  It's easier to just eat the exception than identify
+                // which cases will and won't work.
+                try {
+                    selectionStart = activeElement.selectionStart;
+                    selectionEnd = activeElement.selectionEnd;
+                } catch (e) {}
+            }
 
             /**
              * Move all this view's children to another temporary DOM element.  This will be used as the
              * pseudo-parent element for the destroyDOM call.
              */
-            if (self.templateId) {
-                /**
-                 * If the DOM fragment to be removed has an active (focused) element, we attempt
-                 * to restore that focus after refreshing this DOM fragment.  We also attempt
-                 * to restore the selection start/end, which only works in Webkit/Gecko right
-                 * now; see the URL below for possible IE compatibility.
-                 */
-                var activeElement = document.activeElement;
-                var activeElementSelector, activeElementIndex, selectionStart, selectionEnd;
-                if (_.contains($(activeElement).parents(), self.el)) {
-                    // XXX this could be improved to pick up on IDs/classes/attributes or something?
-                    activeElementSelector = 'input';
-                    activeElementIndex = _.indexOf(self.$(activeElementSelector), activeElement);
-                    // XXX for IE compatibility, this might work:
-                    // http://the-stickman.com/web-development/javascript/ ...
-                    // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
-                    // The selectionStart and selectionEnd properties are unsupported for
-                    // some input types.  It's easier to just eat the exception than identify
-                    // which cases will and won't work.
-                    try {
-                        selectionStart = activeElement.selectionStart;
-                        selectionEnd = activeElement.selectionEnd;
-                    } catch (e) {}
-                }
+            var $old = $('<div>').append(this.$el.children());
+            var newHtml = renderTemplate(self.templateId, self);
+            log(INFO, self, 'newhtml', newHtml);
+            self.$el.html(newHtml);
 
-                var $old = $('<div>').append(this.$el.children());
-                var newHtml = renderTemplate(self.templateId, self);
-                log(INFO, self, 'newhtml', newHtml);
-                self.$el.html(newHtml);
+            /**
+             * Execute the "fragment ready" callback.
+             */
+            self['ready']();
+            self['postReady']();
 
-                /**
-                 * Execute the "fragment ready" callback.
-                 */
-                self['ready']();
-                self['postReady']();
+            /**
+             * (Re-)create sub-views for each descendent element with a tbone attribute.
+             * On re-renders, the pre-existing list of sub-views is passed to render, which
+             * attempts to pair already-rendered views with matching elements in this view's
+             * newly re-rendered template.  Matching views are transferred to the new DOM
+             * hierarchy without disruption.
+             */
+            var oldSubViews = self.subViews || [];
+            self.subViews = render(self.$('[tbone]'), self, oldSubViews);
+            var obsoleteSubViews = _.difference(oldSubViews, self.subViews);
 
-                /**
-                 * (Re-)create sub-views for each descendent element with a tbone attribute.
-                 * On re-renders, the pre-existing list of sub-views is passed to render, which
-                 * attempts to pair already-rendered views with matching elements in this view's
-                 * newly re-rendered template.  Matching views are transferred to the new DOM
-                 * hierarchy without disruption.
-                 */
-                var oldSubViews = self.subViews || [];
-                self.subViews = render(self.$('[tbone]'), self, oldSubViews);
-                var obsoleteSubViews = _.difference(oldSubViews, self.subViews);
-                /**
-                 * Destroy all of the sub-views that were not reused.
-                 */
-                _.each(obsoleteSubViews, function (view) {
-                    view.destroy(self);
-                });
-                /**
-                 * Call destroyDOM with the the pseudo-parent created above.  This DOM fragment contains all
-                 * of the previously-rendered (if any) DOM structure of this view and subviews, minus any
-                 * subviews that are being reused (which have already been moved to the new parent).
-                 */
-                self['destroyDOM']($old);
+            /**
+             * Destroy all of the sub-views that were not reused.
+             */
+            _.each(obsoleteSubViews, function (view) {
+                view.destroy(self);
+            });
 
-                /**
-                 * If we saved it above, restore the active element focus and selection.
-                 */
-                if (activeElementSelector) {
-                    var newActiveElement = self.$(activeElementSelector)[activeElementIndex];
-                    if (newActiveElement) {
-                        $(newActiveElement).focus();
-                        if (selectionStart != null && selectionEnd != null) {
-                            try {
-                                newActiveElement.selectionStart = selectionStart;
-                                newActiveElement.selectionEnd = selectionEnd;
-                            } catch (e) {}
-                        }
+            /**
+             * Call destroyDOM with the the pseudo-parent created above.  This DOM fragment contains all
+             * of the previously-rendered (if any) DOM structure of this view and subviews, minus any
+             * subviews that are being reused (which have already been moved to the new parent).
+             */
+            self['destroyDOM']($old);
+
+            /**
+             * If we saved it above, restore the active element focus and selection.
+             */
+            if (activeElementSelector) {
+                var newActiveElement = self.$(activeElementSelector)[activeElementIndex];
+                if (newActiveElement) {
+                    $(newActiveElement).focus();
+                    if (selectionStart != null && selectionEnd != null) {
+                        try {
+                            newActiveElement.selectionStart = selectionStart;
+                            newActiveElement.selectionEnd = selectionEnd;
+                        } catch (e) {}
                     }
                 }
-            } else {
-                self['ready']();
-                self['postReady']();
             }
-            self['postRender']();
-            viewRenders++;
-
-            renderDepth--;
+        } else {
+            self['ready']();
+            self['postReady']();
         }
+
+        self['postRender']();
+        viewRenders++;
+        renderDepth--;
     },
 
     /**
