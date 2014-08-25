@@ -89,6 +89,15 @@ var boundModel = models['bound'] = baseModel.extend({
         this['unset'](QUERY_SELF);
     },
 
+    'disableSleep': function () {
+        // This is intended to be used only interactively for development.
+        if (TBONE_DEBUG && this['sleepEnabled']) {
+            log(WARN, this, 'disableSleep', 'Disabling sleep mode for <%-Name%>.', this);
+            this['sleepEnabled'] = false;
+            this['wake']();
+        }
+    },
+
     /**
      * returns the new state, synchronously
      */
