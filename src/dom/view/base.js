@@ -152,7 +152,6 @@ var baseView = {
             }
         }
 
-        self['postRender']();
         viewRenders++;
         renderDepth--;
     },
@@ -164,7 +163,7 @@ var baseView = {
      * It is the recommended means of adding interactivity/data/whatever to Views.
      *
      * At the moment this callback is executed, subviews are neither rendered nor are they
-     * attached to the DOM fragment.  If you need to interact with subviews, use postRender.
+     * attached to the DOM fragment.
      */
     'ready': noop,
 
@@ -176,18 +175,6 @@ var baseView = {
      * such as activating a tooltip library, and to use View.ready for specific view logic.
      */
     'postReady': noop,
-
-    /**
-     * View.postRender
-     *
-     * The "fragment-updated" callback.  This is executed whenever this view is re-rendered,
-     * and after all sub-views (recursively) have rendered.
-     *
-     * Note that because we optimistically re-use sub-views, this may be called multiple times
-     * with the same sub-view DOM fragments.  Ensure that anything you do to DOM elements in
-     * sub-views is idempotent.
-     */
-    'postRender': noop,
 
     /**
      * View.destroyDOM
@@ -204,7 +191,7 @@ var baseView = {
     /**
      * If a root attribute was specified, use that as the root object for this view's
      * render, both in templating automatically as well as available via this.root in
-     * `ready` and `postRender` callbacks.
+     * `ready` callbacks.
      */
     root: function () {
         return this['query'](DONT_GET_DATA);

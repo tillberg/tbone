@@ -7,7 +7,7 @@
  *
  * Models and views update automatically by wrapping their reset functions with this.
  *
- * Additionally, this can be used within postRender callbacks to section off a smaller
+ * Additionally, this can be used within view `ready` callbacks to section off a smaller
  * block of code to repeat when its own referenced properties are updated, without
  * needing to re-render the entire view.
  * @param  {Function}                       fn        Function to invoke
