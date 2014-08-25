@@ -285,13 +285,16 @@ function hasViewListener(self) {
         var listeners = getListeners(next);
         for (var i = 0; i < listeners.length; i++) {
             var listener = listeners[i];
-            if (listener.isScope) {
+            while (listener && !(listener.isView || listener.isModel)) {
                 // The listener context is the model or view to whom the scope belongs.
-                // Here, we care about that model/view, not the scope, because that's
-                // what everyone else might be listening to.
-                listener = listener.context;
+                // Here, we care about that model/view, not the view's or model's scope
+                // or that scope's descendent scopes. Walk up the scope tree to the parent
+                // scope or to the scope's context. The target is to find the first model
+                // or view in the tree.
+                listener = listener.parentScope || listener.context;
             }
-            // listener might be undefined right now if the scope above didn't have a context.
+            // listener might be undefined right now if this listener is not part of a
+            // view or model (i.e. it is an independent scope created by tbone.autorun).
             if (listener) {
                 if (listener.isView) {
                     // We found a view that depends on the original model!

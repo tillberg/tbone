@@ -149,6 +149,7 @@ _.extend(Scope.prototype,
      */
     destroy: function () {
         this.destroyed = true;
+        delete this.parentScope;
         this.unbindAll();
         this.destroySubScopes();
     }

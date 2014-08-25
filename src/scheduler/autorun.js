@@ -31,9 +31,11 @@ function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, de
     // Create a new scope for this function
     var scope = new Scope(fn, context, priority, name, onExecuteCb, onExecuteContext);
 
-    // If this is a subscope, add it to its parent's list of subscopes.
+    // If this is a subscope, add it to its parent's list of subscopes, and add a reference
+    // to the parent scope.
     if (!detached && currentExecutingScope) {
         currentExecutingScope.subScopes.push(scope);
+        scope.parentScope = currentExecutingScope;
     }
 
     // Run the associated function (and bind associated models)
