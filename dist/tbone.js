@@ -290,13 +290,16 @@ function hasViewListener(self) {
         var listeners = getListeners(next);
         for (var i = 0; i < listeners.length; i++) {
             var listener = listeners[i];
-            if (listener.isScope) {
+            while (listener && !(listener.isView || listener.isModel)) {
                 // The listener context is the model or view to whom the scope belongs.
-                // Here, we care about that model/view, not the scope, because that's
-                // what everyone else might be listening to.
-                listener = listener.context;
+                // Here, we care about that model/view, not the view's or model's scope
+                // or that scope's descendent scopes. Walk up the scope tree to the parent
+                // scope or to the scope's context. The target is to find the first model
+                // or view in the tree.
+                listener = listener.parentScope || listener.context;
             }
-            // listener might be undefined right now if the scope above didn't have a context.
+            // listener might be undefined right now if this listener is not part of a
+            // view or model (i.e. it is an independent scope created by tbone.autorun).
             if (listener) {
                 if (listener.isView) {
                     // We found a view that depends on the original model!
@@ -630,7 +633,7 @@ var timers = [ ];
  *
  * Models and views update automatically by wrapping their reset functions with this.
  *
- * Additionally, this can be used within postRender callbacks to section off a smaller
+ * Additionally, this can be used within view `ready` callbacks to section off a smaller
  * block of code to repeat when its own referenced properties are updated, without
  * needing to re-render the entire view.
  * @param  {Function}                       fn        Function to invoke
@@ -654,9 +657,11 @@ function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, de
     // Create a new scope for this function
     var scope = new Scope(fn, context, priority, name, onExecuteCb, onExecuteContext);
 
-    // If this is a subscope, add it to its parent's list of subscopes.
+    // If this is a subscope, add it to its parent's list of subscopes, and add a reference
+    // to the parent scope.
     if (!detached && currentExecutingScope) {
         currentExecutingScope.subScopes.push(scope);
+        scope.parentScope = currentExecutingScope;
     }
 
     // Run the associated function (and bind associated models)
@@ -828,6 +833,7 @@ _.extend(Scope.prototype,
      */
     destroy: function () {
         this.destroyed = true;
+        delete this.parentScope;
         this.unbindAll();
         this.destroySubScopes();
     }
@@ -1632,6 +1638,15 @@ var boundModel = models['bound'] = baseModel.extend({
         this['unset'](QUERY_SELF);
     },
 
+    'disableSleep': function () {
+        // This is intended to be used only interactively for development.
+        if (TBONE_DEBUG && this['sleepEnabled']) {
+            log(WARN, this, 'disableSleep', 'Disabling sleep mode for <%-Name%>.', this);
+            this['sleepEnabled'] = false;
+            this['wake']();
+        }
+    },
+
     /**
      * returns the new state, synchronously
      */
@@ -2290,12 +2305,7 @@ function renderTemplate(id, view) {
         // <script name="<id>" type="text/tbone-tmpl">...</script>
         // The type doesn't matter, per se, but you should specify one so
         // as not to have your template parsed as javascript.
-        template = $('script[name="' + id + '"]').html();
-        if (!template) {
-            error('Could not find template ' + id + '.  If you don\'t want to ' +
-                  'use a template, use the view attribute instead.');
-            return '';
-        }
+        template = $('script[name="' + id + '"]').html() || '';
     }
     if (typeof template === 'string') {
         template = templates[id] = initTemplate(template);
@@ -2492,7 +2502,6 @@ var baseView = {
             }
         }
 
-        self['postRender']();
         viewRenders++;
         renderDepth--;
     },
@@ -2504,7 +2513,7 @@ var baseView = {
      * It is the recommended means of adding interactivity/data/whatever to Views.
      *
      * At the moment this callback is executed, subviews are neither rendered nor are they
-     * attached to the DOM fragment.  If you need to interact with subviews, use postRender.
+     * attached to the DOM fragment.
      */
     'ready': noop,
 
@@ -2516,18 +2525,6 @@ var baseView = {
      * such as activating a tooltip library, and to use View.ready for specific view logic.
      */
     'postReady': noop,
-
-    /**
-     * View.postRender
-     *
-     * The "fragment-updated" callback.  This is executed whenever this view is re-rendered,
-     * and after all sub-views (recursively) have rendered.
-     *
-     * Note that because we optimistically re-use sub-views, this may be called multiple times
-     * with the same sub-view DOM fragments.  Ensure that anything you do to DOM elements in
-     * sub-views is idempotent.
-     */
-    'postRender': noop,
 
     /**
      * View.destroyDOM
@@ -2544,7 +2541,7 @@ var baseView = {
     /**
      * If a root attribute was specified, use that as the root object for this view's
      * render, both in templating automatically as well as available via this.root in
-     * `ready` and `postRender` callbacks.
+     * `ready` callbacks.
      */
     root: function () {
         return this['query'](DONT_GET_DATA);

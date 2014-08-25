@@ -1,5 +1,11 @@
 ## TBone Change Log
 
+### 0.7.2
+
+- Fix hasViewListener such that references inside T-functions in
+  views wake the models they depend on.
+- Add disableSleep function to bound models (for debug mode only).
+
 ### 0.7.1
 
 - No longer suppresses JS errors during Scope execution, either
