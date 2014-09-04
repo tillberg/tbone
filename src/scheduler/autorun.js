@@ -21,7 +21,7 @@ function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, de
     // preventing unnecessary refreshes of views/subscopes that may be slated
     // for destruction by a parent; the parent should have priority so as
     // to execute first.
-    if (!priority) {
+    if (priority == null) {
         priority = currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY;
     }
     if (!name && currentExecutingScope) {
