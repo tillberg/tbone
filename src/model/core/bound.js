@@ -119,14 +119,14 @@ function getQuerySetProp (flag, prop) {
     }
     var isSet = flag >= MIN_QUERY_SET_FLAG || hasValue;
     prop = (prop || '').replace('__self__', '');
-    return isSet && prop;
+    return isSet ? prop : null;
 }
 
 if (TBONE_DEBUG) {
     boundModel['query'] = function (flag, prop, value) {
         var setProp = getQuerySetProp.apply(this, arguments);
         if (setProp) {
-            log(WARN, this, 'boundModelSet', 'Attempting to set non-root property <%-prop%> of bound model!', {
+            log(WARN, this, 'boundModelSet', 'Attempting to set property <%-prop%> of bound model!', {
                 prop: setProp
             });
         }
