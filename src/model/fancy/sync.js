@@ -26,7 +26,7 @@
     });
 
     // Default JSON-request options.
-    var params = {type: type, dataType: 'json'};
+    var params = {type: type};
 
     // Ensure that we have a URL.
     if (!options.url) {
