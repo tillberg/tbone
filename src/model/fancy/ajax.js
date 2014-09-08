@@ -45,7 +45,6 @@ models['ajax'] = asyncModel.extend({
                 'beforeSend': function (xhr) {
                     inflight++;
                     myXhr = xhr;
-                    xhr['__tbone__'] = true;
                 },
                 'url': url
             });

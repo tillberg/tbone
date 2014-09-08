@@ -30,7 +30,7 @@
 
     // Ensure that we have a URL.
     if (!options.url) {
-      params.url = _.result(model, 'url') || urlError();
+      params.url = _.result(model, 'url');
     }
 
     // Ensure that we have the appropriate request data.

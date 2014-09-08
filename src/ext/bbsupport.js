@@ -269,7 +269,6 @@ if (Backbone) {
                         }
                         inflight++;
                         myXhr = self.xhrInFlight = xhr;
-                        xhr['__tbone__'] = true;
                     },
                     url: url
                 });
