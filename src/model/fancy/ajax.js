@@ -28,7 +28,7 @@ models['ajax'] = asyncModel.extend({
                 self.clear();
             }
             sync('read', self, {
-                'dataType': 'text',
+                'dataType': self['dataType'],
                 'success': function (resp) {
                     /**
                      * dataCallback returns true if this update was accepted (i.e.
@@ -82,6 +82,8 @@ models['ajax'] = asyncModel.extend({
 
     'clearOnFetch': true, // XXX move to async model
 
-    'sleepEnabled': true
+    'sleepEnabled': true,
+
+    'dataType': 'json'
 
 });
