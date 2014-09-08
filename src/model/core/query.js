@@ -232,8 +232,26 @@ function listDiffs(curr, prev, accum) {
     return diffs;
 }
 
-function query(flag, prop, value) {
+function query (flag, prop, value) {
     var self = this;
+    var hasValue = arguments.length === 3;
+    if (typeof flag !== 'number') {
+        /**
+         * If no flag provided, shift the prop and value over.  We do it this way instead
+         * of having flag last so that we can type-check flag and discern optional flags
+         * from optional values.  And flag should only be used internally, anyway.
+         */
+        value = prop;
+        prop = flag;
+        flag = QUERY_DEFAULT;
+        /**
+         * Use arguments.length to switch to set mode in order to properly support
+         * setting undefined.
+         */
+        if (arguments.length === 2) {
+            hasValue = true;
+        }
+    }
     var dontGetData = flag === DONT_GET_DATA;
     var iterateOverModels = flag === ITERATE_OVER_MODELS;
     var isPush = flag === QUERY_PUSH;
@@ -245,26 +263,7 @@ function query(flag, prop, value) {
     var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
     var isUnset = flag === QUERY_UNSET;
     var assumeChanged = flag === QUERY_ASSUME_CHANGED;
-    var hasValue = arguments.length === 3;
     var isSet = isListOp || isToggle || isUnset || hasValue || isIncrement;
-    if (typeof flag !== 'number') {
-        /**
-         * If no flag provided, shift the prop and value over.  We do it this way instead
-         * of having flag last so that we can type-check flag and discern optional flags
-         * from optional values.  And flag should only be used internally, anyway.
-         */
-        value = prop;
-        prop = flag;
-        flag = 0;
-        /**
-         * Use arguments.length to switch to set mode in order to properly support
-         * setting undefined.
-         */
-        if (arguments.length === 2) {
-            isSet = true;
-            hasValue = true;
-        }
-    }
 
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
