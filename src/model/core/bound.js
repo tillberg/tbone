@@ -105,3 +105,31 @@ var boundModel = models['bound'] = baseModel.extend({
 
     'sleepEnabled': false
 });
+
+function getQuerySetProp (flag, prop) {
+    // This is a short version of the start of the `query` function, and it would be nice
+    // to refactor that to incorporate this feature without a duplication of that logic.
+    var hasValue = arguments.length === 3;
+    if (typeof flag !== 'number') {
+        prop = flag;
+        flag = QUERY_DEFAULT;
+        if (arguments.length === 2) {
+            hasValue = true;
+        }
+    }
+    var isSet = flag >= MIN_QUERY_SET_FLAG || hasValue;
+    prop = (prop || '').replace('__self__', '');
+    return isSet && prop;
+}
+
+if (TBONE_DEBUG) {
+    boundModel['query'] = function (flag, prop, value) {
+        var setProp = getQuerySetProp.apply(this, arguments);
+        if (setProp) {
+            log(WARN, this, 'boundModelSet', 'Attempting to set non-root property <%-prop%> of bound model!', {
+                prop: setProp
+            });
+        }
+        return query.apply(this, arguments);
+    };
+}

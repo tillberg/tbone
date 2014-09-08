@@ -24,6 +24,11 @@ var ITERATE_OVER_MODELS = 2;
 /**
  * @const
  */
+var MIN_QUERY_SET_FLAG = 3;
+
+/**
+ * @const
+ */
 var QUERY_PUSH = 3;
 
 /**
