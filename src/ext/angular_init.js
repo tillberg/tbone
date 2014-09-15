@@ -1,3 +1,18 @@
+/**
+ * @const
+ */
+var RECENTLY_CHANGED_NONE;
+
+/**
+ * @const
+ */
+var RECENTLY_CHANGED_TBONE = 1;
+
+/**
+ * @const
+ */
+var RECENTLY_CHANGED_ANGULAR = 2;
+
 tbone['initAngular'] = function ($rootscope) {
     var scopesToDigest = [];
     var scopeDigestTimer;
@@ -15,14 +30,26 @@ tbone['initAngular'] = function ($rootscope) {
         scopesToDigest.push($scope);
     }
 
-    $rootscope['$tbind'] = function (dest, src) {
+    $rootscope['$tbind'] = function (dest, src, opts) {
         var $scope = this;
+        var recentlyChanged = RECENTLY_CHANGED_NONE;
         var tscope = T(function () {
-            $scope[dest] = T(src);
-            if ($scope['$root']['$$phase'] !== '$digest') {
-                queueScopeDigest($scope);
+            if (recentlyChanged !== RECENTLY_CHANGED_ANGULAR) {
+                $scope[dest] = T(src);
+                recentlyChanged = RECENTLY_CHANGED_TBONE;
+                if ($scope['$root']['$$phase'] !== '$digest') {
+                    queueScopeDigest($scope);
+                }
             }
+            recentlyChanged = RECENTLY_CHANGED_NONE;
         }, BASE_PRIORITY_VIEW);
+        $scope['$watch'](dest, function (newValue) {
+            if (recentlyChanged !== RECENTLY_CHANGED_TBONE) {
+                T(src, newValue);
+                recentlyChanged = RECENTLY_CHANGED_ANGULAR;
+            }
+            recentlyChanged = RECENTLY_CHANGED_NONE;
+        });
         tscope['$angscope'] = $scope;
         if (!$scope['$tscopes']) {
             $scope['$tscopes'] = [];
