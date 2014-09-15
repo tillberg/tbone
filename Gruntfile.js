@@ -83,6 +83,7 @@ module.exports = function(grunt) {
           'src/dom/view/create.js',
           'src/export.js',
           'src/ext/bbsupport.js',
+          'src/ext/angular_init.js',
           'src/snippet/footer.js'
         ],
         dest: 'dist/<%= pkg.name %>.js',
