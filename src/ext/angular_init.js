@@ -18,6 +18,7 @@ tbone['initAngular'] = function ($rootscope) {
     var scopeDigestTimer;
     function digestScopes () {
         scopeDigestTimer = null;
+        // console.log('digesting ' + _.uniq(scopesToDigest).length + ' scopes due to ' + scopesToDigest.length + ' changes.');
         _.each(_.uniq(scopesToDigest), function ($scope) {
             $scope.$digest();
         });
@@ -33,39 +34,57 @@ tbone['initAngular'] = function ($rootscope) {
     $rootscope['$tbind'] = function (dest, src, opts) {
         var $scope = this;
         var recentlyChanged = RECENTLY_CHANGED_NONE;
+
+        // Create a TBone scope to propagate TBone model changes to the Angular $scope.
         var tscope = T(function () {
             if (recentlyChanged !== RECENTLY_CHANGED_ANGULAR) {
                 $scope[dest] = T(src);
                 recentlyChanged = RECENTLY_CHANGED_TBONE;
                 if ($scope['$root']['$$phase'] !== '$digest') {
+                    console.log('queue scope digest');
                     queueScopeDigest($scope);
                 }
             }
             recentlyChanged = RECENTLY_CHANGED_NONE;
         }, BASE_PRIORITY_VIEW);
-        $scope['$watch'](dest, function (newValue) {
+        tscope['$angscope'] = $scope;
+
+        // Watch the Angular $scope for property changes to propagate to the TBone model.
+        var deregister = $scope['$watch'](dest, function (newValue) {
             if (recentlyChanged !== RECENTLY_CHANGED_TBONE) {
                 T(src, newValue);
                 recentlyChanged = RECENTLY_CHANGED_ANGULAR;
             }
             recentlyChanged = RECENTLY_CHANGED_NONE;
         });
-        tscope['$angscope'] = $scope;
-        if (!$scope['$tscopes']) {
-            $scope['$tscopes'] = [];
+
+        if (!$scope['$tbone']) {
+            $scope['$tbone'] = { 'bindings': {} };
         }
-        $scope['$tscopes'].push(tscope);
+        $scope['$tbone']['bindings'][dest] = {
+            tscope: tscope,
+            deregister: deregister
+        };
+    };
+
+    $rootscope['$tunbind'] = function (dest) {
+        var bindings = this['$tbone']['bindings'];
+        var binding = bindings[dest];
+        binding.tscope['destroy']();
+        delete binding.tscope['$angscope'];
+        binding.deregister();
+        delete bindings[dest];
     };
 
     var origDestroy = $rootscope['$destroy'];
     $rootscope.$destroy = function () {
-        if (this['$tscopes']) {
-            _.each(this['$tscopes'], function (tscope) {
-                tscope['destroy']();
-                delete tscope['$angscope'];
+        var self = this;
+        if (self['$tbone']) {
+            _.each(_.keys(self['$tbone']['bindings']), function (key) {
+                self['$tunbind'](key);
             });
-            delete this['$tscopes'];
+            delete self['$tbone'];
         }
-        return origDestroy.apply(this, arguments);
+        return origDestroy.apply(self, arguments);
     };
 };
