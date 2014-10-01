@@ -1,5 +1,13 @@
 ## TBone Change Log
 
+### 0.8.0
+
+- Exposed `dataType` as a configurable ajax model property, and
+  changed the default from 'text' to 'json'.
+- Add log warnings when making ad hoc changes to a bound model.
+- Add initial draft Angular support (unstable).
+- Add bower support.
+
 ### 0.7.2
 
 - Fix hasViewListener such that references inside T-functions in
