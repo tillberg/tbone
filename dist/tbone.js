@@ -647,7 +647,7 @@ function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, de
     // preventing unnecessary refreshes of views/subscopes that may be slated
     // for destruction by a parent; the parent should have priority so as
     // to execute first.
-    if (!priority) {
+    if (priority == null) {
         priority = currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY;
     }
     if (!name && currentExecutingScope) {
@@ -1076,6 +1076,11 @@ var ITERATE_OVER_MODELS = 2;
 /**
  * @const
  */
+var MIN_QUERY_SET_FLAG = 3;
+
+/**
+ * @const
+ */
 var QUERY_PUSH = 3;
 
 /**
@@ -1284,8 +1289,26 @@ function listDiffs(curr, prev, accum) {
     return diffs;
 }
 
-function query(flag, prop, value) {
+function query (flag, prop, value) {
     var self = this;
+    var hasValue = arguments.length === 3;
+    if (typeof flag !== 'number') {
+        /**
+         * If no flag provided, shift the prop and value over.  We do it this way instead
+         * of having flag last so that we can type-check flag and discern optional flags
+         * from optional values.  And flag should only be used internally, anyway.
+         */
+        value = prop;
+        prop = flag;
+        flag = QUERY_DEFAULT;
+        /**
+         * Use arguments.length to switch to set mode in order to properly support
+         * setting undefined.
+         */
+        if (arguments.length === 2) {
+            hasValue = true;
+        }
+    }
     var dontGetData = flag === DONT_GET_DATA;
     var iterateOverModels = flag === ITERATE_OVER_MODELS;
     var isPush = flag === QUERY_PUSH;
@@ -1297,26 +1320,7 @@ function query(flag, prop, value) {
     var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
     var isUnset = flag === QUERY_UNSET;
     var assumeChanged = flag === QUERY_ASSUME_CHANGED;
-    var hasValue = arguments.length === 3;
     var isSet = isListOp || isToggle || isUnset || hasValue || isIncrement;
-    if (typeof flag !== 'number') {
-        /**
-         * If no flag provided, shift the prop and value over.  We do it this way instead
-         * of having flag last so that we can type-check flag and discern optional flags
-         * from optional values.  And flag should only be used internally, anyway.
-         */
-        value = prop;
-        prop = flag;
-        flag = 0;
-        /**
-         * Use arguments.length to switch to set mode in order to properly support
-         * setting undefined.
-         */
-        if (arguments.length === 2) {
-            isSet = true;
-            hasValue = true;
-        }
-    }
 
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
@@ -1655,6 +1659,34 @@ var boundModel = models['bound'] = baseModel.extend({
     'sleepEnabled': false
 });
 
+function getQuerySetProp (flag, prop) {
+    // This is a short version of the start of the `query` function, and it would be nice
+    // to refactor that to incorporate this feature without a duplication of that logic.
+    var hasValue = arguments.length === 3;
+    if (typeof flag !== 'number') {
+        prop = flag;
+        flag = QUERY_DEFAULT;
+        if (arguments.length === 2) {
+            hasValue = true;
+        }
+    }
+    var isSet = flag >= MIN_QUERY_SET_FLAG || hasValue;
+    prop = (prop || '').replace('__self__', '');
+    return isSet ? prop : null;
+}
+
+if (TBONE_DEBUG) {
+    boundModel['query'] = function (flag, prop, value) {
+        var setProp = getQuerySetProp.apply(this, arguments);
+        if (setProp) {
+            log(WARN, this, 'boundModelSet', 'Attempting to set property <%-prop%> of bound model!', {
+                prop: setProp
+            });
+        }
+        return query.apply(this, arguments);
+    };
+}
+
 /**
  * model/core/async.js
  */
@@ -1797,11 +1829,11 @@ tbone['collections'] = collections;
     });
 
     // Default JSON-request options.
-    var params = {type: type, dataType: 'json'};
+    var params = {type: type};
 
     // Ensure that we have a URL.
     if (!options.url) {
-      params.url = _.result(model, 'url') || urlError();
+      params.url = _.result(model, 'url');
     }
 
     // Ensure that we have the appropriate request data.
@@ -1888,7 +1920,7 @@ models['ajax'] = asyncModel.extend({
                 self.clear();
             }
             sync('read', self, {
-                'dataType': 'text',
+                'dataType': self['dataType'],
                 'success': function (resp) {
                     /**
                      * dataCallback returns true if this update was accepted (i.e.
@@ -1905,7 +1937,6 @@ models['ajax'] = asyncModel.extend({
                 'beforeSend': function (xhr) {
                     inflight++;
                     myXhr = xhr;
-                    xhr['__tbone__'] = true;
                 },
                 'url': url
             });
@@ -1942,7 +1973,9 @@ models['ajax'] = asyncModel.extend({
 
     'clearOnFetch': true, // XXX move to async model
 
-    'sleepEnabled': true
+    'sleepEnabled': true,
+
+    'dataType': 'json'
 
 });
 
@@ -3092,7 +3125,6 @@ if (Backbone) {
                         }
                         inflight++;
                         myXhr = self.xhrInFlight = xhr;
-                        xhr['__tbone__'] = true;
                     },
                     url: url
                 });
@@ -3186,5 +3218,96 @@ if (Backbone) {
         });
     });
 }
+
+/**
+ * @const
+ */
+var RECENTLY_CHANGED_NONE;
+
+/**
+ * @const
+ */
+var RECENTLY_CHANGED_TBONE = 1;
+
+/**
+ * @const
+ */
+var RECENTLY_CHANGED_ANGULAR = 2;
+
+tbone['initAngular'] = function ($rootscope) {
+    var scopesToDigest = [];
+    var scopeDigestTimer;
+    function digestScopes () {
+        scopeDigestTimer = null;
+        // console.log('digesting ' + _.uniq(scopesToDigest).length + ' scopes due to ' + scopesToDigest.length + ' changes.');
+        _.each(_.uniq(scopesToDigest), function ($scope) {
+            $scope.$digest();
+        });
+        scopesToDigest = [];
+    }
+    function queueScopeDigest ($scope) {
+        if (!scopeDigestTimer) {
+            scopeDigestTimer = setTimeout(digestScopes, 0);
+        }
+        scopesToDigest.push($scope);
+    }
+
+    $rootscope['$tbind'] = function (dest, src, opts) {
+        var $scope = this;
+        var recentlyChanged = RECENTLY_CHANGED_NONE;
+
+        // Create a TBone scope to propagate TBone model changes to the Angular $scope.
+        var tscope = T(function () {
+            if (recentlyChanged !== RECENTLY_CHANGED_ANGULAR) {
+                $scope[dest] = T(src);
+                recentlyChanged = RECENTLY_CHANGED_TBONE;
+                if ($scope['$root']['$$phase'] !== '$digest') {
+                    console.log('queue scope digest');
+                    queueScopeDigest($scope);
+                }
+            }
+            recentlyChanged = RECENTLY_CHANGED_NONE;
+        }, BASE_PRIORITY_VIEW);
+        tscope['$angscope'] = $scope;
+
+        // Watch the Angular $scope for property changes to propagate to the TBone model.
+        var deregister = $scope['$watch'](dest, function (newValue) {
+            if (recentlyChanged !== RECENTLY_CHANGED_TBONE) {
+                T(src, newValue);
+                recentlyChanged = RECENTLY_CHANGED_ANGULAR;
+            }
+            recentlyChanged = RECENTLY_CHANGED_NONE;
+        });
+
+        if (!$scope['$tbone']) {
+            $scope['$tbone'] = { 'bindings': {} };
+        }
+        $scope['$tbone']['bindings'][dest] = {
+            tscope: tscope,
+            deregister: deregister
+        };
+    };
+
+    $rootscope['$tunbind'] = function (dest) {
+        var bindings = this['$tbone']['bindings'];
+        var binding = bindings[dest];
+        binding.tscope['destroy']();
+        delete binding.tscope['$angscope'];
+        binding.deregister();
+        delete bindings[dest];
+    };
+
+    var origDestroy = $rootscope['$destroy'];
+    $rootscope.$destroy = function () {
+        var self = this;
+        if (self['$tbone']) {
+            _.each(_.keys(self['$tbone']['bindings']), function (key) {
+                self['$tunbind'](key);
+            });
+            delete self['$tbone'];
+        }
+        return origDestroy.apply(self, arguments);
+    };
+};
 
 }());
