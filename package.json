@@ -2,7 +2,7 @@
   "name": "tbone",
   "version": "0.7.2",
   "author": "Dan Tillberg <dan@tillberg.us>",
-  "description": "Automagic event-binding for Backbone",
+  "description": "Reactive Programming for JavaScript",
   "license": "MIT",
   "main": "dist/tbone.js",
   "directories": {

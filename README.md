@@ -1,7 +1,7 @@
 TBone [![GitHub version](https://badge.fury.io/gh/appneta%2Ftbone.png)](https://badge.fury.io/gh/appneta%2Ftbone) [![Build Status](https://travis-ci.org/appneta/tbone.png)](https://travis-ci.org/appneta/tbone)
 =====
 
-### Declarative programming in Javascript
+### Reactive Programming for JavaScript
 
 TBone extends live template binding to Javascript functions.
 
