@@ -1,0 +1,22 @@
+{
+  "name": "TBone",
+  "version": "0.7.2",
+  "homepage": "https://www.tbonejs.org/",
+  "authors": [
+    "Dan Tillberg <dan@tillberg.us>"
+  ],
+  "description": "Reactive Programming for JavaScript",
+  "main": "dist/tbone.js",
+  "moduleType": [
+    "globals",
+    "node"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
