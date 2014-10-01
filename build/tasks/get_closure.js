@@ -14,9 +14,13 @@ module.exports = function( grunt ) {
       ].join(';');
       var proc = require('child_process')
         .spawn('sh', ['-c', cmd], { cwd: 'build/closure_compiler/google/' });
-      proc.on('close', function () {
-        grunt.log.writeln('Closure compiler download complete.');
-        done();
+      proc.on('close', function (err, out) {
+        if (err) {
+          grunt.log.writeln('Error downloading closure compiler.');
+        } else {
+          grunt.log.writeln('Closure compiler download complete.');
+        }
+        done(!err);
       });
     }
   });

@@ -138,21 +138,18 @@ module.exports = function(grunt) {
       },
       core: {
         pretty: true,
-        expand: true,
         src: 'dist/tbone.core.min.js',
-        dest: './',
+        dest: 'dist/tbone.core.min.js.gz',
       },
       core_ext: {
         pretty: true,
-        expand: true,
         src: 'dist/tbone.core_ext.min.js',
-        dest: './',
+        dest: 'dist/tbone.core_ext.min.js.gz',
       },
       full: {
         pretty: true,
-        expand: true,
         src: 'dist/tbone.min.js',
-        dest: './',
+        dest: 'dist/tbone.min.js.gz',
       },
     },
 
@@ -205,7 +202,7 @@ module.exports = function(grunt) {
         options: {
           hostname: '*',
           port: 9238,
-          base: 'test/',
+          base: './test',
         }
       }
     },
