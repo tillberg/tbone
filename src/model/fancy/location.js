@@ -2,6 +2,13 @@
  * model/fancy/location.js
  */
 
+function changePathGen (method) {
+    return function (path) {
+        window['history'][method + 'State']({}, '', path);
+        $(window).trigger(method + 'state');
+    };
+}
+
 models['location'] = baseModel.extend({
     /**
      * Example:
@@ -16,10 +23,14 @@ models['location'] = baseModel.extend({
         function updateHash () {
             self('hash', location.hash);
         }
-        $(window).bind('hashchange', function () {
-            updateHash();
-        });
+        function updatePath () {
+            self('pathname', location.pathname);
+        }
+
+        $(window).bind('hashchange', updateHash);
+        $(window).bind('popstate pushstate replacestate', updatePath);
         updateHash();
+        updatePath();
 
         self(function () {
             var hash = self('hash');
@@ -27,5 +38,15 @@ models['location'] = baseModel.extend({
                 location.hash = hash;
             }
         });
-    }
+        self(function () {
+            var pathname = self('pathname');
+            if (location.pathname !== pathname) {
+                self['pushPath'](pathname);
+            }
+        });
+    },
+
+    'pushPath': changePathGen('push'),
+
+    'replacePath': changePathGen('replace')
 });
