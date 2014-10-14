@@ -20,33 +20,31 @@ models['location'] = baseModel.extend({
      */
     initialize: function () {
         var self = this;
-        function updateHash () {
-            self('hash', location.hash);
-        }
-        function updatePath () {
-            self('pathname', location.pathname);
-        }
-
-        $(window).bind('hashchange', updateHash);
-        $(window).bind('popstate pushstate replacestate', updatePath);
-        updateHash();
-        updatePath();
-
-        self(function () {
-            var hash = self('hash');
-            if (location.hash !== hash) {
-                location.hash = hash;
+        var recentlyChanged;
+        function update (ev) {
+            recentlyChanged = self('hash') !== location.hash ||
+                              self('search') !== location.search ||
+                              self('pathname') !== location.pathname;
+            if (recentlyChanged) {
+                self('hash', location.hash);
+                self('pathname', location.pathname);
+                self('search', location.search);
             }
-        });
+        }
+        $(window).bind('hashchange popstate pushstate replacestate', update);
+        update();
+
         self(function () {
             var pathname = self('pathname');
-            if (location.pathname !== pathname) {
-                self['pushPath'](pathname);
+            var search = self('search');
+            var hash = self('hash');
+            if (!recentlyChanged) {
+                self['pushPath'](pathname + (search || '') + (hash ? '#' + hash : ''));
             }
+            recentlyChanged = false;
         });
     },
 
     'pushPath': changePathGen('push'),
-
     'replacePath': changePathGen('replace')
 });
