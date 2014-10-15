@@ -1,6 +1,7 @@
 var root;
 var _;
 var $;
+
 // Export TBone for Node.js or for the browser
 if (typeof exports !== 'undefined') {
     _ = require('underscore')['_'];
@@ -72,32 +73,32 @@ function isFunction (x) {
     return typeof x === 'function';
 }
 
-function isString(x) {
+function isString (x) {
     return typeof x === 'string';
 }
 
-function isRealNumber(x) {
+function isRealNumber (x) {
     return typeof x === 'number' && !isNaN(x);
 }
 
-function isObject(x) {
+function isObject (x) {
     return x !== null && typeof x === 'object' && !isDate(x);
 }
 
-function isDate(x) {
+function isDate (x) {
     return !!(x && x.getTimezoneOffset && x.setUTCFullYear);
 }
 
-function isQueryable(x) {
+function isQueryable (x) {
     return !!(x && typeof x['query'] === 'function');
 }
 
-function isBoolean(x) {
+function isBoolean (x) {
     return typeof x === 'boolean';
 }
 
 var objectToString = Object.prototype.toString;
-function isArray(x) {
+function isArray (x) {
     return objectToString.call(x) === '[object Array]';
 }
 
@@ -108,12 +109,12 @@ function isArray(x) {
  */
 var rgxNumber = /^\d+$/;
 
-function warn() {
+function warn () {
     if (TBONE_DEBUG) {
         console.warn.apply(console, arguments);
     }
 }
-function error() {
+function error () {
     if (TBONE_DEBUG) {
         console.error.apply(console, arguments);
     }
@@ -218,7 +219,7 @@ function onLog (cb) {
     logCallbacks.push(cb);
 }
 
-function denullText(v) {
+function denullText (v) {
     return (isString(v) || isRealNumber(v) || isDate(v) || isBoolean(v)) ? v + '' : '';
 }
 
@@ -227,7 +228,7 @@ function denullText(v) {
  * @param  {Backbone.Model|Backbone.View} self
  * @return {Array.<Backbone.Model|Backbone.View|Scope>} array of listeners
  */
-function getListeners(self) {
+function getListeners (self) {
     var listeners = [];
     // Older backbone:
     _.each(_.values(self['_callbacks'] || {}), function (ll) {
@@ -277,7 +278,7 @@ function getListeners(self) {
  * @param  {Backbone.Model|Backbone.View}  self
  * @return {Boolean}
  */
-function hasViewListener(self) {
+function hasViewListener (self) {
     var todo = [ self ];
     var usedModels = [ self ];
     while (todo.length) {
