@@ -15,7 +15,7 @@ models['ajax'] = asyncModel.extend({
             }
         }
 
-        var url = self.url();
+        var url = isString(self.url) ? self.url : self.url();
         if (url != null && url !== self.fetchedUrl) {
             /**
              * If a defined URL function returns null, it will prevent fetching.
