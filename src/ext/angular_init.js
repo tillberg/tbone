@@ -13,17 +13,26 @@ var RECENTLY_CHANGED_TBONE = 1;
  */
 var RECENTLY_CHANGED_ANGULAR = 2;
 
+function doDigest () {
+    // `this` is an angular scope
+    this['$digest']();
+}
+
+var angTData = {};
+function getTData ($scope, create) {
+    var id = $scope['$id'];
+    if (create && !angTData[id]) {
+        angTData[id] = {
+            'bindings': {},
+            'digestScope': new Scope(doDigest, $scope, BASE_PRIORITY_VIEW)
+        };
+    }
+    return angTData[id];
+}
+
 tbone['initAngular'] = function ($rootscope) {
     var scopesToDigest = [];
     var scopeDigestTimer;
-    function digestScopes () {
-        scopeDigestTimer = null;
-        // console.log('digesting ' + _.uniq(scopesToDigest).length + ' scopes due to ' + scopesToDigest.length + ' changes.');
-        _.each(_.uniq(scopesToDigest), function ($scope) {
-            $scope.$digest();
-        });
-        scopesToDigest = [];
-    }
     function queueScopeDigest ($scope) {
         if (!scopeDigestTimer) {
             scopeDigestTimer = setTimeout(digestScopes, 0);
@@ -34,15 +43,21 @@ tbone['initAngular'] = function ($rootscope) {
     $rootscope['$tbind'] = function (dest, src, opts) {
         var $scope = this;
         var recentlyChanged = RECENTLY_CHANGED_NONE;
+        if (!opts) { opts = {}; }
+
+        var tdata = getTData($scope, true);
 
         // Create a TBone scope to propagate TBone model changes to the Angular $scope.
         var tscope = T(function () {
             if (recentlyChanged !== RECENTLY_CHANGED_ANGULAR) {
                 $scope[dest] = T(src);
+                // console.log('src ' + src + ' is', $scope[dest]);
                 recentlyChanged = RECENTLY_CHANGED_TBONE;
                 if ($scope['$root']['$$phase'] !== '$digest') {
-                    // console.log('queue scope digest');
-                    queueScopeDigest($scope);
+                    // console.log('queueing scope digest');
+                    tdata['digestScope'].trigger();
+                } else {
+                    // console.log('not queueing scope digest; already in digest phase');
                 }
             }
             recentlyChanged = RECENTLY_CHANGED_NONE;
@@ -50,26 +65,31 @@ tbone['initAngular'] = function ($rootscope) {
         tscope['$angscope'] = $scope;
         tscope['isView'] = true; // well, it's almost true...
 
-        // Watch the Angular $scope for property changes to propagate to the TBone model.
-        var deregister = $scope['$watch'](dest, function (newValue) {
-            if (recentlyChanged !== RECENTLY_CHANGED_TBONE) {
-                T(src, newValue);
-                recentlyChanged = RECENTLY_CHANGED_ANGULAR;
-            }
-            recentlyChanged = RECENTLY_CHANGED_NONE;
-        });
-
-        if (!$scope['$tbone']) {
-            $scope['$tbone'] = { 'bindings': {} };
+        var deregister;
+        if (opts.twoWay) {
+            // Watch the Angular $scope for property changes to propagate to the TBone model.
+            deregister = $scope['$watch'](dest, function (newValue) {
+                if (recentlyChanged !== RECENTLY_CHANGED_TBONE) {
+                    T(src, newValue);
+                    recentlyChanged = RECENTLY_CHANGED_ANGULAR;
+                }
+                recentlyChanged = RECENTLY_CHANGED_NONE;
+            });
         }
-        $scope['$tbone']['bindings'][dest] = {
+
+        tdata['bindings'][dest] = {
             tscope: tscope,
-            deregister: deregister
+            deregister: deregister || noop
         };
     };
 
+    $rootscope['$tbind2'] = function (dest, src, opts) {
+        return this['$tbind'](dest, src, _.extend({}, opts, { twoWay: true }));
+    };
+
     $rootscope['$tunbind'] = function (dest) {
-        var bindings = this['$tbone']['bindings'];
+        // console.log('$tunbinding ' + dest);
+        var bindings = getTData(this)['bindings'];
         var binding = bindings[dest];
         binding.tscope['destroy']();
         delete binding.tscope['$angscope'];
@@ -80,11 +100,13 @@ tbone['initAngular'] = function ($rootscope) {
     var origDestroy = $rootscope['$destroy'];
     $rootscope.$destroy = function () {
         var self = this;
-        if (self['$tbone']) {
-            _.each(_.keys(self['$tbone']['bindings']), function (key) {
+        var tdata = getTData(self);
+        if (tdata) {
+            _.each(_.keys(tdata['bindings']), function (key) {
                 self['$tunbind'](key);
             });
-            delete self['$tbone'];
+            tdata['digestScope']['destroy']();
+            delete angTData[self['$id']];
         }
         return origDestroy.apply(self, arguments);
     };
