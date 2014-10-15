@@ -12,7 +12,7 @@ if (typeof exports !== 'undefined') {
 }
 
 /** @const {boolean} */
-var TBONE_DEBUG = !TBONE_BUILD_RELEASE && !!root['TBONE_DEBUG'];
+var TBONE_DEBUG = !TBONE_BUILD_RELEASE && !!(root['TBONE_DEBUG'] == null ? root['DEBUG'] : root['TBONE_DEBUG']);
 
 var models = {};
 var collections = {};
