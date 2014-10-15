@@ -41,13 +41,14 @@ tbone['initAngular'] = function ($rootscope) {
                 $scope[dest] = T(src);
                 recentlyChanged = RECENTLY_CHANGED_TBONE;
                 if ($scope['$root']['$$phase'] !== '$digest') {
-                    console.log('queue scope digest');
+                    // console.log('queue scope digest');
                     queueScopeDigest($scope);
                 }
             }
             recentlyChanged = RECENTLY_CHANGED_NONE;
         }, BASE_PRIORITY_VIEW);
         tscope['$angscope'] = $scope;
+        tscope['isView'] = true; // well, it's almost true...
 
         // Watch the Angular $scope for property changes to propagate to the TBone model.
         var deregister = $scope['$watch'](dest, function (newValue) {
