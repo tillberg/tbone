@@ -22,13 +22,14 @@ models['location'] = baseModel.extend({
         var self = this;
         var recentlyChanged;
         function update (ev) {
-            recentlyChanged = self('hash') !== location.hash ||
-                              self('search') !== location.search ||
-                              self('pathname') !== location.pathname;
-            if (recentlyChanged) {
+            var changed = self('hash') !== location.hash ||
+                          self('search') !== location.search ||
+                          self('pathname') !== location.pathname;
+            if (changed) {
                 self('hash', location.hash);
                 self('pathname', location.pathname);
                 self('search', location.search);
+                recentlyChanged = true;
             }
         }
         $(window).bind('hashchange popstate pushstate replacestate', update);
