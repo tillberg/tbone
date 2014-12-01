@@ -237,7 +237,7 @@ if (Backbone) {
                  **/
                 log(INFO, self, 'sleep');
                 self.sleeping = true;
-            } else if (url != null && url !== lastFetchedUrl) {
+            } else if (url != null) {
                 /**
                  * If a defined URL function returns null, it will prevent fetching.
                  * This can be used e.g. to prevent loading until all required
