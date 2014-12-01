@@ -76,22 +76,22 @@ var baseView = {
              * to restore the selection start/end, which only works in Webkit/Gecko right
              * now; see the URL below for possible IE compatibility.
              */
-            var activeElement = document.activeElement;
-            if (_.contains($(activeElement).parents(), self.el)) {
-                // XXX this could be improved to pick up on IDs/classes/attributes or something?
-                activeElementSelector = 'input';
-                activeElementIndex = _.indexOf(self.$(activeElementSelector), activeElement);
-                // XXX for IE compatibility, this might work:
-                // http://the-stickman.com/web-development/javascript/ ...
-                // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
-                // The selectionStart and selectionEnd properties are unsupported for
-                // some input types.  It's easier to just eat the exception than identify
-                // which cases will and won't work.
-                try {
+            try {
+                var activeElement = document.activeElement;
+                if (_.contains($(activeElement).parents(), self.el)) {
+                    // XXX this could be improved to pick up on IDs/classes/attributes or something?
+                    activeElementSelector = 'input';
+                    activeElementIndex = _.indexOf(self.$(activeElementSelector), activeElement);
+                    // XXX for IE compatibility, this might work:
+                    // http://the-stickman.com/web-development/javascript/ ...
+                    // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
+                    // The selectionStart and selectionEnd properties are unsupported for
+                    // some input types.  It's easier to just eat the exception than identify
+                    // which cases will and won't work.
                     selectionStart = activeElement.selectionStart;
                     selectionEnd = activeElement.selectionEnd;
-                } catch (e) {}
-            }
+                }
+            } catch (e) {}
 
             /**
              * Move all this view's children to another temporary DOM element.  This will be used as the
