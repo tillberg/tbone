@@ -201,7 +201,7 @@ ID of the model.  For example, `T('users.#42.name')`.
 - `tbone.render(elementArray)`: Render TBone Views/templates (recursively)
   for each of the DOM elements passed.  Most applications can kick off TBone
   with a single call to `tbone.render($('[tbone]'))`.
-- `tbone.defaultView(view)`: Set the default View to use when rendering a
+- `tbone.setDefaultView(view)`: Set the default View to use when rendering a
   template with no corresponding View.
 
 ### View methods
