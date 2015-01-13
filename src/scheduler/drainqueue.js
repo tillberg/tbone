@@ -68,6 +68,11 @@ var drainQueueTimer;
  */
 var inflight = 0;
 
+function incrInFlight (delta) {
+    inflight += delta;
+    updateIsReady();
+}
+
 var isReady = tbone['isReady'] = function () {
     return !inflight && !drainQueueTimer;
 };

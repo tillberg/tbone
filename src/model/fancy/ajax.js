@@ -7,12 +7,15 @@ models['ajax'] = asyncModel.extend({
     'state': function (dataCallback) {
         var self = this;
         var myXhr;
-        function complete() {
-            if (myXhr) {
-                inflight--;
-                myXhr = null;
-                self['onComplete']();
+        function complete () {
+            if (self.isInFlight) {
+                incrInFlight(-1);
+                self.isInFlight = false;
             }
+            if (myXhr) {
+                myXhr = null;
+            }
+            self['onComplete']();
         }
 
         var url = isString(self.url) ? self.url : self.url();
@@ -26,6 +29,10 @@ models['ajax'] = asyncModel.extend({
             self['abortPrevious']();
             if (self['clearOnFetch']) {
                 self.clear();
+            }
+            if (!self.isInFlight) {
+                incrInFlight(1);
+                self.isInFlight = true;
             }
             sync('read', self, {
                 'dataType': self['dataType'],
@@ -43,7 +50,6 @@ models['ajax'] = asyncModel.extend({
                 },
                 'complete': complete,
                 'beforeSend': function (xhr) {
-                    inflight++;
                     myXhr = xhr;
                 },
                 'url': url
@@ -59,8 +65,8 @@ models['ajax'] = asyncModel.extend({
                         'oldurl': self.fetchedUrl
                     });
                     myXhr.abort();
-                    complete();
                 }
+                complete();
             }
         };
     },
