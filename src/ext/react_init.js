@@ -55,13 +55,14 @@ if (React) {
         var componentDidMount = origOpts.componentDidMount ? function () {
             var self = this, args = arguments;
             var rval;
-            T(function () {
+            var tscope = T(function () {
                 // Run and re-run componentDidMount until this component is
                 // no longer mounted.
                 if (self.isMounted()) {
                     rval = origOpts.componentDidMount.apply(self, args);
                 }
             });
+            tscope.isView = true;
             return rval;
         } : undefined;
 

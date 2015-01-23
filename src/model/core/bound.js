@@ -125,7 +125,7 @@ function getQuerySetProp (flag, prop) {
 if (TBONE_DEBUG) {
     boundModel['query'] = function (flag, prop, value) {
         var setProp = getQuerySetProp.apply(this, arguments);
-        if (setProp) {
+        if (setProp && !this['isMutable']) {
             log(WARN, this, 'boundModelSet', 'Attempting to set property <%-prop%> of bound model!', {
                 prop: setProp
             });
