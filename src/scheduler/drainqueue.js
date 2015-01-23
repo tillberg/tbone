@@ -66,15 +66,20 @@ var drainQueueTimer;
  * Dynamic counter of how many ajax requests are inflight.
  * @type {Number}
  */
-var inflight = 0;
+var inflight = {};
 
-function incrInFlight (delta) {
-    inflight += delta;
+function addInFlight (model) {
+    inflight[model['tboneid']] = model;
+    updateIsReady();
+}
+
+function removeInFlight (model) {
+    delete inflight[model['tboneid']];
     updateIsReady();
 }
 
 var isReady = tbone['isReady'] = function () {
-    return !inflight && !drainQueueTimer;
+    return _.isEmpty(inflight) && !drainQueueTimer;
 };
 
 var isReadyTimer;
@@ -82,9 +87,11 @@ var isReadyTimer;
 function updateIsReady () {
     if (!isReadyTimer) {
         isReadyTimer = setTimeout(function () {
+            var anyInFlight = !_.isEmpty(inflight);
             tbone['query']('__isReady__', isReady());
-            tbone['query']('__ajaxReady__', !inflight);
-            tbone['query']('__numAjaxInFlight__', inflight);
+            tbone['query']('__modelsInFlight__', _.clone(inflight));
+            tbone['query']('__ajaxReady__', !anyInFlight);
+            tbone['query']('__numAjaxInFlight__', anyInFlight);
             isReadyTimer = null;
         }, 20);
     }

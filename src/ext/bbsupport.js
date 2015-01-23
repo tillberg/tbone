@@ -221,7 +221,7 @@ if (Backbone) {
             var myXhr;
             function complete() {
                 if (myXhr === self.xhrInFlight) {
-                    incrInFlight(-1);
+                    removeInFlight(self);
                     delete self.xhrInFlight;
                 }
             }
@@ -267,7 +267,7 @@ if (Backbone) {
                             self.xhrInFlight.abort();
                             complete(); // Decrement inflight counter
                         }
-                        incrInFlight(1);
+                        addInFlight(self);
                         myXhr = self.xhrInFlight = xhr;
                     },
                     url: url

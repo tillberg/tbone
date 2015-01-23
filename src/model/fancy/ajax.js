@@ -8,10 +8,7 @@ models['ajax'] = asyncModel.extend({
         var self = this;
         var myXhr;
         function complete () {
-            if (self.isInFlight) {
-                incrInFlight(-1);
-                self.isInFlight = false;
-            }
+            removeInFlight(self);
             if (myXhr) {
                 myXhr = null;
             }
@@ -30,10 +27,7 @@ models['ajax'] = asyncModel.extend({
             if (self['clearOnFetch']) {
                 self.clear();
             }
-            if (!self.isInFlight) {
-                incrInFlight(1);
-                self.isInFlight = true;
-            }
+            addInFlight(self);
             sync('read', self, {
                 'dataType': self['dataType'],
                 'success': function (resp) {
