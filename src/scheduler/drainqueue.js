@@ -69,13 +69,21 @@ var drainQueueTimer;
 var inflight = {};
 
 function addInFlight (model) {
-    inflight[model['tboneid']] = model;
-    updateIsReady();
+    var id = model['tboneid'];
+    if (!inflight[id]) {
+        inflight[id] = model;
+        tbone['increment']('__totalAjaxStart__');
+        updateIsReady();
+    }
 }
 
 function removeInFlight (model) {
-    delete inflight[model['tboneid']];
-    updateIsReady();
+    var id = model['tboneid'];
+    if (inflight[id]) {
+        delete inflight[id];
+        tbone['increment']('__totalAjaxFinish__');
+        updateIsReady();
+    }
 }
 
 var isReady = tbone['isReady'] = function () {
