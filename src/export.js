@@ -12,11 +12,12 @@ tbone['priority'] = priority;
 
 views['base'] = baseView;
 
+tbone['hasViewListener'] = hasViewListener;
+
 if (TBONE_DEBUG) {
     tbone['watchLog'] = watchLog;
     tbone['showRenderTrees'] = showRenderTrees;
     tbone['getListeners'] = getListeners;
-    tbone['hasViewListener'] = hasViewListener;
     tbone['onLog'] = onLog;
     tbone['freeze'] = freeze;
     tbone['opts'] = opts;

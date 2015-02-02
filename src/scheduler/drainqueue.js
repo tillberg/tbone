@@ -72,7 +72,7 @@ function addInFlight (model) {
     var id = model['tboneid'];
     if (!inflight[id]) {
         inflight[id] = model;
-        tbone['increment']('__totalAjaxStart__');
+        metrics['increment']('ajax.numReqStarted');
         updateIsReady();
     }
 }
@@ -81,7 +81,7 @@ function removeInFlight (model) {
     var id = model['tboneid'];
     if (inflight[id]) {
         delete inflight[id];
-        tbone['increment']('__totalAjaxFinish__');
+        metrics['increment']('ajax.numReqFinished');
         updateIsReady();
     }
 }
@@ -90,16 +90,20 @@ var isReady = tbone['isReady'] = function () {
     return _.isEmpty(inflight) && !drainQueueTimer;
 };
 
+tbone['isReady'] = function () {
+    return metrics['query']('isReady');
+};
+
 var isReadyTimer;
 
 function updateIsReady () {
     if (!isReadyTimer) {
         isReadyTimer = setTimeout(function () {
-            var anyInFlight = !_.isEmpty(inflight);
-            tbone['query']('__isReady__', isReady());
-            tbone['query']('__modelsInFlight__', _.clone(inflight));
-            tbone['query']('__ajaxReady__', !anyInFlight);
-            tbone['query']('__numAjaxInFlight__', anyInFlight);
+            var numInFlight = _.keys(inflight).length;
+            metrics['query']('isReady', isReady());
+            metrics['query']('ajax.modelsInFlight', _.clone(inflight));
+            metrics['query']('ajax.isReady', numInFlight === 0);
+            metrics['query']('ajax.numInFlight', numInFlight);
             isReadyTimer = null;
         }, 20);
     }

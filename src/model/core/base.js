@@ -244,6 +244,8 @@ if (TBONE_DEBUG) {
 }
 
 var tbone = baseModel.make({ 'Name': 'tbone' });
+var metrics = baseModel.make({ 'Name': 'tbone_metrics' });
+tbone['metrics'] = metrics;
 
 var orig_tbone = root['tbone'];
 var orig_T = root['T'];

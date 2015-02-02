@@ -28,19 +28,23 @@ models['ajax'] = asyncModel.extend({
                 self.clear();
             }
             addInFlight(self);
+            var onData = function (str) {
+                /**
+                 * dataCallback returns true if this update was accepted (i.e.
+                 * is of the current async update generation).  So only fire
+                 * the postFetch callback, etc, when the update actually sticks.
+                 */
+                if (dataCallback(self.parse(str))) {
+                    self['postFetch']();
+                    self.trigger('fetch');
+                    log(INFO, self, 'updated', self.attributes);
+                }
+            };
             sync('read', self, {
                 'dataType': self['dataType'],
-                'success': function (resp) {
-                    /**
-                     * dataCallback returns true if this update was accepted (i.e.
-                     * is of the current async update generation).  So only fire
-                     * the postFetch callback, etc, when the update actually sticks.
-                     */
-                    if (dataCallback(self.parse(resp))) {
-                        self['postFetch']();
-                        self.trigger('fetch');
-                        log(INFO, self, 'updated', self.attributes);
-                    }
+                'success': onData,
+                'error': function (xhr) {
+                    onData(xhr && xhr.responseText);
                 },
                 'complete': complete,
                 'beforeSend': function (xhr) {
@@ -53,11 +57,11 @@ models['ajax'] = asyncModel.extend({
             onAbort: function () {
                 // If we have an active XHR in flight, we should abort
                 // it because we don't want that anymore.
+                log(WARN, self, 'abort',
+                    'aborting obsolete ajax request. old url: <%=oldurl%>', {
+                    'oldurl': self.fetchedUrl
+                });
                 if (myXhr) {
-                    log(WARN, self, 'abort',
-                        'aborting obsolete ajax request. old url: <%=oldurl%>', {
-                        'oldurl': self.fetchedUrl
-                    });
                     myXhr.abort();
                 }
                 complete();
