@@ -19,21 +19,22 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "grunt": "~0.4.5",
-    "grunt-contrib-clean": "~0.6.0",
-    "grunt-contrib-compress": "~0.11.0",
-    "grunt-contrib-concat": "~0.5.0",
-    "grunt-contrib-connect": "~0.8.0",
-    "grunt-contrib-copy": "~0.5.0",
-    "grunt-contrib-jshint": "~0.10.0",
-    "grunt-contrib-qunit": "~0.5.2",
-    "grunt-contrib-uglify": "~0.5.1",
-    "grunt-contrib-watch": "~0.6.1",
-    "grunt-closure-tools": "~0.9.7",
+    "del": "^1.1.1",
+    "fs-extra": "^0.16.3",
+    "gulp": "^3.8.10",
+    "gulp-concat": "^2.4.3",
+    "gulp-gzip": "0.0.8",
+    "gulp-jshint": "^1.9.2",
+    "gulp-qunit": "^1.2.1",
+    "gulp-replace": "^0.5.2",
+    "gulp-uglify": "^1.1.0",
+    "gulp-util": "^3.0.3",
+    "jshint-stylish": "^1.0.0",
     "load-grunt-tasks": "~0.6.0",
-    "underscore": "~1.7.0"
+    "lodash": "^3.0.1",
+    "node-qunit-phantomjs": "^1.2.0"
   },
   "scripts": {
-    "test": "grunt"
+    "test": "gulp test"
   }
 }

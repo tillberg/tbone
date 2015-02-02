@@ -1,19 +1,7 @@
-var root;
-var _;
-var $;
-
-// Export TBone for Node.js or for the browser
-if (typeof exports !== 'undefined') {
-    _ = require('underscore')['_'];
-    root = exports;
-} else {
-    root = window;
-    _ = root['_'];
-    $ = root['$'];
-}
-
-/** @const {boolean} */
-var TBONE_DEBUG = !TBONE_BUILD_RELEASE && !!(root['TBONE_DEBUG'] == null ? root['DEBUG'] : root['TBONE_DEBUG']);
+var root = typeof exports !== 'undefined' ? exports : window;
+var _ = root._ || require('lodash');
+var $ = root.$;
+var TBONE_DEBUG = !!root.TBONE_DEBUG;
 
 var models = {};
 var collections = {};

@@ -22,8 +22,8 @@
     var min = !!location.href.match(/min=(\w+)/);
     document.write([
       '<scr',
-      'ipt src="dist/tbone',
-      variant ? '.' + variant : '',
+      'ipt src="../dist/tbone',
+      variant ? '_' + variant : '',
       min ? '.min' : '',
       '.js"><\/scr',
       'ipt>'
@@ -45,8 +45,8 @@
   <script>
     var modules = ['core'];
     var enabled = {
-      ext: variant === 'core_ext' || !variant,
-      dom: !variant
+      ext: variant === 'ext' || variant === 'full',
+      dom: variant === 'full'
     };
     if (enabled.ext) {
       modules.push('core_ext');
