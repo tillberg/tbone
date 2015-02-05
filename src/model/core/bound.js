@@ -7,7 +7,7 @@ var boundModel = models.bound = baseModel.extend({
      * Constructor function to initialize each new model instance.
      * @return {[type]}
      */
-    'initialize': function () {
+    initialize: function () {
         var self = this;
         /**
          * Queue the autorun of update.  We want this to happen after the current JS module
@@ -82,14 +82,14 @@ var boundModel = models.bound = baseModel.extend({
         }
     },
 
-    'destroy': function () {
+    destroy: function () {
         if (this.scope) {
             this.scope.destroy();
         }
         this.unset(QUERY_SELF);
     },
 
-    'disableSleep': function () {
+    disableSleep: function () {
         // This is intended to be used only interactively for development.
         if (TBONE_DEBUG && this.sleepEnabled) {
             log(WARN, this, 'disableSleep', 'Disabling sleep mode for <%-Name%>.', this);
@@ -101,9 +101,9 @@ var boundModel = models.bound = baseModel.extend({
     /**
      * returns the new state, synchronously
      */
-    'state': noop,
+    state: noop,
 
-    'sleepEnabled': false
+    sleepEnabled: false
 });
 
 function getQuerySetProp (flag, prop) {

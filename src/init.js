@@ -7,7 +7,7 @@ var models = {};
 var collections = {};
 var templates = {};
 var views = {};
-var opts = TBONE_DEBUG ? { 'aliasCheck': false } : {};
+var opts = TBONE_DEBUG ? { aliasCheck: false } : {};
 
 /**
  * Scheduling priority constants
@@ -33,13 +33,13 @@ var BASE_PRIORITY_VIEW = 2000;
 var BASE_PRIORITY_MODEL_ASYNC = 1000;
 
 var priority = {
-    'highest': 10000,
-    'bound': BASE_PRIORITY_MODEL_SYNC,
-    'beforeViews': BASE_PRIORITY_VIEW + 500,
-    'view': BASE_PRIORITY_VIEW,
-    'afterViews': BASE_PRIORITY_VIEW - 500,
-    'async': BASE_PRIORITY_MODEL_ASYNC,
-    'lowest': 0
+    highest: 10000,
+    bound: BASE_PRIORITY_MODEL_SYNC,
+    beforeViews: BASE_PRIORITY_VIEW + 500,
+    view: BASE_PRIORITY_VIEW,
+    afterViews: BASE_PRIORITY_VIEW - 500,
+    async: BASE_PRIORITY_MODEL_ASYNC,
+    lowest: 0
 };
 
 /**

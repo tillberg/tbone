@@ -389,8 +389,8 @@ function query (flag, prop, value) {
         id = uniqueId(self);
         if (!recentLookups[id]) {
             recentLookups[id] = {
-                'obj': self,
-                'props': {}
+                obj: self,
+                props: {}
             };
         }
         recentLookups[id].props[name_parts.join('.')] = _data;

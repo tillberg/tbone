@@ -20,7 +20,7 @@ function Scope(fn, context, priority, name, onExecuteCb, onExecuteContext) {
         fn: fn,
         context: context,
         priority: priority,
-        'Name': name,
+        Name: name,
         onExecuteCb: onExecuteCb,
         onExecuteContext: onExecuteContext,
         subScopes: []
@@ -99,15 +99,15 @@ _.extend(Scope.prototype,
                 if (TBONE_DEBUG) {
                     var executionTimeMs = myTimer.done();
                     log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
-                        'priority': self.priority,
-                        'Name': self.Name,
-                        'duration': executionTimeMs
+                        priority: self.priority,
+                        Name: self.Name,
+                        duration: executionTimeMs
                     });
                     if (executionTimeMs > 10) {
                         log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
-                            'priority': self.priority,
-                            'Name': self.Name,
-                            'duration': executionTimeMs
+                            priority: self.priority,
+                            Name: self.Name,
+                            duration: executionTimeMs
                         });
                     }
                 }

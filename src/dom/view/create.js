@@ -51,7 +51,7 @@ function createView(name, base, fn, opts) {
         fn = null;
     }
     opts = _.extend({}, arg || {}, {
-        'Name': name
+        Name: name
     });
     var baseReady = base.ready;
     if (fn) {

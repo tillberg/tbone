@@ -98,9 +98,9 @@ function render($els, parent, subViews) {
                 var rootObj = hashedObjectCache[root] || tbone;
 
                 var opts = {
-                    'Name': name,
+                    Name: name,
                     origOuterHTML: outerHTML,
-                    'el': el,
+                    el: el,
                     templateId: templateId,
                     domParentView: parent,
                     rootObj: rootObj,

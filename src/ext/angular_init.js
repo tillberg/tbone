@@ -28,9 +28,9 @@ function getTData ($scope, create) {
     var id = $scope['$id'];
     if (create && !angTData[id]) {
         angTData[id] = {
-            'bindings': {},
-            'scopes': [],
-            'digestScope': new Scope(doDigest, $scope, BASE_PRIORITY_VIEW)
+            bindings: {},
+            scopes: [],
+            digestScope: new Scope(doDigest, $scope, BASE_PRIORITY_VIEW)
         };
     }
     return angTData[id];

@@ -46,6 +46,6 @@ models.location = baseModel.extend({
         });
     },
 
-    'pushPath': changePathGen('push'),
-    'replacePath': changePathGen('replace')
+    pushPath: changePathGen('push'),
+    replacePath: changePathGen('replace')
 });

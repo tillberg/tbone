@@ -96,8 +96,8 @@ if (Backbone) {
             id = uniqueId(this);
             if (!recentLookups[id]) {
                 recentLookups[id] = {
-                    'obj': this,
-                    'props': {}
+                    obj: this,
+                    props: {}
                 };
             }
             recentLookups[id].props[firstprop] = firstdata;
@@ -205,7 +205,7 @@ if (Backbone) {
                 this.scope.trigger();
             }
         },
-        'isVisible': function () {
+        isVisible: function () {
             return hasViewListener(this);
         },
         update: function () {
@@ -248,21 +248,21 @@ if (Backbone) {
                     self.clear();
                 }
                 self.fetch({
-                    'dataType': 'text',
+                    dataType: 'text',
                     success: function () {
                         self.postFetch();
                         self.trigger('fetch');
                         log(INFO, self, 'updated', self.toJSON());
                     },
-                    'complete': complete,
-                    'beforeSend': function (xhr) {
+                    complete: complete,
+                    beforeSend: function (xhr) {
                         // If we have an active XHR in flight, we should abort
                         // it because we don't want that anymore.
                         if (self.xhrInFlight) {
                             log(WARN, self, 'abort',
                                 'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
-                                'oldurl': lastFetchedUrl,
-                                'newurl': url
+                                oldurl: lastFetchedUrl,
+                                newurl: url
                             });
                             self.xhrInFlight.abort();
                             complete(); // Decrement inflight counter
@@ -282,26 +282,26 @@ if (Backbone) {
                 log(INFO, self, 'updated', self.toJSON());
             }
         },
-        'state': null,
-        'postFetch': noop,
+        state: null,
+        postFetch: noop,
 
-        'clearOnFetch': true
+        clearOnFetch: true
     });
 
     _.each([Backbone.Model.prototype, Backbone.Collection.prototype], function (proto) {
         _.extend(proto, {
-            'isBackbone': true,
+            isBackbone: true,
 
             /**
              * Copy query and text onto the Model, View, and Collection.
              *
              */
-            'query': bbquery,
-            'text': queryText,
+            query: bbquery,
+            text: queryText,
 
             // deprecated?
-            'lookup': bbquery,
-            'lookupText': queryText,
+            lookup: bbquery,
+            lookupText: queryText,
 
             /**
              * Wake up this model as well as (recursively) any models that depend on
@@ -358,7 +358,7 @@ if (Backbone) {
              * By overriding _validate, we can still use isValid and validate, but Backbone
              * will no longer prevent set() calls from succeeding with invalid data.
              */
-            '_validate': function () { return true; }
+            _validate: function () { return true; }
         });
     });
 }

@@ -4,7 +4,7 @@
 
 models.ajax = asyncModel.extend({
 
-    'state': function (dataCallback) {
+    state: function (dataCallback) {
         var self = this;
         var myXhr;
         function complete () {
@@ -43,16 +43,16 @@ models.ajax = asyncModel.extend({
                 }
             };
             sync('read', self, {
-                'dataType': self.dataType,
-                'success': onData,
-                'error': function (xhr) {
+                dataType: self.dataType,
+                success: onData,
+                error: function (xhr) {
                     onData(xhr && xhr.responseText);
                 },
-                'complete': complete,
-                'beforeSend': function (xhr) {
+                complete: complete,
+                beforeSend: function (xhr) {
                     myXhr = xhr;
                 },
-                'url': url
+                url: url
             });
         }
         return {
@@ -61,7 +61,7 @@ models.ajax = asyncModel.extend({
                 // it because we don't want that anymore.
                 log(WARN, self, 'abort',
                     'aborting obsolete ajax request. old url: <%=oldurl%>', {
-                    'oldurl': self.fetchedUrl
+                    oldurl: self.fetchedUrl
                 });
                 if (myXhr) {
                     myXhr.abort();
@@ -71,24 +71,24 @@ models.ajax = asyncModel.extend({
         };
     },
 
-    'parse': _.identity,
+    parse: _.identity,
 
     /**
      * By default, async models will use $.ajax to fetch data; override this
      * with something else if desired.
      */
-    'ajax': function () {
+    ajax: function () {
         return $.ajax.apply($, arguments);
     },
 
-    'postFetch': noop,
+    postFetch: noop,
 
-    'onComplete': noop,
+    onComplete: noop,
 
-    'clearOnFetch': true, // XXX move to async model
+    clearOnFetch: true, // XXX move to async model
 
-    'sleepEnabled': true,
+    sleepEnabled: true,
 
-    'dataType': 'json'
+    dataType: 'json'
 
 });

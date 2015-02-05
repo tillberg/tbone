@@ -256,7 +256,7 @@ function initTemplate(string) {
      * parameter.  On render, we'll pass either a model/collection or tbone itself as the view.
      * @type {Function}
      */
-    var fn = _.template(parsed, null, { 'variable': 'view' });
+    var fn = _.template(parsed, null, { variable: 'view' });
 
     if (TBONE_DEBUG) {
         /**

@@ -206,10 +206,10 @@ function drainQueue () {
         log(WARN, 'scheduler', 'drainQueueOverflow', 'exceeded max drainQueue iterations');
     }
     log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
-        'duration': now() - queueDrainStartTime
+        duration: now() - queueDrainStartTime
     });
     log(VERBOSE, 'scheduler', 'viewRenders', 'rendered <%=viewRenders%> total', {
-        'viewRenders': viewRenders
+        viewRenders: viewRenders
     });
     updateIsReady();
     if (scrollTop && !scrollTopChangedProgrammatically && scrollTop !== queryScrollTop()) {

@@ -7,9 +7,9 @@ var baseCollection = collections.base = baseModel.extend({
     // For that function's purposes, TBone collections are models.
     // It might be better to remove isModel and use isQueryable instead.
     isModel: true,
-    'model': baseModel,
+    model: baseModel,
 
-    'add': function (data) {
+    add: function (data) {
         var self = this;
         var child;
         var lastId;
@@ -69,7 +69,7 @@ var baseCollection = collections.base = baseModel.extend({
     /**
      * Remove a model by ID or by model instance.
      */
-    'remove': function (modelOrId) {
+    remove: function (modelOrId) {
         modelOrId = '#' + (isQueryable(modelOrId) ? modelOrId.queryId() : modelOrId);
         if (this._removeCallbacks[modelOrId]) {
             this._removeCallbacks[modelOrId]();

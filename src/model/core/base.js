@@ -32,7 +32,7 @@ var baseModel = {
             if (typeof arg0 === 'function') {
                 return autorun(arg0, arg1);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
-                return instance.query(arg0, boundModel.extend({ 'state': arg1 }).make());
+                return instance.query(arg0, boundModel.extend({ state: arg1 }).make());
             } else {
                 return (arguments.length === 0 ? instance.query() :
                         arguments.length === 1 ? instance.query(arg0) :
@@ -40,7 +40,7 @@ var baseModel = {
                                                  instance.query(arg0, arg1, arg2));
             }
         };
-        _.extend(instance, self, _.isFunction(opts) ? { 'state': opts } : opts || {});
+        _.extend(instance, self, _.isFunction(opts) ? { state: opts } : opts || {});
 
         // Initialize the model instance
         delete instance.tboneid;
@@ -55,11 +55,11 @@ var baseModel = {
 
         return instance;
     },
-    'extend': function (subclass) {
+    extend: function (subclass) {
         return _.extend({}, this, subclass);
     },
-    'initialize': noop,
-    'on': function (name, callback, context) {
+    initialize: noop,
+    on: function (name, callback, context) {
         // XXX callback is not supported.  assumes context.trigger is the callback
         var parts = splitName(name);
         var events = this._events;
@@ -87,7 +87,7 @@ var baseModel = {
          */
         this.wake({});
     },
-    'off': function (name, callback, context) {
+    off: function (name, callback, context) {
         // XXX only supports use with both name & context.
         // XXX doesn't clean up when callbacks list goes to zero length
         var parts = splitName(name);
@@ -109,7 +109,7 @@ var baseModel = {
             delete contexts[contextId];
         }
     },
-    'trigger': function (name) {
+    trigger: function (name) {
         var self = this;
         var events = self._events;
         var parts = splitName(name);
@@ -129,16 +129,16 @@ var baseModel = {
         }
     },
 
-    'runOnlyOnce': runOnlyOnce,
+    runOnlyOnce: runOnlyOnce,
 
-    'query': query,
+    query: query,
 
-    'queryModel': function (prop) {
+    queryModel: function (prop) {
         return this.query(DONT_GET_DATA, prop);
     },
 
     // query `prop` without binding to changes in its value
-    'readSilent': function (prop) {
+    readSilent: function (prop) {
         var tmp = recentLookups;
         recentLookups = null;
         var rval = this.query(prop);
@@ -146,17 +146,17 @@ var baseModel = {
         return rval;
     },
 
-    'idAttribute': 'id',
+    idAttribute: 'id',
 
-    'queryId': function () {
+    queryId: function () {
         return this.query(this.idAttribute);
     },
 
-    'toggle': function (prop) {
+    toggle: function (prop) {
         this.query(QUERY_TOGGLE, prop);
     },
 
-    'push': function (prop, value) {
+    push: function (prop, value) {
         if (arguments.length === 1) {
             value = prop;
             prop = '';
@@ -164,7 +164,7 @@ var baseModel = {
         this.query(QUERY_PUSH, prop, value);
     },
 
-    'unshift': function (prop, value) {
+    unshift: function (prop, value) {
         if (arguments.length === 1) {
             value = prop;
             prop = '';
@@ -172,38 +172,38 @@ var baseModel = {
         this.query(QUERY_UNSHIFT, prop, value);
     },
 
-    'removeFirst': function (prop) {
+    removeFirst: function (prop) {
         this.query(QUERY_REMOVE_FIRST, prop);
     },
 
-    'removeLast': function (prop) {
+    removeLast: function (prop) {
         this.query(QUERY_REMOVE_LAST, prop);
     },
 
-    'unset': function (prop) {
+    unset: function (prop) {
         this.query(QUERY_UNSET, prop);
     },
 
-    'increment': function (prop, value) {
+    increment: function (prop, value) {
         this.query(QUERY_INCREMENT, prop, value != null ? value : 1);
     },
 
-    'clear': function () {
+    clear: function () {
         this.query('', undefined);
     },
 
-    'toJSON': function () {
+    toJSON: function () {
         return this.attributes;
     },
 
     wake: noop,
 
-    'queryText': queryText, // deprecated
-    'text': queryText, // deprecated
-    'lookup': query, // deprecated
-    'lookupText': queryText, // deprecated
-    'set': query, // deprecated
-    'get': query // deprecated
+    queryText: queryText, // deprecated
+    text: queryText, // deprecated
+    lookup: query, // deprecated
+    lookupText: queryText, // deprecated
+    set: query, // deprecated
+    get: query // deprecated
 };
 
 if (TBONE_DEBUG) {
@@ -243,8 +243,8 @@ if (TBONE_DEBUG) {
     };
 }
 
-var tbone = baseModel.make({ 'Name': 'tbone' });
-var metrics = baseModel.make({ 'Name': 'tbone_metrics' });
+var tbone = baseModel.make({ Name: 'tbone' });
+var metrics = baseModel.make({ Name: 'tbone_metrics' });
 tbone.metrics = metrics;
 
 var orig_tbone = root.tbone;

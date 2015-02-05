@@ -11,7 +11,7 @@ var baseView = {
         instance.initialize(opts);
         return instance;
     },
-    'extend': function (subclass) {
+    extend: function (subclass) {
         return _.extend({}, this, subclass, { parentView: this });
     },
 
@@ -21,7 +21,7 @@ var baseView = {
 
     isView: true,
 
-    'initialize': function (opts) {
+    initialize: function (opts) {
         var self = this;
         uniqueId(self);
         _.extend(self, opts);
@@ -165,7 +165,7 @@ var baseView = {
      * At the moment this callback is executed, subviews are neither rendered nor are they
      * attached to the DOM fragment.
      */
-    'ready': noop,
+    ready: noop,
 
     /**
      * View.postReady
@@ -174,7 +174,7 @@ var baseView = {
      * to override this in your base template to provide automatic application-wide helpers,
      * such as activating a tooltip library, and to use View.ready for specific view logic.
      */
-    'postReady': noop,
+    postReady: noop,
 
     /**
      * View.destroyDOM
@@ -186,7 +186,7 @@ var baseView = {
      *
      * @param  {!jQuery} $el jQuery selection of DOM fragment to destroy
      */
-    'destroyDOM': function ($el) { },
+    destroyDOM: function ($el) { },
 
     /**
      * If a root attribute was specified, use that as the root object for this view's
@@ -201,7 +201,7 @@ var baseView = {
      * Perform a query relative to the view's rootObj and rootStr, delegating to
      * rootObj for the actual query but prepending rootStr to the prop string.
      **/
-    'query': function (flag, prop, value) {
+    query: function (flag, prop, value) {
         var isSet = false;
         if (typeof flag !== 'number') {
             /**
@@ -222,7 +222,7 @@ var baseView = {
         return isSet ? this.rootObj(flag, prop, value) : this.rootObj(flag, prop);
     },
 
-    'parentRoot': function () {
+    parentRoot: function () {
         return this.domParentView && this.domParentView.root();
     },
 
@@ -230,16 +230,16 @@ var baseView = {
      * Get the DOM parent view, i.e. the view associated with the closest
      * ancestor DOM node that is a view root element.
      */
-    'parent': function () {
+    parent: function () {
         return this.domParentView;
     },
 
     // These are used at template render.  They're really not properties of views so much
     // as it is useful to reference these functions on the view, which is what we pass to
     // _.template already.
-    'getHashId': getHashId,
-    'isQueryable': isQueryable,
-    'denullText': denullText
+    getHashId: getHashId,
+    isQueryable: isQueryable,
+    denullText: denullText
 
 };
 

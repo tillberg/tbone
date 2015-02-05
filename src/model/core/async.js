@@ -22,7 +22,7 @@ var asyncModel = models.async = boundModel.extend({
         self.abortCallback = opts && opts.onAbort;
     },
 
-    'abortPrevious': function () {
+    abortPrevious: function () {
         if (this.abortCallback) {
             this.abortCallback();
         }
