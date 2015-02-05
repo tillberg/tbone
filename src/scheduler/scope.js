@@ -75,8 +75,8 @@ _.extend(Scope.prototype,
                 self.fn.call(self.context);
             } finally {
                 _.each(recentLookups, function (propMap) {
-                    var obj = propMap['obj'];
-                    var props = propMap['props'];
+                    var obj = propMap.obj;
+                    var props = propMap.props;
                     if (props['']) {
                         obj.on('change', self.trigger, self);
                     } else {
@@ -100,13 +100,13 @@ _.extend(Scope.prototype,
                     var executionTimeMs = myTimer.done();
                     log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
                         'priority': self.priority,
-                        'Name': self['Name'],
+                        'Name': self.Name,
                         'duration': executionTimeMs
                     });
                     if (executionTimeMs > 10) {
                         log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
                             'priority': self.priority,
-                            'Name': self['Name'],
+                            'Name': self.Name,
                             'duration': executionTimeMs
                         });
                     }
@@ -125,8 +125,8 @@ _.extend(Scope.prototype,
         var lookups = self.lookups || {};
         for (var objId in lookups) {
             var propMap = lookups[objId];
-            var obj = propMap['obj'];
-            var props = propMap['props'];
+            var obj = propMap.obj;
+            var props = propMap.props;
             for (var prop in props) {
                 obj.off('change:' + prop, null, self);
             }

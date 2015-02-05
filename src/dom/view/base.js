@@ -8,7 +8,7 @@ var baseView = {
     make: function (opts) {
         var instance = {};
         _.extend(instance, this);
-        instance['initialize'](opts);
+        instance.initialize(opts);
         return instance;
     },
     'extend': function (subclass) {
@@ -25,10 +25,10 @@ var baseView = {
         var self = this;
         uniqueId(self);
         _.extend(self, opts);
-        self['$el'] = $(self['el']);
-        self['el']['view'] = self;
+        self['$el'] = $(self.el);
+        self.el.view = self;
         self.priority = self.domParentView ? self.domParentView.priority - 1 : BASE_PRIORITY_VIEW;
-        self.scope = autorun(self.render, self.priority, self, 'view_' + self['Name'],
+        self.scope = autorun(self.render, self.priority, self, 'view_' + self.Name,
                              self.onScopeExecute, self, true);
     },
 
@@ -43,13 +43,13 @@ var baseView = {
      */
     destroy: function (destroyRoot) {
         var self = this;
-        log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot['Name']);
+        log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot.Name);
         self.destroyed = true;
         self.scope.destroy();
         _.each(self.subViews || [], function (view) {
             view.destroy(self);
         });
-        self['destroyDOM'](self.$el);
+        self.destroyDOM(self.$el);
     },
 
     /**
@@ -106,8 +106,8 @@ var baseView = {
         /**
          * Execute the "fragment ready" callback.
          */
-        self['ready']();
-        self['postReady']();
+        self.ready();
+        self.postReady();
 
         /**
          * (Re-)create sub-views for each descendent element with a tbone attribute.
@@ -133,7 +133,7 @@ var baseView = {
              * of the previously-rendered (if any) DOM structure of this view and subviews, minus any
              * subviews that are being reused (which have already been moved to the new parent).
              */
-            self['destroyDOM']($old);
+            self.destroyDOM($old);
 
             /**
              * If we saved it above, restore the active element focus and selection.
@@ -194,7 +194,7 @@ var baseView = {
      * `ready` callbacks.
      */
     root: function () {
-        return this['query'](DONT_GET_DATA);
+        return this.query(DONT_GET_DATA);
     },
 
     /**

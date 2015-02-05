@@ -10,7 +10,7 @@
  * @return {string}     Unique ID assigned to this object
  */
 function uniqueId(obj) {
-    return obj['tboneid'] = obj['tboneid'] || nextId++; // jshint ignore:line
+    return obj.tboneid = obj.tboneid || nextId++; // jshint ignore:line
 }
 var nextId = 1;
 
@@ -69,29 +69,29 @@ var drainQueueTimer;
 var inflight = {};
 
 function addInFlight (model) {
-    var id = model['tboneid'];
+    var id = model.tboneid;
     if (!inflight[id]) {
         inflight[id] = model;
-        metrics['increment']('ajax.numReqStarted');
+        metrics.increment('ajax.numReqStarted');
         updateIsReady();
     }
 }
 
 function removeInFlight (model) {
-    var id = model['tboneid'];
+    var id = model.tboneid;
     if (inflight[id]) {
         delete inflight[id];
-        metrics['increment']('ajax.numReqFinished');
+        metrics.increment('ajax.numReqFinished');
         updateIsReady();
     }
 }
 
-var isReady = tbone['isReady'] = function () {
+var isReady = tbone.isReady = function () {
     return _.isEmpty(inflight) && !drainQueueTimer;
 };
 
-tbone['isReady'] = function () {
-    return metrics['query']('isReady');
+tbone.isReady = function () {
+    return metrics.query('isReady');
 };
 
 var isReadyTimer;
@@ -100,10 +100,10 @@ function updateIsReady () {
     if (!isReadyTimer) {
         isReadyTimer = setTimeout(function () {
             var numInFlight = _.keys(inflight).length;
-            metrics['query']('isReady', isReady());
-            metrics['query']('ajax.modelsInFlight', _.clone(inflight));
-            metrics['query']('ajax.isReady', numInFlight === 0);
-            metrics['query']('ajax.numInFlight', numInFlight);
+            metrics.query('isReady', isReady());
+            metrics.query('ajax.modelsInFlight', _.clone(inflight));
+            metrics.query('ajax.isReady', numInFlight === 0);
+            metrics.query('ajax.numInFlight', numInFlight);
             isReadyTimer = null;
         }, 20);
     }
@@ -222,7 +222,7 @@ function drainQueue () {
  * This is useful both for testing and MAYBE also for optimizing responsiveness by
  * draining at the end of a keyboard / mouse event handler.
  */
-var drain = tbone['drain'] = function () {
+var drain = tbone.drain = function () {
     if (drainQueueTimer) {
         clearTimeout(drainQueueTimer);
     }

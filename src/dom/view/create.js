@@ -53,9 +53,9 @@ function createView(name, base, fn, opts) {
     opts = _.extend({}, arg || {}, {
         'Name': name
     });
-    var baseReady = base['ready'];
+    var baseReady = base.ready;
     if (fn) {
-        opts['ready'] = baseReady === noop ? fn : function () {
+        opts.ready = baseReady === noop ? fn : function () {
             baseReady.call(this);
             fn.call(this);
         };

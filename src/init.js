@@ -78,7 +78,7 @@ function isDate (x) {
 }
 
 function isQueryable (x) {
-    return !!(x && typeof x['query'] === 'function');
+    return !!(x && typeof x.query === 'function');
 }
 
 function isBoolean (x) {
@@ -173,7 +173,7 @@ function log () {
  * @param  {Object=}                                   data    Relevant data
  */
 function logconsole (level, context, event, msg, data, moredata) {
-    var name = isString(context) ? context : context['Name'];
+    var name = isString(context) ? context : context.Name;
     var type = (isString(context) ? context :
                 context.isModel ? 'model' :
                 context.isView ? 'view' :
@@ -183,7 +183,7 @@ function logconsole (level, context, event, msg, data, moredata) {
                              logLevels.type[type] || 0) || logLevels.base;
     if (event === 'lookups') {
         msg = _.reduce(msg, function(memo, map, id) {
-            memo[map['obj']['Name'] || ('tboneid-' + map['obj'].tboneid)] = map;
+            memo[map.obj.Name || ('tboneid-' + map.obj.tboneid)] = map;
             return memo;
         }, {});
     }
@@ -219,7 +219,7 @@ function denullText (v) {
 function getListeners (self) {
     var listeners = [];
     // Older backbone:
-    _.each(_.values(self['_callbacks'] || {}), function (ll) {
+    _.each(_.values(self._callbacks || {}), function (ll) {
         var curr = ll.next;
         while (true) {
             if (curr.context) {
@@ -231,14 +231,14 @@ function getListeners (self) {
         }
     });
     // Newer backbone:
-    _.each(_.flatten(_.values(self['_events'] || {})), function (ev) {
+    _.each(_.flatten(_.values(self._events || {})), function (ev) {
         if (ev.context) {
             listeners.push(ev.context);
         }
     });
     // TBone-native:
     if (isQueryable(self) && isFunction(self)) {
-        var stack = [ self['_events'] ];
+        var stack = [ self._events ];
         var next, callbacks, k;
 
         while (!!(next = stack.pop())) {

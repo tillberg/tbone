@@ -186,7 +186,7 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
  * This is only ever called if TBONE_DEBUG is true.
  */
 function serializeForComparison(model) {
-    if (opts['aliasCheck']) {
+    if (opts.aliasCheck) {
         try {
             var attributes = model.attributes;
             return JSON.stringify(attributes === undefined ? null : attributes, function (key, value) {
@@ -308,7 +308,7 @@ function query (flag, prop, value) {
     var arg;
     var doSubQuery;
     var parentCallbackContexts = {};
-    var events = isSet && self['_events']['change'];
+    var events = isSet && self._events.change;
 
     while (true) {
         if (_data == null && !isSet) {
@@ -369,7 +369,7 @@ function query (flag, prop, value) {
              * operation; otherwise, an object.
              */
             _data = (args.length ? rgxNumber.exec(args[0]) : isListOp) ? [] : {};
-            self['query'](name_parts.join('.'), _data);
+            self.query(name_parts.join('.'), _data);
         }
 
         arg = args.shift();
@@ -393,11 +393,11 @@ function query (flag, prop, value) {
                 'props': {}
             };
         }
-        recentLookups[id]['props'][name_parts.join('.')] = _data;
+        recentLookups[id].props[name_parts.join('.')] = _data;
     }
 
     if (doSubQuery) {
-        return hasValue ? _data['query'](flag, args.join('.'), value) : _data['query'](flag, args.join('.'));
+        return hasValue ? _data.query(flag, args.join('.'), value) : _data.query(flag, args.join('.'));
     }
 
     if (isSet) {
@@ -451,11 +451,11 @@ function query (flag, prop, value) {
         }
 
         if (TBONE_DEBUG && isQueryable(value)) {
-            if (value['Name'] == null) {
-                value['Name'] = nameProp;
+            if (value.Name == null) {
+                value.Name = nameProp;
             }
-            if (value.scope && value.scope['Name'] == null) {
-                value.scope['Name'] = 'model_' + nameProp;
+            if (value.scope && value.scope.Name == null) {
+                value.scope.Name = 'model_' + nameProp;
             }
         }
 
@@ -482,11 +482,11 @@ function query (flag, prop, value) {
          * raw data of each model in a list.  XXX is this ideal?  or too magical?
          */
         if (isArray(_data)) {
-            _data = _.map(_data, function (d) { return d['query'](); });
+            _data = _.map(_data, function (d) { return d.query(); });
         } else if (_data) {
             _data = _.reduce(_.keys(_data), function (memo, k) {
                 if (isQueryable(_data[k])) {
-                    memo[k] = _data[k]['query']();
+                    memo[k] = _data[k].query();
                 }
                 return memo;
             }, {});
@@ -496,5 +496,5 @@ function query (flag, prop, value) {
 }
 
 function queryText(flag, prop) {
-    return denullText(prop == null ? this['query'](flag) : this['query'](flag, prop));
+    return denullText(prop == null ? this.query(flag) : this.query(flag, prop));
 }

@@ -2,7 +2,7 @@
  * model/fancy/localstorage.js
  */
 
-models['localStorage'] = baseModel.extend({
+models.localStorage = baseModel.extend({
     /**
      * To use, extend this model and specify key as a property.
      *
@@ -14,9 +14,9 @@ models['localStorage'] = baseModel.extend({
 
     initialize: function () {
         var self = this;
-        self['query']('', JSON.parse(localStorage[self['key']] || "null"));
+        self.query('', JSON.parse(localStorage[self.key] || "null"));
         autorun(function () {
-            localStorage[self['key']] = JSON.stringify(self.query(''));
+            localStorage[self.key] = JSON.stringify(self.query(''));
         });
     }
 });

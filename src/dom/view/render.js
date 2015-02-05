@@ -29,7 +29,7 @@ function render($els, parent, subViews) {
     return _.map($els, function (el) {
         var $this = $(el);
         var outerHTML = el.outerHTML;
-        var view = el['__tboneview__'];
+        var view = el.__tboneview__;
         if (!view) {
             if (subViewMap[outerHTML] && subViewMap[outerHTML].length) {
                 /**
@@ -50,7 +50,7 @@ function render($els, parent, subViews) {
                 ($this.attr('tbone') || '').replace(rgxTBoneAttribute, function(__, prop, value) {
                     props[prop] = value;
                 });
-                var inlineTemplateId = props['inline'];
+                var inlineTemplateId = props.inline;
                 if (inlineTemplateId) {
                     /**
                      * XXX what's the best way to get the original html back?
@@ -61,9 +61,9 @@ function render($els, parent, subViews) {
                         .replace(/&amp;/g, '&');
                     addTemplate(inlineTemplateId, origTemplateHtml);
                 }
-                var templateId = inlineTemplateId || props['tmpl'];
-                var viewId = props['view'];
-                var root = props['root'];
+                var templateId = inlineTemplateId || props.tmpl;
+                var viewId = props.view;
+                var root = props.root;
 
                 /**
                  * Use either the view or template attributes as the `name` of the view.
@@ -90,8 +90,8 @@ function render($els, parent, subViews) {
                  * Also add a class for each of the parent views, if any.
                  */
                 var parentView = myView.parentView;
-                while (parentView && parentView['Name']) {
-                    $this.addClass(parentView['Name']);
+                while (parentView && parentView.Name) {
+                    $this.addClass(parentView.Name);
                     parentView = parentView.parentView;
                 }
 
@@ -115,7 +115,7 @@ function render($els, parent, subViews) {
 
                 view = myView.make(opts);
             }
-            el['__tboneview__'] = view;
+            el.__tboneview__ = view;
         }
         return view;
     });

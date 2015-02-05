@@ -18,8 +18,8 @@ var HEXCHARS = '0123456789ABCDEF';
  */
 function getHashId(obj) {
     if (!isQueryable(obj)) {
-        var instaModel = tbone['make']();
-        instaModel['query']('', obj);
+        var instaModel = tbone.make();
+        instaModel.query('', obj);
         obj = instaModel;
     }
     if (!obj.hashId) {

@@ -1,5 +1,5 @@
 
-var Backbone = root['Backbone'];
+var Backbone = root.Backbone;
 
 if (Backbone) {
 
@@ -100,12 +100,12 @@ if (Backbone) {
                     'props': {}
                 };
             }
-            recentLookups[id]['props'][firstprop] = firstdata;
+            recentLookups[id].props[firstprop] = firstdata;
         }
 
         // Skip the sub-query if DONT_GET_DATA is set there are no more args
         if (doSubQuery && (!dontGetData || args.length)) {
-            return hasValue ? _data['query'](flag, args.join('.'), value) : _data['query'](flag, args.join('.'));
+            return hasValue ? _data.query(flag, args.join('.'), value) : _data.query(flag, args.join('.'));
         }
 
         if (isSet) {
@@ -157,7 +157,7 @@ if (Backbone) {
              * If iterateOverModels is not set and _data is a collection, return the
              * raw data of each model in a list.  XXX is this ideal?  or too magical?
              */
-            _data = _.map(_data, function (d) { return d['query'](); });
+            _data = _.map(_data, function (d) { return d.query(); });
         }
         return _data;
     };
@@ -180,7 +180,7 @@ if (Backbone) {
              */
             queueExec({
                 execute: function () {
-                    self.scope = autorun(self.update, priority, self, 'model_' + self['Name'],
+                    self.scope = autorun(self.update, priority, self, 'model_' + self.Name,
                                          self.onScopeExecute, self);
                 },
                 priority: priority + PRIORITY_INIT_DELTA
@@ -192,7 +192,7 @@ if (Backbone) {
          * @return {Boolean}
          */
         isAsync: function () {
-            return !!this['_url'];
+            return !!this._url;
         },
         onScopeExecute: function (scope) {
             log(INFO, this, 'lookups', scope.lookups);
@@ -228,7 +228,7 @@ if (Backbone) {
 
             var url = self.url();
             var lastFetchedUrl = self.fetchedUrl;
-            self.sleeping = !this['isVisible']();
+            self.sleeping = !this.isVisible();
             if (self.sleeping) {
                 /**
                  * Regardless of whether url is non-null, this model goes to sleep
@@ -244,13 +244,13 @@ if (Backbone) {
                  * parameters are set.
                  **/
                 self.fetchedUrl = url;
-                if (self['clearOnFetch']) {
+                if (self.clearOnFetch) {
                     self.clear();
                 }
                 self.fetch({
                     'dataType': 'text',
                     success: function () {
-                        self['postFetch']();
+                        self.postFetch();
                         self.trigger('fetch');
                         log(INFO, self, 'updated', self.toJSON());
                     },
@@ -277,8 +277,8 @@ if (Backbone) {
         updateSync: function () {
             var self = this;
             // this.state returns the new state, synchronously
-            if (self['state']) {
-                self['query'](QUERY_SELF, self['state']());
+            if (self.state) {
+                self.query(QUERY_SELF, self.state());
                 log(INFO, self, 'updated', self.toJSON());
             }
         },
@@ -322,7 +322,7 @@ if (Backbone) {
                  * been woken up.
                  */
                 _.each((this.scope && this.scope.lookups) || [], function (lookup) {
-                    var bindable = lookup['obj'];
+                    var bindable = lookup.obj;
                     if (bindable && !woken[uniqueId(bindable)]) {
                         woken[uniqueId(bindable)] = true;
                         bindable.wake(woken);
@@ -337,14 +337,14 @@ if (Backbone) {
          * This passes through execution to the original on function.
          */
         var originalOn = proto.on;
-        proto['on'] = function () {
+        proto.on = function () {
             this.wake({});
             return originalOn.apply(this, arguments);
         };
     });
 
-    var bbModel = models['bbbase'] = bbbaseModel;
-    var bbCollection = collections['bbbase'] = Backbone.Collection.extend({
+    var bbModel = models.bbbase = bbbaseModel;
+    var bbCollection = collections.bbbase = Backbone.Collection.extend({
         isCollection: true
     });
 

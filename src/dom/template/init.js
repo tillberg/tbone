@@ -160,7 +160,7 @@ function initTemplate(string) {
         /**
          * Rebuild the hash set of variables that are "in closure scope"
          */
-        inClosure = _['invert'](_.flatten(varstack));
+        inClosure = _.invert(_.flatten(varstack));
     }
     updateInClosure();
     /**

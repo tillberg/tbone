@@ -36,7 +36,7 @@ function getTData ($scope, create) {
     return angTData[id];
 }
 
-var angular = root['angular'];
+var angular = root.angular;
 if (angular) {
     var scopesToDigest = [];
     var scopeDigestTimer;
@@ -63,7 +63,7 @@ if (angular) {
                         $scope[dest] = T(src);
                         // console.log('src ' + src + ' is', $scope[dest]);
                         recentlyChanged = RECENTLY_CHANGED_TBONE;
-                        tdata['digestScope'].trigger();
+                        tdata.digestScope.trigger();
                     }
                     recentlyChanged = RECENTLY_CHANGED_NONE;
                 }, BASE_PRIORITY_VIEW);
@@ -79,7 +79,7 @@ if (angular) {
                         recentlyChanged = RECENTLY_CHANGED_NONE;
                     });
                 }
-                tdata['bindings'][dest] = {
+                tdata.bindings[dest] = {
                     tscope: tscope,
                     deregister: deregister || noop
                 };
@@ -91,17 +91,17 @@ if (angular) {
 
             $rootScope['$tunbind'] = function (dest) {
                 // console.log('$tunbinding ' + dest);
-                var bindings = getTData(this)['bindings'];
+                var bindings = getTData(this).bindings;
                 var binding = bindings[dest];
-                binding.tscope['destroy']();
+                binding.tscope.destroy();
                 binding.deregister();
                 delete bindings[dest];
             };
 
             $rootScope['$trun'] = function (fn, priority) {
                 var tscope = T(fn, priority);
-                tscope['isView'] = true; // it's almost true
-                getTData(this, true)['scopes'].push(tscope);
+                tscope.isView = true; // it's almost true
+                getTData(this, true).scopes.push(tscope);
                 return tscope;
             };
 
@@ -110,13 +110,13 @@ if (angular) {
                 var self = this;
                 var tdata = getTData(self);
                 if (tdata) {
-                    _.each(_.keys(tdata['bindings']), function (key) {
+                    _.each(_.keys(tdata.bindings), function (key) {
                         self['$tunbind'](key);
                     });
-                    _.each(_.keys(tdata['tscopes']), function (tscope) {
-                        tscope['destroy']();
+                    _.each(_.keys(tdata.tscopes), function (tscope) {
+                        tscope.destroy();
                     });
-                    tdata['digestScope']['destroy']();
+                    tdata.digestScope.destroy();
                     delete angTData[self['$id']];
                 }
                 return origDestroy.apply(self, arguments);

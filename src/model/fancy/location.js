@@ -4,12 +4,12 @@
 
 function changePathGen (method) {
     return function (path) {
-        window['history'][method + 'State']({}, '', path);
+        window.history[method + 'State']({}, '', path);
         $(window).trigger(method + 'state');
     };
 }
 
-models['location'] = baseModel.extend({
+models.location = baseModel.extend({
     /**
      * Example:
      * var loc = tbone.models.location.make();
@@ -40,7 +40,7 @@ models['location'] = baseModel.extend({
             var search = self('search');
             var hash = self('hash');
             if (!recentlyChanged) {
-                self['pushPath'](pathname + (search || '') + (hash ? '#' + hash : ''));
+                self.pushPath(pathname + (search || '') + (hash ? '#' + hash : ''));
             }
             recentlyChanged = false;
         });

@@ -2,7 +2,7 @@
  * model/fancy/ajax.js
  */
 
-models['ajax'] = asyncModel.extend({
+models.ajax = asyncModel.extend({
 
     'state': function (dataCallback) {
         var self = this;
@@ -12,7 +12,7 @@ models['ajax'] = asyncModel.extend({
             if (myXhr) {
                 myXhr = null;
             }
-            self['onComplete']();
+            self.onComplete();
         }
 
         var url = isString(self.url) ? self.url : self.url();
@@ -25,8 +25,8 @@ models['ajax'] = asyncModel.extend({
              * parameters are set.
              **/
             self.fetchedUrl = url;
-            self['abortPrevious']();
-            if (self['clearOnFetch']) {
+            self.abortPrevious();
+            if (self.clearOnFetch) {
                 self.clear();
             }
             addInFlight(self);
@@ -37,13 +37,13 @@ models['ajax'] = asyncModel.extend({
                  * the postFetch callback, etc, when the update actually sticks.
                  */
                 if (dataCallback(self.parse(str))) {
-                    self['postFetch']();
+                    self.postFetch();
                     self.trigger('fetch');
                     log(INFO, self, 'updated', self.attributes);
                 }
             };
             sync('read', self, {
-                'dataType': self['dataType'],
+                'dataType': self.dataType,
                 'success': onData,
                 'error': function (xhr) {
                     onData(xhr && xhr.responseText);

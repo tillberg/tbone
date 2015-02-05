@@ -32,26 +32,26 @@ var baseModel = {
             if (typeof arg0 === 'function') {
                 return autorun(arg0, arg1);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
-                return instance['query'](arg0, boundModel.extend({ 'state': arg1 }).make());
+                return instance.query(arg0, boundModel.extend({ 'state': arg1 }).make());
             } else {
-                return (arguments.length === 0 ? instance['query']() :
-                        arguments.length === 1 ? instance['query'](arg0) :
-                        arguments.length === 2 ? instance['query'](arg0, arg1) :
-                                                 instance['query'](arg0, arg1, arg2));
+                return (arguments.length === 0 ? instance.query() :
+                        arguments.length === 1 ? instance.query(arg0) :
+                        arguments.length === 2 ? instance.query(arg0, arg1) :
+                                                 instance.query(arg0, arg1, arg2));
             }
         };
         _.extend(instance, self, isFunction(opts) ? { 'state': opts } : opts || {});
 
         // Initialize the model instance
-        delete instance['tboneid'];
-        delete instance['attributes'];
+        delete instance.tboneid;
+        delete instance.attributes;
         if (TBONE_DEBUG) {
             delete instance.prevJson;
         }
-        instance['_events'] = {};
+        instance._events = {};
         instance._removeCallbacks = {};
         uniqueId(instance);
-        instance['initialize']();
+        instance.initialize();
 
         return instance;
     },
@@ -62,7 +62,7 @@ var baseModel = {
     'on': function (name, callback, context) {
         // XXX callback is not supported.  assumes context.trigger is the callback
         var parts = splitName(name);
-        var events = this['_events'];
+        var events = this._events;
         var arg;
 
         while ((arg = parts.shift()) != null) {
@@ -91,7 +91,7 @@ var baseModel = {
         // XXX only supports use with both name & context.
         // XXX doesn't clean up when callbacks list goes to zero length
         var parts = splitName(name);
-        var events = this['_events'];
+        var events = this._events;
         var arg;
 
         while ((arg = parts.shift()) != null) {
@@ -111,7 +111,7 @@ var baseModel = {
     },
     'trigger': function (name) {
         var self = this;
-        var events = self['_events'];
+        var events = self._events;
         var parts = splitName(name);
         var arg;
         while ((arg = parts.shift()) != null) {
@@ -134,14 +134,14 @@ var baseModel = {
     'query': query,
 
     'queryModel': function (prop) {
-        return this['query'](DONT_GET_DATA, prop);
+        return this.query(DONT_GET_DATA, prop);
     },
 
     // query `prop` without binding to changes in its value
     'readSilent': function (prop) {
         var tmp = recentLookups;
         recentLookups = null;
-        var rval = this['query'](prop);
+        var rval = this.query(prop);
         recentLookups = tmp;
         return rval;
     },
@@ -149,11 +149,11 @@ var baseModel = {
     'idAttribute': 'id',
 
     'queryId': function () {
-        return this['query'](this['idAttribute']);
+        return this.query(this.idAttribute);
     },
 
     'toggle': function (prop) {
-        this['query'](QUERY_TOGGLE, prop);
+        this.query(QUERY_TOGGLE, prop);
     },
 
     'push': function (prop, value) {
@@ -161,7 +161,7 @@ var baseModel = {
             value = prop;
             prop = '';
         }
-        this['query'](QUERY_PUSH, prop, value);
+        this.query(QUERY_PUSH, prop, value);
     },
 
     'unshift': function (prop, value) {
@@ -169,27 +169,27 @@ var baseModel = {
             value = prop;
             prop = '';
         }
-        this['query'](QUERY_UNSHIFT, prop, value);
+        this.query(QUERY_UNSHIFT, prop, value);
     },
 
     'removeFirst': function (prop) {
-        this['query'](QUERY_REMOVE_FIRST, prop);
+        this.query(QUERY_REMOVE_FIRST, prop);
     },
 
     'removeLast': function (prop) {
-        this['query'](QUERY_REMOVE_LAST, prop);
+        this.query(QUERY_REMOVE_LAST, prop);
     },
 
     'unset': function (prop) {
-        this['query'](QUERY_UNSET, prop);
+        this.query(QUERY_UNSET, prop);
     },
 
     'increment': function (prop, value) {
-        this['query'](QUERY_INCREMENT, prop, value != null ? value : 1);
+        this.query(QUERY_INCREMENT, prop, value != null ? value : 1);
     },
 
     'clear': function () {
-        this['query']('', undefined);
+        this.query('', undefined);
     },
 
     'toJSON': function () {
@@ -207,7 +207,7 @@ var baseModel = {
 };
 
 if (TBONE_DEBUG) {
-    baseModel['find'] = function (obj) {
+    baseModel.find = function (obj) {
         function recurse(o, depth) {
             if (depth > 10) {
                 return [];
@@ -245,19 +245,19 @@ if (TBONE_DEBUG) {
 
 var tbone = baseModel.make({ 'Name': 'tbone' });
 var metrics = baseModel.make({ 'Name': 'tbone_metrics' });
-tbone['metrics'] = metrics;
+tbone.metrics = metrics;
 
-var orig_tbone = root['tbone'];
-var orig_T = root['T'];
+var orig_tbone = root.tbone;
+var orig_T = root.T;
 
-root['tbone'] = tbone;
-root['T'] = tbone;
+root.tbone = tbone;
+root.T = tbone;
 
-tbone['noConflict'] = function () {
-    root['T'] = orig_T;
-    root['tbone'] = orig_tbone;
+tbone.noConflict = function () {
+    root.T = orig_T;
+    root.tbone = orig_tbone;
 };
 
-tbone['models'] = models;
+tbone.models = models;
 
-models['base'] = baseModel;
+models.base = baseModel;

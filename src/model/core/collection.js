@@ -1,7 +1,7 @@
 
 var nextTempId = 1;
 
-var baseCollection = collections['base'] = baseModel.extend({
+var baseCollection = collections.base = baseModel.extend({
     isCollection: true,
     // The only place isModel is checked is in hasViewListener.
     // For that function's purposes, TBone collections are models.
@@ -21,8 +21,8 @@ var baseCollection = collections['base'] = baseModel.extend({
         if (isQueryable(data)) {
             child = data;
         } else {
-            child = self['model'].make();
-            child['query']('', data);
+            child = self.model.make();
+            child.query('', data);
         }
 
         /**
@@ -35,25 +35,25 @@ var baseCollection = collections['base'] = baseModel.extend({
         var removed;
         var update = function () {
             if (lastId != null) {
-                self['unset'](lastId, null);
-                self['trigger']('change:' + lastId);
+                self.unset(lastId, null);
+                self.trigger('change:' + lastId);
                 delete self._removeCallbacks[lastId];
             }
             if (!removed) {
-                var id = child['queryId']();
+                var id = child.queryId();
                 if (id == null) {
                     id = '__unidentified' + (nextTempId++);
                 }
                 id = '#' + id;
-                self['query'](id, child);
-                self['trigger']('change:' + id);
+                self.query(id, child);
+                self.trigger('change:' + id);
                 self._removeCallbacks[id] = remove;
                 lastId = id;
             }
         };
-        self['increment']('size');
+        self.increment('size');
         var remove = function () {
-            self['increment']('size', -1);
+            self.increment('size', -1);
             removed = true;
             update();
         };
@@ -70,11 +70,11 @@ var baseCollection = collections['base'] = baseModel.extend({
      * Remove a model by ID or by model instance.
      */
     'remove': function (modelOrId) {
-        modelOrId = '#' + (isQueryable(modelOrId) ? modelOrId['queryId']() : modelOrId);
+        modelOrId = '#' + (isQueryable(modelOrId) ? modelOrId.queryId() : modelOrId);
         if (this._removeCallbacks[modelOrId]) {
             this._removeCallbacks[modelOrId]();
         }
     }
 });
 
-tbone['collections'] = collections;
+tbone.collections = collections;

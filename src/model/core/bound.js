@@ -2,7 +2,7 @@
  * model/core/bound.js
  */
 
-var boundModel = models['bound'] = baseModel.extend({
+var boundModel = models.bound = baseModel.extend({
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}
@@ -15,7 +15,7 @@ var boundModel = models['bound'] = baseModel.extend({
          * or _.defer because that could possibly fire after drainQueue.
          */
         self.scope = autorun(self.update, self.scopePriority, self,
-                             self['Name'] && 'model_' + self['Name'],
+                             self.Name && 'model_' + self.Name,
                              self.onScopeExecute, self, true);
     },
 
@@ -40,7 +40,7 @@ var boundModel = models['bound'] = baseModel.extend({
          * XXX - how does this work?
          */
         _.each((this.scope && this.scope.lookups) || [], function (lookup) {
-            var bindable = lookup['obj'];
+            var bindable = lookup.obj;
             if (bindable && !woken[uniqueId(bindable)]) {
                 woken[uniqueId(bindable)] = true;
                 bindable.wake(woken);
@@ -54,7 +54,7 @@ var boundModel = models['bound'] = baseModel.extend({
 
     update: function () {
         var self = this;
-        self.sleeping = self['sleepEnabled'] && !hasViewListener(self);
+        self.sleeping = self.sleepEnabled && !hasViewListener(self);
         if (self.sleeping) {
             /**
              * This model will not update itself until there's a view listener
@@ -68,8 +68,8 @@ var boundModel = models['bound'] = baseModel.extend({
     },
 
     _update: function () {
-        var flag = this['assumeChanged'] ? QUERY_ASSUME_CHANGED : QUERY_DEFAULT;
-        this['query'](flag, QUERY_SELF, this['state']());
+        var flag = this.assumeChanged ? QUERY_ASSUME_CHANGED : QUERY_DEFAULT;
+        this.query(flag, QUERY_SELF, this.state());
         log(VERBOSE, this, 'updated', this.attributes);
     },
 
@@ -86,15 +86,15 @@ var boundModel = models['bound'] = baseModel.extend({
         if (this.scope) {
             this.scope.destroy();
         }
-        this['unset'](QUERY_SELF);
+        this.unset(QUERY_SELF);
     },
 
     'disableSleep': function () {
         // This is intended to be used only interactively for development.
-        if (TBONE_DEBUG && this['sleepEnabled']) {
+        if (TBONE_DEBUG && this.sleepEnabled) {
             log(WARN, this, 'disableSleep', 'Disabling sleep mode for <%-Name%>.', this);
-            this['sleepEnabled'] = false;
-            this['wake']();
+            this.sleepEnabled = false;
+            this.wake();
         }
     },
 
@@ -123,9 +123,9 @@ function getQuerySetProp (flag, prop) {
 }
 
 if (TBONE_DEBUG) {
-    boundModel['query'] = function (flag, prop, value) {
+    boundModel.query = function (flag, prop, value) {
         var setProp = getQuerySetProp.apply(this, arguments);
-        if (setProp && !this['isMutable']) {
+        if (setProp && !this.isMutable) {
             log(WARN, this, 'boundModelSet', 'Attempting to set property <%-prop%> of bound model!', {
                 prop: setProp
             });

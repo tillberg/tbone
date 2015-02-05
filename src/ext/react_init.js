@@ -1,7 +1,7 @@
-var React = window['React'];
+var React = window.React;
 if (React) {
-    var origCreateClass = React['createClass'];
-    React['createClass'] = function (origOpts) {
+    var origCreateClass = React.createClass;
+    React.createClass = function (origOpts) {
         function cleanUpTScopes (inst) {
             _.each(inst.tscopes || [], function (tscope) {
                 tscope.destroy();
