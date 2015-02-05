@@ -110,7 +110,7 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
                 // then we need to search recursively for "real" changes.
                 // We want to avoid firing change events when the user sets
                 // something to a deep copy of itself.
-                if (isObject(prev) && isObject(curr)) {
+                if (isRealObject(prev) && isRealObject(curr)) {
                     exhaustive = true;
                 } else if (isDate(prev) && isDate(curr)) {
                     changed = (prev.getTime() !== curr.getTime()) || changed;
@@ -128,7 +128,7 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
         // through all keys until we find one (note that this could duplicate
         // some searching done while searching the event tree)
         // This may not be super-efficient to call recursiveDiff all the time.
-        if (isObject(prev) && isObject(curr)) {
+        if (isRealObject(prev) && isRealObject(curr)) {
             // prev and curr are both objects/arrays
             // search through them recursively for any differences
             var searched = {};
@@ -193,7 +193,7 @@ function serializeForComparison(model) {
                 // If value is an array or object, screen its keys for queryables.
                 // Queryables track their own changes, so we don't care to
                 // check that they haven't changed without this model knowing.
-                if (isObject(value)) {
+                if (isRealObject(value)) {
                     // This is not a way to serialize correctly, but
                     // we just want to show that the original structures
                     // were the same, minus queryables.
@@ -217,7 +217,7 @@ function serializeForComparison(model) {
 
 function listDiffs(curr, prev, accum) {
     var diffs = {};
-    if (isObject(prev) && isObject(curr)) {
+    if (isRealObject(prev) && isRealObject(curr)) {
         var searched = {};
         var objs = [prev, curr];
         for (var i = 0; i < 2; i++) {
@@ -337,7 +337,7 @@ function query (flag, prop, value) {
              */
             doSubQuery = args.length || (isSet ? !isUnset && !isQueryable(value) : !dontGetData);
             break;
-        } else if (isSet && !isObject(_data) && (args.length || isListOp)) {
+        } else if (isSet && !isRealObject(_data) && (args.length || isListOp)) {
             /**
              * Don't do implicit mkdir -p if we're just trying to unset something
              * that doesn't exist.

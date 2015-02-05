@@ -40,7 +40,7 @@ var baseModel = {
                                                  instance.query(arg0, arg1, arg2));
             }
         };
-        _.extend(instance, self, isFunction(opts) ? { 'state': opts } : opts || {});
+        _.extend(instance, self, _.isFunction(opts) ? { 'state': opts } : opts || {});
 
         // Initialize the model instance
         delete instance.tboneid;

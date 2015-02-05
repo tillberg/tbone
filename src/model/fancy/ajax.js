@@ -15,7 +15,7 @@ models.ajax = asyncModel.extend({
             self.onComplete();
         }
 
-        var url = isString(self.url) ? self.url : self.url();
+        var url = _.isString(self.url) ? self.url : self.url();
         if (url == null) {
             dataCallback(null);
         } else {
@@ -71,7 +71,7 @@ models.ajax = asyncModel.extend({
         };
     },
 
-    'parse': identity,
+    'parse': _.identity,
 
     /**
      * By default, async models will use $.ajax to fetch data; override this

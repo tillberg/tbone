@@ -53,45 +53,23 @@ var priority = {
  */
 var PRIORITY_INIT_DELTA = 5000;
 
-function identity (x) { return x; }
-
 function noop () { return undefined; }
 
-function isFunction (x) {
-    return typeof x === 'function';
-}
+var isString = _.isString;
+var isBoolean = _.isBoolean;
+var isArray = _.isArray;
+var isDate = _.isDate;
 
-function isString (x) {
-    return typeof x === 'string';
-}
-
-function isRealNumber (x) {
-    return typeof x === 'number' && !isNaN(x);
-}
-
-function isObject (x) {
+function isRealObject (x) {
     return x !== null && typeof x === 'object' && !isDate(x);
-}
-
-function isDate (x) {
-    return !!(x && x.getTimezoneOffset && x.setUTCFullYear);
 }
 
 function isQueryable (x) {
     return !!(x && typeof x.query === 'function');
 }
 
-function isBoolean (x) {
-    return typeof x === 'boolean';
-}
-
-var objectToString = Object.prototype.toString;
-function isArray (x) {
-    return objectToString.call(x) === '[object Array]';
-}
-
 /**
- * Use to test whether a string is in fact a number literal.  We don't want to instrument those.
+ * Use to test whether a string is a number literal.
  * @type {RegExp}
  * @const
  */
@@ -208,7 +186,7 @@ function onLog (cb) {
 }
 
 function denullText (v) {
-    return (isString(v) || isRealNumber(v) || isDate(v) || isBoolean(v)) ? v + '' : '';
+    return (isString(v) || _.isFinite(v) || isDate(v) || isBoolean(v)) ? v + '' : '';
 }
 
 /**
@@ -237,7 +215,7 @@ function getListeners (self) {
         }
     });
     // TBone-native:
-    if (isQueryable(self) && isFunction(self)) {
+    if (isQueryable(self) && _.isFunction(self)) {
         var stack = [ self._events ];
         var next, callbacks, k;
 
