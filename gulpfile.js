@@ -148,6 +148,7 @@ gulp.task('build_all', _.map(_.keys(versions), function (name) { return 'test:' 
     cb();
   }
 });
+gulp.task('test', ['build_all']);
 gulp.task('default', ['build_all']);
 
 gulp.task('restart-gulp', function () {
