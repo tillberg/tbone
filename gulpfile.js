@@ -116,6 +116,7 @@ _.each(versions, function (version, name) {
       .pipe(replace('var TBONE_DEBUG = !!root.TBONE_DEBUG;\n', ''))
       .pipe(uglify({
         compress: {
+          unsafe: true,
           global_defs: { TBONE_DEBUG: false },
         }
       }))
