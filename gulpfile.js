@@ -8,6 +8,7 @@ var concat = require('gulp-concat');
 var replace = require('gulp-replace');
 var jshint = require('gulp-jshint');
 var gzip = require('gulp-gzip');
+var size = require('gulp-size');
 var qunit = require('node-qunit-phantomjs');
 var del = require('del');
 
@@ -61,9 +62,9 @@ var fullFiles = extFiles.concat([
   'src/dom/view/render.js',
   'src/dom/view/create.js',
   'src/export.js',
-  'src/ext/react_init.js',
-  'src/ext/angular_init.js',
   'src/ext/bbsupport.js',
+  'src/ext/angular_init.js',
+  'src/ext/react_init.js',
 ]);
 
 function wrapFiles (files) {
@@ -105,13 +106,13 @@ _.each(versions, function (version, name) {
 
   gulp.task(tn('concat'), [tn('jshint')], function () {
     return gulp.src(files)
-      .pipe(concat(jsFilename, {newLine: ';\n'}))
+      .pipe(concat(jsFilename))
       .pipe(gulp.dest(dest));
   });
 
   gulp.task(tn('compile'), [tn('concat')], function () {
     return gulp.src([jsFullPath])
-      .pipe(concat(minJsFilename, {newLine: ';\n'}))
+      .pipe(concat(minJsFilename))
       .pipe(replace('var TBONE_DEBUG = !!root.TBONE_DEBUG;\n', ''))
       .pipe(uglify({
         compress: {
@@ -123,7 +124,9 @@ _.each(versions, function (version, name) {
 
   gulp.task(tn('compress'), [tn('compile')], function () {
     return gulp.src([minJsFullPath])
+      .pipe(size({ showFiles: true }))
       .pipe(gzip({ gzipOptions: { level: 9 } }))
+      .pipe(size({ showFiles: true }))
       .pipe(gulp.dest(dest));
   });
 
@@ -146,6 +149,12 @@ gulp.task('build_all', _.map(_.keys(versions), function (name) { return 'test:' 
 });
 gulp.task('default', ['build_all']);
 
+gulp.task('restart-gulp', function () {
+  console.log('restarting gulp...');
+  process.exit(0);
+});
+
 gulp.task('watch', ['build_all'], function () {
+  gulp.watch(['gulpfile.js'], ['restart-gulp']);
   gulp.watch(['src/**/*.js', 'test/**/*'], ['build_all']);
 });
