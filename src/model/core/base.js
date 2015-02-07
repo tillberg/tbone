@@ -244,8 +244,17 @@ if (TBONE_DEBUG) {
 }
 
 var tbone = baseModel.make({ Name: 'tbone' });
-var metrics = baseModel.make({ Name: 'tbone_metrics' });
-tbone.metrics = metrics;
+
+tbone.hasViewListener = hasViewListener;
+tbone.priority = priority;
+
+if (TBONE_DEBUG) {
+    tbone.watchLog = watchLog;
+    tbone.getListeners = getListeners;
+    tbone.onLog = onLog;
+    tbone.opts = opts;
+    onLog(logconsole);
+}
 
 var orig_tbone = root.tbone;
 var orig_T = root.T;
@@ -258,6 +267,10 @@ tbone.noConflict = function () {
     root.tbone = orig_tbone;
 };
 
-tbone.models = models;
+var metrics = baseModel.make({ Name: 'tbone_metrics' });
+tbone.metrics = metrics;
 
-models.base = baseModel;
+var models = {
+    base: baseModel,
+};
+tbone.models = models;

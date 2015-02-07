@@ -2,6 +2,8 @@
  * dom/template/init.js
  */
 
+var templates = tbone.templates = {};
+
 /**
  * Convenience function to generate a RegExp from a string.  Spaces in the original string
  * are re-interpreted to mean a sequence of zero or more whitespace characters.
@@ -76,9 +78,9 @@ _.each(('break case catch continue debugger default delete do else finally for f
  * e.g. `<%= stringz.formatMoney(account.balance) %>`.
  * @param  {string} namespace
  */
-function dontPatch (namespace) {
+tbone.dontPatch = function (namespace) {
     neverLookup[namespace] = true;
-}
+};
 
 /**
  * Adds listeners for model value lookups to a template string
@@ -131,9 +133,9 @@ function withLookupListeners(str, closureVariables) {
  * @param {string} name   template name; should match tbone attribute references
  * @param {string} string template as HTML string
  */
-function addTemplate(name, string) {
+tbone.addTemplate = function (name, string) {
     templates[name] = string;
-}
+};
 
 /**
  * Instrument the template for automatic reference binding via tbone.lookup/lookupText.

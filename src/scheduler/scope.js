@@ -63,7 +63,7 @@ _.extend(Scope.prototype,
             // Save our parent's lookups and subscopes.  It's like pushing our own values
             // onto the top of each stack.
             var oldLookups = recentLookups;
-            this.lookups = recentLookups = {};
+            self.lookups = recentLookups = {};
             var parentScope = currentExecutingScope;
             currentExecutingScope = self;
 
@@ -88,7 +88,7 @@ _.extend(Scope.prototype,
 
                 // This is intended primarily for diagnostics.
                 if (self.onExecuteCb) {
-                    self.onExecuteCb.call(self.onExecuteContext, this);
+                    self.onExecuteCb.call(self.onExecuteContext, self);
                 }
 
                 // Pop our own lookups and parent scope off the stack, restoring them to
@@ -137,10 +137,11 @@ _.extend(Scope.prototype,
      * Destroy any execution scopes that were creation during execution of this function.
      */
     destroySubScopes: function () {
-        for (var i = 0; i < this.subScopes.length; i++) {
-            this.subScopes[i].destroy();
+        var self = this;
+        for (var i = 0; i < self.subScopes.length; i++) {
+            self.subScopes[i].destroy();
         }
-        this.subScopes = [];
+        self.subScopes = [];
     },
 
     /**
@@ -148,9 +149,10 @@ _.extend(Scope.prototype,
      * and ignore any execute calls which may already be queued in the scheduler.
      */
     destroy: function () {
-        this.destroyed = true;
-        delete this.parentScope;
-        this.unbindAll();
-        this.destroySubScopes();
+        var self = this;
+        self.destroyed = true;
+        delete self.parentScope;
+        self.unbindAll();
+        self.destroySubScopes();
     }
 });

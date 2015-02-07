@@ -1,12 +1,7 @@
 var root = typeof exports !== 'undefined' ? exports : window;
 var _ = root._ || require('lodash');
-var $ = root.$;
 var TBONE_DEBUG = !!root.TBONE_DEBUG;
 
-var models = {};
-var collections = {};
-var templates = {};
-var views = {};
 var opts = TBONE_DEBUG ? { aliasCheck: false } : {};
 
 /**
@@ -115,20 +110,7 @@ function watchLog (name, level) {
     logLevels.event[name] = VERBOSE;
 }
 
-var _showRenderTrees = false;
-function showRenderTrees () {
-    _showRenderTrees = true;
-}
-
-function logRender (obj) {
-    if (TBONE_DEBUG && _showRenderTrees) {
-        console.log('render ' + _.times(renderDepth, function () { return '.'; }).join('') + obj.Name);
-    }
-}
-
 var events = [];
-
-var viewRenders = 0;
 
 var logCallbacks = [];
 
@@ -185,14 +167,10 @@ function onLog (cb) {
     logCallbacks.push(cb);
 }
 
-function denullText (v) {
-    return (isString(v) || _.isFinite(v) || isDate(v) || isBoolean(v)) ? v + '' : '';
-}
-
 /**
  * Returns the list of unique listeners attached to the specified model/view.
- * @param  {Backbone.Model|Backbone.View} self
- * @return {Array.<Backbone.Model|Backbone.View|Scope>} array of listeners
+ * @param  {Queryable} self
+ * @return {Array.<Queryable|View|Scope>} array of listeners
  */
 function getListeners (self) {
     var listeners = [];
@@ -241,7 +219,7 @@ function getListeners (self) {
  * to this model.  Useful for determining whether the current model should
  * be updated (if a model is updated in the forest and nobody is there to
  * hear it, then why update it in the first place?)
- * @param  {Backbone.Model|Backbone.View}  self
+ * @param  {Queryable}  self
  * @return {Boolean}
  */
 function hasViewListener (self) {

@@ -2,6 +2,7 @@
  * scheduler/drainqueue.js
  */
 
+var nextId = 1;
 /**
  * Generate and return a unique identifier which we attach to an object.
  * The object is typically a view, model, or scope, and is used to compare
@@ -10,9 +11,11 @@
  * @return {string}     Unique ID assigned to this object
  */
 function uniqueId(obj) {
-    return obj.tboneid = obj.tboneid || nextId++; // jshint ignore:line
+    if (!obj.tboneid) {
+        obj.tboneid = nextId++;
+    }
+    return obj.tboneid;
 }
-var nextId = 1;
 
 /**
  * List of Scopes to be executed immediately.
@@ -86,21 +89,16 @@ function removeInFlight (model) {
     }
 }
 
-var isReady = tbone.isReady = function () {
-    return _.isEmpty(inflight) && !drainQueueTimer;
-};
-
 tbone.isReady = function () {
     return metrics.query('isReady');
 };
 
 var isReadyTimer;
-
 function updateIsReady () {
     if (!isReadyTimer) {
         isReadyTimer = setTimeout(function () {
             var numInFlight = _.keys(inflight).length;
-            metrics.query('isReady', isReady());
+            metrics.query('isReady', _.isEmpty(inflight) && !drainQueueTimer);
             metrics.query('ajax.modelsInFlight', _.clone(inflight));
             metrics.query('ajax.isReady', numInFlight === 0);
             metrics.query('ajax.numInFlight', numInFlight);
@@ -141,51 +139,15 @@ function queueExec (scope) {
 
 var frozen = false;
 
-/**
- * Attempt to restore scrollTop around drainQueue calls.
- *
- * The basic problem is that removing and re-adding elements to the page
- * will force the scroll up to the minimum height that the page gets to
- * in the midst of that operation.
- *
- * This is really kind of kludgy... Is there a cleaner way to accomplish
- * the same thing?
-
- * Only supported for JQuery / when scrollTop is available on $.
- */
-
-var origScrollTop = this.$ && $.fn && $.fn.scrollTop;
-var $window = origScrollTop && $(window);
-var scrollTopChangedProgrammatically;
-
-if (origScrollTop) {
-    /**
-     * Avoid clobbering intentional programmatic scrollTop changes that
-     * occur inside T-functions.  This is not foolproof, and only preserves
-     * changes made through $.fn.scrollTop.
-     *
-     * XXX This could frustrate users that try to change it some other way,
-     * only to find that somehow, mysteriously, the scrollTop change gets
-     * reverted.
-     */
-    $.fn.scrollTop = function (value) {
-        if (value) {
-            scrollTopChangedProgrammatically = true;
-        }
-        return origScrollTop.apply(this, arguments);
-    };
-}
-
-function queryScrollTop (value) {
-    return origScrollTop && (value ? $window.scrollTop(value) : $window.scrollTop());
+function runListOfFunctions (list) {
+    _.each(list, function (cb) { cb(); });
 }
 
 /**
  * Drain the Scope execution queue, in priority order.
  */
 function drainQueue () {
-    scrollTopChangedProgrammatically = false;
-    var scrollTop = queryScrollTop();
+    runListOfFunctions(onBeforeSchedulerDrainQueue);
     var queueDrainStartTime = now();
     var scope;
     drainQueueTimer = null;
@@ -208,14 +170,12 @@ function drainQueue () {
     log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
         duration: now() - queueDrainStartTime
     });
-    log(VERBOSE, 'scheduler', 'viewRenders', 'rendered <%=viewRenders%> total', {
-        viewRenders: viewRenders
-    });
     updateIsReady();
-    if (scrollTop && !scrollTopChangedProgrammatically && scrollTop !== queryScrollTop()) {
-        queryScrollTop(scrollTop);
-    }
+    runListOfFunctions(onAfterSchedulerDrainQueue);
 }
+
+var onBeforeSchedulerDrainQueue = [];
+var onAfterSchedulerDrainQueue = [];
 
 /**
  * Drain to the tbone drainQueue, executing all queued Scopes immediately.
@@ -229,6 +189,8 @@ var drain = tbone.drain = function () {
     drainQueue();
 };
 
-function freeze () {
-    frozen = true;
+if (TBONE_DEBUG) {
+    tbone.freeze = function () {
+        frozen = true;
+    };
 }

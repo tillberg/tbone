@@ -1,7 +1,7 @@
 
 var nextTempId = 1;
 
-var baseCollection = collections.base = baseModel.extend({
+var baseCollection = baseModel.extend({
     isCollection: true,
     // The only place isModel is checked is in hasViewListener.
     // For that function's purposes, TBone collections are models.
@@ -77,4 +77,6 @@ var baseCollection = collections.base = baseModel.extend({
     }
 });
 
-tbone.collections = collections;
+var collections = tbone.collections = {
+    base: baseCollection,
+};

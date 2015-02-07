@@ -39,4 +39,4 @@ function timer() {
     return me;
 }
 
-var timers = [ ];
+var timers = [];

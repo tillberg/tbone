@@ -29,7 +29,7 @@
  * @param  {Object=}               opts additional prototype properties
  * @return {ViewPrototype}
  */
-function createView(name, base, fn, opts) {
+tbone.createView = function (name, base, fn, opts) {
     var args = [].slice.call(arguments);
     var arg = args.shift();
     if (typeof arg === 'string') {
@@ -61,4 +61,4 @@ function createView(name, base, fn, opts) {
         };
     }
     return views[name] = base.extend(opts); // jshint ignore:line
-}
+};

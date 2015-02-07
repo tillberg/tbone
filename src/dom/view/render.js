@@ -21,7 +21,7 @@ var rgxTBoneAttribute = /[^\w.]*([\w.]+)[^\w.]+([\w.]+)/g;
  *                                           to avoid redundantly regenerating unchanged views.
  * @return {Array.<Backbone.View>}           views created (and/or substituted from subViews)
  */
-function render($els, parent, subViews) {
+var render = tbone.render = function ($els, parent, subViews) {
     var subViewMap = {};
     _.each(subViews || [], function (subView) {
         (subViewMap[subView.origOuterHTML] = subViewMap[subView.origOuterHTML] || []).push(subView);
@@ -119,4 +119,4 @@ function render($els, parent, subViews) {
         }
         return view;
     });
-}
+};

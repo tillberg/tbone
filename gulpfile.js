@@ -54,14 +54,16 @@ var extFiles = coreFiles.concat([
   'src/model/fancy/localstoragecoll.js',
 ]);
 
-var fullFiles = extFiles.concat([
+var domFiles = extFiles.concat([
   'src/dom/template/init.js',
   'src/dom/template/render.js',
   'src/dom/view/hash.js',
   'src/dom/view/base.js',
   'src/dom/view/render.js',
   'src/dom/view/create.js',
-  'src/export.js',
+]);
+
+var fullFiles = domFiles.concat([
   'src/ext/bbsupport.js',
   'src/ext/angular_init.js',
   'src/ext/react_init.js',

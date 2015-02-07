@@ -10,11 +10,11 @@
  * Additionally, this can be used within view `ready` callbacks to section off a smaller
  * block of code to repeat when its own referenced properties are updated, without
  * needing to re-render the entire view.
- * @param  {Function}                       fn        Function to invoke
- * @param  {number}                         priority  Scheduling priority - higher = sooner
- * @param  {Backbone.Model|Backbone.View}   context   Context to pass on invocation
- * @param  {string}                         name      Name for debugging purposes
- * @return {Scope}                                    A new Scope created to wrap this function
+ * @param  {Function}    fn        Function to invoke
+ * @param  {number}      priority  Scheduling priority - higher = sooner
+ * @param  {Object}      context   Context to pass on invocation
+ * @param  {string}      name      Name for debugging purposes
+ * @return {Scope}                 A new Scope created to wrap this function
  */
 function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, detached) {
     // Default priority and name if not specified.  Priority is important in
