@@ -1,5 +1,44 @@
 ## TBone Change Log
 
+### 1.0.0
+
+This release includes some breaking changes:
+- The TBone internal metrics `__isReady__`, `__ajaxReady__`, and
+  `__numAjaxInFlight__` have been moved to a new `T.metrics` model:
+  - `T('__isReady__')` -> `T.metrics('isReady')`
+  - `T('__ajaxReady__')` -> `T.metrics('ajax.isReady')`
+  - `T('__numAjaxInFlight__')` -> `T.metrics('ajax.numInFlight')`
+  - Newly added: `T.metrics('ajax.modelsInFlight')`
+- Ajax models now populate themselves with data returned on `error`
+  responses, i.e. 4xx/5xx. Previously, the models would remain
+  unchanged by error responses.
+
+Major notes:
+- TBone's own View and Template modules are now deprecated in favor
+  of using React for the same functionality.
+- React integration (in `ext/react_init.js`) is now bundled with
+  the main TBone build. React integrates seamlessly with TBone;
+  any T-references made in the Component methods `componentDidMount`,
+  `componentWillUpdate`, `componentDidUpdate`, and `render` will
+  be automagically bound and trigger Component updates as you'd
+  expect.
+- Support for TBone views/templates and Backbone models have been
+  moved to the `tbone_legacy` build.
+
+Additional notes:
+- TBone is now built using gulp and uglify, replacing grunt and
+  closure compiler, respectively.
+- Since we no longer use closure compiler advanced optimizations,
+  minified TBone source is a little bit larger, but we were also
+  able to remove all the externs files and a large number of
+  unnecessarily-quoted key strings in the source.
+- The `location` fancy model now includes `pathname` and `search`
+  in addition to `hash`, and listens to `popstate` and `pushstate`
+  events to try and keep them up-to-date.
+- Experimental Angular integration is available to try in
+  `ext/init_angular.js`. However, development was suspended after
+  the discovery that React integrates much more cleanly with TBone.
+
 ### 0.8.0
 
 - Exposed `dataType` as a configurable ajax model property, and

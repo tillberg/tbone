@@ -1,6 +1,6 @@
 {
   "name": "tbone",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "author": "Dan Tillberg <dan@tillberg.us>",
   "description": "Reactive Programming for JavaScript",
   "license": "MIT",
