@@ -23,7 +23,7 @@
     document.write([
       '<scr',
       'ipt src="../dist/tbone',
-      variant ? '_' + variant : '',
+      variant && variant !== 'main' ? '_' + variant : '',
       min ? '.min' : '',
       '.js"><\/scr',
       'ipt>'
@@ -45,8 +45,8 @@
   <script>
     var modules = ['core'];
     var enabled = {
-      ext: variant === 'ext' || variant === 'full',
-      dom: variant === 'full'
+      ext: variant === 'main' || variant === 'legacy',
+      dom: variant === 'legacy'
     };
     if (enabled.ext) {
       modules.push('core_ext');

@@ -210,7 +210,7 @@ function hasViewListener (self) {
     var todo = [ self ];
     var usedModels = [ self ];
     var next;
-    while (next = todo.pop()) {
+    while (!!(next = todo.pop())) {
         var listeners = getListeners(next);
         for (var i = 0; i < listeners.length; i++) {
             var listener = listeners[i];

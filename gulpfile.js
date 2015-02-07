@@ -4,6 +4,7 @@ var _ = require('lodash');
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 var uglify = require('gulp-uglify');
+var sourcemaps = require('gulp-sourcemaps');
 var concat = require('gulp-concat');
 var replace = require('gulp-replace');
 var jshint = require('gulp-jshint');
@@ -51,13 +52,10 @@ var extFiles = coreFiles.concat([
   'src/model/fancy/localstorage.js',
   'src/model/fancy/location.js',
   'src/model/fancy/localstoragecoll.js',
-]);
-
-var withReactFiles = extFiles.concat([
   'src/ext/react_init.js',
 ]);
 
-var fullFiles = withReactFiles.concat([
+var fullFiles = extFiles.concat([
   'src/dom/template/init.js',
   'src/dom/template/render.js',
   'src/dom/view/hash.js',
@@ -77,17 +75,13 @@ var versions = {
     files: wrapFiles(coreFiles),
     suffix: '_core',
   },
-  ext: {
+  main: {
     files: wrapFiles(extFiles),
-    suffix: '_ext',
+    suffix: '',
   },
-  react: {
-    files: wrapFiles(withReactFiles),
-    suffix: '_react',
-  },
-  full: {
+  legacy: {
     files: wrapFiles(fullFiles),
-    suffix: '_full',
+    suffix: '_legacy',
   },
 };
 
@@ -118,13 +112,15 @@ _.each(versions, function (version, name) {
   gulp.task(tn('compile'), [tn('concat')], function () {
     return gulp.src([jsFullPath])
       .pipe(concat(minJsFilename))
-      .pipe(replace('var TBONE_DEBUG = !!root.TBONE_DEBUG;\n', ''))
+      .pipe(replace('var TBONE_DEBUG = !!root.TBONE_DEBUG;\n', '\n'))
+      .pipe(sourcemaps.init())
       .pipe(uglify({
         compress: {
           unsafe: true,
           global_defs: { TBONE_DEBUG: false },
         }
       }))
+      .pipe(sourcemaps.write('./'))
       .pipe(gulp.dest(dest));
   });
 
