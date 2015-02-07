@@ -42,12 +42,12 @@ TBone was originally built as an extension upon [Backbone](http://backbonejs.org
 
 ## Download
 
-* [Development version, with comments](//cdn.tbonejs.org/tbone-v0.8.0.js) *27kiB gzipped*
-* [Production version, minified](//cdn.tbonejs.org/tbone-v0.8.0.min.js) *7kiB gzipped*
+* [Development version, with comments](//cdn.tbonejs.org/tbone-1.0.0.js) **62kb**
+* [Production version, minified](//cdn.tbonejs.org/tbone-1.0.0.min.js) **5kb gzipped**
 
 ```html
-Development: <script src="//cdn.tbonejs.org/tbone-v0.8.0.js"></script>
-Production: <script src="//cdn.tbonejs.org/tbone-v0.8.0.min.js"></script>
+Development: <script src="//cdn.tbonejs.org/tbone-1.0.0.js"></script>
+Production: <script src="//cdn.tbonejs.org/tbone-1.0.0.min.js"></script>
 ```
 
 ## Requirements
