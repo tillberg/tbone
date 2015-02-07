@@ -2007,6 +2007,1245 @@ if (React) {
     };
 }
 
+/**
+ * dom/template/init.js
+ */
+
+var templates = tbone.templates = {};
+
+/**
+ * Convenience function to generate a RegExp from a string.  Spaces in the original string
+ * are re-interpreted to mean a sequence of zero or more whitespace characters.
+ * @param  {String} str
+ * @param  {String} flags
+ * @return {RegExp}
+ */
+function regexp(str, flags) {
+    return new RegExp(str.replace(/ /g, '[\\s\\n]*'), flags);
+}
+
+/**
+ * Capture the contents of any/all underscore template blocks.
+ * @type {RegExp}
+ * @const
+ */
+var rgxLookup = /<%(=|-|@|)([\s\S]+?)%>/g;
+
+/**
+ * Find function declaractions (so that we can detect variables added to the closure scope
+ * inside a template, as well as start and end of scope).
+ * @type {RegExp}
+ * @const
+ */
+var rgxScope = regexp(
+    'function \\( ([\\w$_]* (, [\\w$_]+)*)  \\)|' +
+    '(\\{)|' +
+    '(\\})|' +
+    '([\\s\\S])', 'g');
+
+/**
+ * Match function parameters found in the first line of rgxScope.
+ * @type {RegExp}
+ * @const
+ */
+var rgxArgs = /[\w$_]+/g;
+
+/**
+ * When used with string.replace, rgxUnquoted matches unquoted segments with the first group
+ * and quoted segments with the second group.
+ * @type {RegExp}
+ * @const
+ */
+var rgxUnquoted = /([^'"]+)('[^']+'|"[^"]+")?/g;
+
+/**
+ * Find references that are not subproperty references of something else, e.g. ").hello"
+ * @type {RegExp}
+ * @const
+ */
+var rgxLookupableRef = regexp('(\\. )?(([\\w$_]+)(\\.[\\w$_]+)*)', 'g');
+
+/**
+ * Hashmap of properties to never try to tbone.lookup when instrumenting a template.
+ * @type {Object.<string, Boolean>}
+ */
+var neverLookup = {};
+
+_.each(('break case catch continue debugger default delete do else finally for function if in ' +
+        'instanceof new return switch this throw try typeof var void while with ' +
+        'Array Boolean Date Function Iterator Number Object RegExp String ' +
+        'isFinite isNaN parseFloat parseInt Infinity JSON Math NaN undefined true false null ' +
+        '$ _ tbone T view window'
+       ).split(' '), function (word) {
+    neverLookup[word] = true;
+});
+
+/**
+ * Don't tbone-query-patch variables starting with **namespace** in tbone.addTemplate.
+ * For example, if you have a formatting library at `window.stringz`, use
+ * `tl.dontPatch('stringz')` so that you can use stringz from within templates,
+ * e.g. `<%= stringz.formatMoney(account.balance) %>`.
+ * @param  {string} namespace
+ */
+tbone.dontPatch = function (namespace) {
+    neverLookup[namespace] = true;
+};
+
+/**
+ * Adds listeners for model value lookups to a template string
+ * This allows us to automatically and dynamically bind to change events on the models
+ * to auto-refresh this template.
+ */
+function withLookupListeners(str, closureVariables) {
+    return str.replace(rgxLookupableRef, function (all, precedingDot, expr, firstArg) {
+        if (neverLookup[firstArg] || precedingDot || rgxNumber.test(firstArg)) {
+            return all;
+        } else {
+            if (closureVariables[firstArg] != null) {
+                /**
+                 * If the first part of the expression is a closure-bound variable
+                 * e.g. from a _.each iterator, try to do a lookup on that (if it's
+                 * a model).  Otherwise, just do a native reference.
+                 */
+                return [
+                    '(',
+                    firstArg,
+                    ' && view.isQueryable(',
+                    firstArg,
+                    ') ? ',
+                    firstArg,
+                    '.query("',
+                    expr.slice(firstArg.length + 1),
+                    '")',
+                    ' : ',
+                    expr,
+                    ')'
+                ].join('');
+            } else {
+                /**
+                 * Patch the reference to use query.
+                 */
+                return [
+                    'view.query(',
+                    ITERATE_OVER_MODELS,
+                    ', "',
+                    expr,
+                    '")'
+                ].join('');
+            }
+        }
+    });
+}
+
+/**
+ * Add a template to be used later via render.
+ * @param {string} name   template name; should match tbone attribute references
+ * @param {string} string template as HTML string
+ */
+tbone.addTemplate = function (name, string) {
+    templates[name] = string;
+};
+
+/**
+ * Instrument the template for automatic reference binding via tbone.lookup/lookupText.
+ * @param  {string} string Uninstrumented template as an HTML string
+ * @return {function(Object): string}
+ */
+function initTemplate(string) {
+    /**
+     * As we parse through the template, we identify variables defined as function parameters
+     * within the current closure scope; if a variable is defined, we instrument references to
+     * that variable so that they use that variable as the lookup root, instead of using the
+     * view context.  We push each new closure scope's variables onto varstack and pop them
+     * off when we reach the end of the closure.
+     * @type {Array.<Array.<string>>}
+     */
+    var varstack = [[]];
+    /**
+     * Hash set of variables that are currently in scope.
+     * @type {Object.<string, boolean>}
+     */
+    var inClosure = {};
+
+    function updateInClosure() {
+        /**
+         * Rebuild the hash set of variables that are "in closure scope"
+         */
+        inClosure = _.invert(_.flatten(varstack));
+    }
+    updateInClosure();
+    /**
+     * First, find code blocks within the template.
+     */
+    var parsed = string.replace(rgxLookup, function (__, textOp, contents) {
+        /**
+         * List of accumulated instrumentable characters.
+         * @type {Array.<string>}
+         */
+        var cs = [];
+
+        /**
+         * Inside the rgxScope replace function, we push unmatched characters one by one onto
+         * cs.  Whenever we find any other input, we first flush cs by calling cs_parsed.
+         * This calls withLookupListeners which does the magic of replacing native JS references
+         * with calls to lookup or lookupText where appropriate.
+         */
+        function cs_parsed() {
+            /**
+             * Pass the accumulated string to withLookupListeners, replacing variable
+             * references with calls to lookup.
+             */
+            var instrumented = withLookupListeners(cs.join(''), inClosure);
+            cs = [];
+            return instrumented;
+        }
+
+        var isDataRef = textOp === '@';
+        if (isDataRef) {
+            textOp = '';
+        }
+
+        /**
+         * Find unquoted segments within the code block.  Pass quoted segments through unmodified.
+         */
+        var newContents = contents.replace(rgxUnquoted, function (__, unquoted, quoted) {
+            /**
+             * Process the unquoted segments, taking note of variables added in closure scope.
+             * We should not lookup-patch variables that are defined in a closure (e.g. as the
+             * looping variable of a _.each).
+             */
+            return unquoted.replace(rgxScope, function (all, args, __, openScope, closeScope, c) {
+                if (c) {
+                    /**
+                     * Push a single character onto cs to be parsed in cs_parsed.  Obviously, not
+                     * the most efficient mechanism possible.
+                     */
+                    cs.push(c);
+                    return '';
+                }
+                if (openScope) {
+                    /**
+                     * We found a new function declaration; add a new closure scope to the stack.
+                     */
+                    varstack.push([]);
+                } else if (args) {
+                    /**
+                     * We found an argument list for this function; add each of the arguments to
+                     * the closure scope at the top of the stack (added above).
+                     */
+                    args.replace(rgxArgs, function (arg) {
+                        varstack[varstack.length - 1].push(arg);
+                    });
+                } else if (closeScope) {
+                    /**
+                     * We found the closing brace for a closure scope.  Pop it off the stack to
+                     * reflect that any variables attached to it are no longer in scope.
+                     */
+                    varstack.pop();
+                }
+                updateInClosure();
+                /**
+                 * Flush cs, and in addition to that, return the function/variables/brace that we
+                 * just found.
+                 */
+                return cs_parsed() + all;
+            }) + cs_parsed() + (quoted || '');
+        }) + cs_parsed();
+        return '<%' + (
+            isDataRef ?
+                ('= view.getHashId(' + newContents + ') ') :
+                textOp ?
+                    // if this is a text op (= or -), pass it through denullText
+                    (textOp + 'view.denullText(' + newContents + ')') :
+                    newContents
+            ) + '%>';
+
+    });
+
+    /**
+     * Pass the template to _.template.  It will create a function that takes a single "view"
+     * parameter.  On render, we'll pass either a model/collection or tbone itself as the view.
+     * @type {Function}
+     */
+    var fn = _.template(parsed, null, { variable: 'view' });
+
+    if (TBONE_DEBUG) {
+        /**
+         * For debugging purposes, save a copy of the parsed template for reference.
+         * @type {string}
+         */
+        fn.parsed = parsed;
+    }
+
+    return fn;
+}
+
+/**
+ * dom/template/render.js
+ */
+
+/**
+ * Render the named template with the specified view
+ * @param {string} id
+ * @param {View}   view
+ */
+function renderTemplate(id, view) {
+    var template = templates[id];
+    if (template == null) {
+        // Attempt to lazy-load the template from a script tag, e.g.
+        // <script name="<id>" type="text/tbone-tmpl">...</script>
+        // The type doesn't matter, per se, but you should specify one so
+        // as not to have your template parsed as javascript.
+        template = $('script[name="' + id + '"]').html() || '';
+    }
+    if (typeof template === 'string') {
+        template = templates[id] = initTemplate(template);
+    }
+    return template(view);
+}
+
+/**
+ * dom/hash.js
+ */
+
+var hashedObjectCache = {};
+
+/**
+ * @const
+ */
+var HEXCHARS = '0123456789ABCDEF';
+
+/**
+ * getHashId
+ *
+ * Get hash ID for an object, converting the object to a model with the original
+ * object as its contents if necessary.  The hash is stored in hashedObjectCache
+ * so that object can be retrieved after parsing the HTML generated by the template.
+ */
+function getHashId(obj) {
+    if (!isQueryable(obj)) {
+        var instaModel = tbone.make();
+        instaModel.query('', obj);
+        obj = instaModel;
+    }
+    if (!obj.hashId) {
+        var hashArray = [];
+        for (var i = 20; i; i--) {
+            hashArray.push(HEXCHARS.charAt(Math.floor(Math.random() * HEXCHARS.length)));
+        }
+        obj.hashId = hashArray.join('');
+    }
+    hashedObjectCache[obj.hashId] = obj;
+    return obj.hashId;
+}
+
+/**
+ * dom/view/base.js
+ */
+
+var $ = root.$;
+
+var renderDepth = 0;
+var viewRenders = 0;
+
+var denullText = tbone.denullText = function (v) {
+    return (isString(v) || _.isFinite(v) || isDate(v) || isBoolean(v)) ? v + '' : '';
+};
+
+var baseView = {
+    make: function (opts) {
+        var instance = {};
+        _.extend(instance, this);
+        instance.initialize(opts);
+        return instance;
+    },
+    extend: function (subclass) {
+        return _.extend({}, this, subclass, { parentView: this });
+    },
+
+    '$': function(selector) {
+        return this['$el'].find(selector);
+    },
+
+    isView: true,
+
+    initialize: function (opts) {
+        var self = this;
+        uniqueId(self);
+        _.extend(self, opts);
+        self['$el'] = $(self.el);
+        self.el.view = self;
+        self.priority = self.domParentView ? self.domParentView.priority - 1 : BASE_PRIORITY_VIEW;
+        self.scope = autorun(self.render, self.priority, self, 'view_' + self.Name,
+                             self.onScopeExecute, self, true);
+    },
+
+    onScopeExecute: function (scope) {
+        log(INFO, this, 'lookups', scope.lookups);
+    },
+
+    /**
+     * View.destroy
+     *
+     * Destroys this view, removing all bindings and sub-views (recursively).
+     */
+    destroy: function (destroyRoot) {
+        var self = this;
+        log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot.Name);
+        self.destroyed = true;
+        self.scope.destroy();
+        _.each(self.subViews || [], function (view) {
+            view.destroy(self);
+        });
+        self.destroyDOM(self.$el);
+    },
+
+    /**
+     * View.render
+     *
+     * This function is called at View init, and again whenever any model properties that this View
+     * depended on are changed.
+     */
+    render: function () {
+        var self = this;
+        var $old, activeElementSelector, activeElementIndex, selectionStart, selectionEnd;
+
+        // This view may get a reset call at the same instant that another
+        // view gets created to replace it.
+        if (self.destroyed) { return; }
+
+        logRender(self);
+        renderDepth++;
+
+        if (self.templateId) {
+            /**
+             * If the DOM fragment to be removed has an active (focused) element, we attempt
+             * to restore that focus after refreshing this DOM fragment.  We also attempt
+             * to restore the selection start/end, which only works in Webkit/Gecko right
+             * now; see the URL below for possible IE compatibility.
+             */
+            try {
+                var activeElement = document.activeElement;
+                if (_.contains($(activeElement).parents(), self.el)) {
+                    // XXX this could be improved to pick up on IDs/classes/attributes or something?
+                    activeElementSelector = 'input';
+                    activeElementIndex = _.indexOf(self.$(activeElementSelector), activeElement);
+                    // XXX for IE compatibility, this might work:
+                    // http://the-stickman.com/web-development/javascript/ ...
+                    // finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
+                    // The selectionStart and selectionEnd properties are unsupported for
+                    // some input types.  It's easier to just eat the exception than identify
+                    // which cases will and won't work.
+                    selectionStart = activeElement.selectionStart;
+                    selectionEnd = activeElement.selectionEnd;
+                }
+            } catch (e) {}
+
+            /**
+             * Move all this view's children to another temporary DOM element.  This will be used as the
+             * pseudo-parent element for the destroyDOM call.
+             */
+            $old = $('<div>').append(this.$el.children());
+            var newHtml = renderTemplate(self.templateId, self);
+            log(INFO, self, 'newhtml', newHtml);
+            self.$el.html(newHtml);
+        }
+
+        /**
+         * Execute the "fragment ready" callback.
+         */
+        self.ready();
+        self.postReady();
+
+        /**
+         * (Re-)create sub-views for each descendent element with a tbone attribute.
+         * On re-renders, the pre-existing list of sub-views is passed to render, which
+         * attempts to pair already-rendered views with matching elements in this view's
+         * newly re-rendered template.  Matching views are transferred to the new DOM
+         * hierarchy without disruption.
+         */
+        var oldSubViews = self.subViews || [];
+        self.subViews = render(self.$('[tbone]'), self, oldSubViews);
+        var obsoleteSubViews = _.difference(oldSubViews, self.subViews);
+
+        /**
+         * Destroy all of the sub-views that were not reused.
+         */
+        _.each(obsoleteSubViews, function (view) {
+            view.destroy(self);
+        });
+
+        if (self.templateId) {
+            /**
+             * Call destroyDOM with the the pseudo-parent created above.  This DOM fragment contains all
+             * of the previously-rendered (if any) DOM structure of this view and subviews, minus any
+             * subviews that are being reused (which have already been moved to the new parent).
+             */
+            self.destroyDOM($old);
+
+            /**
+             * If we saved it above, restore the active element focus and selection.
+             */
+            if (activeElementSelector) {
+                var newActiveElement = self.$(activeElementSelector)[activeElementIndex];
+                if (newActiveElement) {
+                    $(newActiveElement).focus();
+                    if (selectionStart != null && selectionEnd != null) {
+                        try {
+                            newActiveElement.selectionStart = selectionStart;
+                            newActiveElement.selectionEnd = selectionEnd;
+                        } catch (e) {}
+                    }
+                }
+            }
+        }
+
+        viewRenders++;
+        renderDepth--;
+    },
+
+    /**
+     * View.ready
+     *
+     * The "template-ready" callback.  This is the restricted tbone equivalent of document-ready.
+     * It is the recommended means of adding interactivity/data/whatever to Views.
+     *
+     * At the moment this callback is executed, subviews are neither rendered nor are they
+     * attached to the DOM fragment.
+     */
+    ready: noop,
+
+    /**
+     * View.postReady
+     *
+     * This is the same as ready, except that it executes after ready.  The typical use case is
+     * to override this in your base template to provide automatic application-wide helpers,
+     * such as activating a tooltip library, and to use View.ready for specific view logic.
+     */
+    postReady: noop,
+
+    /**
+     * View.destroyDOM
+     *
+     * The "document-destroy" callback.  Use this to do cleanup on removal of old HTML, e.g.
+     * destroying associated tooltips.
+     *
+     * Note: Destroy contents of the $el parameter, not this.$el!  (XXX make this less error-prone)
+     *
+     * @param  {!jQuery} $el jQuery selection of DOM fragment to destroy
+     */
+    destroyDOM: function ($el) { },
+
+    /**
+     * If a root attribute was specified, use that as the root object for this view's
+     * render, both in templating automatically as well as available via this.root in
+     * `ready` callbacks.
+     */
+    root: function () {
+        return this.query(DONT_GET_DATA);
+    },
+
+    /**
+     * Perform a query relative to the view's rootObj and rootStr, delegating to
+     * rootObj for the actual query but prepending rootStr to the prop string.
+     **/
+    query: function (flag, prop, value) {
+        var isSet = false;
+        if (typeof flag !== 'number') {
+            /**
+             * If no flag provided, shift the prop and value over.  We do it this way instead
+             * of having flag last so that we can type-check flag and discern optional flags
+             * from optional values.  And flag should only be used internally, anyway.
+             */
+            value = prop;
+            prop = flag;
+            flag = 0;
+            /**
+             * Use arguments.length to switch to set mode in order to properly support
+             * setting undefined.
+             */
+            isSet = arguments.length === 2;
+        }
+        prop = (this.rootStr ? this.rootStr + '.' : '') + (prop || '');
+        return isSet ? this.rootObj(flag, prop, value) : this.rootObj(flag, prop);
+    },
+
+    parentRoot: function () {
+        return this.domParentView && this.domParentView.root();
+    },
+
+    /**
+     * Get the DOM parent view, i.e. the view associated with the closest
+     * ancestor DOM node that is a view root element.
+     */
+    parent: function () {
+        return this.domParentView;
+    },
+
+    // These are used at template render.  They're really not properties of views so much
+    // as it is useful to reference these functions on the view, which is what we pass to
+    // _.template already.
+    getHashId: getHashId,
+    isQueryable: isQueryable,
+    denullText: denullText
+};
+
+var views = {
+    base: baseView,
+};
+tbone.views = views;
+
+var defaultView = baseView;
+/**
+ * Set the default View to use when rendering templates with no matching View.
+ * @param {ViewPrototype} view
+ */
+function setDefaultView(view) {
+    defaultView = view;
+}
+tbone.setDefaultView = setDefaultView;
+
+var _showRenderTrees = false;
+if (TBONE_DEBUG) {
+    tbone.showRenderTrees = function () {
+        _showRenderTrees = true;
+    };
+}
+
+function logRender (obj) {
+    if (TBONE_DEBUG && _showRenderTrees) {
+        console.log('render ' + _.times(renderDepth, function () { return '.'; }).join('') + obj.Name);
+    }
+}
+
+/**
+ * Attempt to restore scrollTop around drainQueue calls.
+ *
+ * The basic problem is that removing and re-adding elements to the page
+ * will force the scroll up to the minimum height that the page gets to
+ * in the midst of that operation.
+ *
+ * This is really kind of kludgy... Is there a cleaner way to accomplish
+ * the same thing?
+
+ * Only supported for JQuery / when scrollTop is available on $.
+ */
+
+var origScrollTop = $ && $.fn && $.fn.scrollTop;
+var $window = origScrollTop && $(window);
+var scrollTopChangedProgrammatically;
+
+if (origScrollTop) {
+    /**
+     * Avoid clobbering intentional programmatic scrollTop changes that
+     * occur inside T-functions.  This is not foolproof, and only preserves
+     * changes made through $.fn.scrollTop.
+     *
+     * XXX This could frustrate users that try to change it some other way,
+     * only to find that somehow, mysteriously, the scrollTop change gets
+     * reverted.
+     */
+    $.fn.scrollTop = function (value) {
+        if (value) {
+            scrollTopChangedProgrammatically = true;
+        }
+        return origScrollTop.apply(this, arguments);
+    };
+}
+
+function queryScrollTop (value) {
+    return origScrollTop && (value ? $window.scrollTop(value) : $window.scrollTop());
+}
+
+var scrollTop;
+onBeforeSchedulerDrainQueue.push(function () {
+    scrollTopChangedProgrammatically = false;
+    scrollTop = queryScrollTop();
+});
+
+onAfterSchedulerDrainQueue.push(function () {
+    log(VERBOSE, 'scheduler', 'viewRenders', 'rendered <%=viewRenders%> total', {
+        viewRenders: viewRenders
+    });
+    if (scrollTop && !scrollTopChangedProgrammatically && scrollTop !== queryScrollTop()) {
+        queryScrollTop(scrollTop);
+    }
+});
+
+/**
+ * dom/view/render.js
+ */
+
+/**
+ * Use to find key/value pairs in tbone attributes on render.
+ * @type {RegExp}
+ * @const
+ */
+var rgxTBoneAttribute = /[^\w.]*([\w.]+)[^\w.]+([\w.]+)/g;
+
+/**
+ * tbone.render
+ *
+ * Render an array of HTML elements into Views.  This reads the tbone attribute generates a View
+ * for each element accordingly.
+ *
+ * @param  {Array.<DOMElement>}     $els     elements to render templates from
+ * @param  {Backbone.View=}         parent   parent view
+ * @param  {Array.<Backbone.View>=} subViews (internal) sub-views created previously; these are used
+ *                                           to avoid redundantly regenerating unchanged views.
+ * @return {Array.<Backbone.View>}           views created (and/or substituted from subViews)
+ */
+var render = tbone.render = function ($els, parent, subViews) {
+    var subViewMap = {};
+    _.each(subViews || [], function (subView) {
+        (subViewMap[subView.origOuterHTML] = subViewMap[subView.origOuterHTML] || []).push(subView);
+    });
+    return _.map($els, function (el) {
+        var $this = $(el);
+        var outerHTML = el.outerHTML;
+        var view = el.__tboneview__;
+        if (!view) {
+            if (subViewMap[outerHTML] && subViewMap[outerHTML].length) {
+                /**
+                 * If we have a pre-rendered view available with matching outerHTML (i.e. nothing in
+                 * the parent template has changed for this subview's root element), then just swap
+                 * the pre-existing element in place along with its undisturbed associated View.
+                 */
+                var subView = subViewMap[outerHTML].shift();
+                log(VERBOSE, parent || 'render', 'reuse', subView);
+                $this.replaceWith(subView.el);
+                view = subView;
+            } else {
+                /**
+                 * Otherwise, read the tbone attribute from the element and use it to instantiate
+                 * a new View.
+                 */
+                var props = {};
+                ($this.attr('tbone') || '').replace(rgxTBoneAttribute, function(__, prop, value) {
+                    props[prop] = value;
+                });
+                var inlineTemplateId = props.inline;
+                if (inlineTemplateId) {
+                    /**
+                     * XXX what's the best way to get the original html back?
+                     */
+                    var origTemplateHtml = $this.html()
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&amp;/g, '&');
+                    addTemplate(inlineTemplateId, origTemplateHtml);
+                }
+                var templateId = inlineTemplateId || props.tmpl;
+                var viewId = props.view;
+                var root = props.root;
+
+                /**
+                 * Use either the view or template attributes as the `name` of the view.
+                 */
+                var name = viewId || templateId;
+                if (!name) {
+                    error('No view or template was specified for this element: ', el);
+                }
+
+                /**
+                 * Find the corresponding view matching the name (`viewId` or `templateId`) to the
+                 * name passed to `createView.`  If there is no view matching that name, then use
+                 * the default view.  You can set the default view using `tbone.defaultView().`
+                 * @type {function(new:Backbone.View, Object)}
+                 */
+                var myView = views[name] || defaultView;
+
+                /**
+                 * Add a class matching the view name for CSS.
+                 */
+                $this.addClass(name);
+
+                /**
+                 * Also add a class for each of the parent views, if any.
+                 */
+                var parentView = myView.parentView;
+                while (parentView && parentView.Name) {
+                    $this.addClass(parentView.Name);
+                    parentView = parentView.parentView;
+                }
+
+                var rootObj = hashedObjectCache[root] || tbone;
+
+                var opts = {
+                    Name: name,
+                    origOuterHTML: outerHTML,
+                    el: el,
+                    templateId: templateId,
+                    domParentView: parent,
+                    rootObj: rootObj,
+                    rootStr: hashedObjectCache[root] ? '' : root
+                };
+
+                // This could potentially miss some cached objects (e.g.
+                // if the subview was removed during view-ready execution)
+                // Might be simpler just to clear hashedObjectCache when
+                // the drainQueue finishes?
+                delete hashedObjectCache[root];
+
+                view = myView.make(opts);
+            }
+            el.__tboneview__ = view;
+        }
+        return view;
+    });
+};
+
+/**
+ * dom/view/create.js
+ */
+
+/**
+ * tbone.createView
+ *
+ * Create a new view, inheriting from another view (or the default view).
+ *
+ * This is the primary method you should use to add JS logic to your UI. e.g.:
+ *
+ * tbone.createView('widget', function () {
+ *     this.$('span').text('42');
+ *     this.$('a[href]').click(function () {
+ *         tbone.set('selected.widget', $(this).attr('id'));
+ *         return false;
+ *     })
+ * });
+ *
+ * The function above whenever a template renders an element with a tbone attribute
+ * of "widget", and this.$ will be scoped to that view.
+ *
+ * All of the parameters are optional, though you're best off passing *something*.
+ *
+ * @param  {String=}               name Name for the view.
+ * @param  {ViewPrototype=}        base Base view to extend.
+ * @param  {function(this:View)=}  fn   convenience parameter for specifying ready
+ *                                      function.
+ * @param  {Object=}               opts additional prototype properties
+ * @return {ViewPrototype}
+ */
+tbone.createView = function (name, base, fn, opts) {
+    var args = [].slice.call(arguments);
+    var arg = args.shift();
+    if (typeof arg === 'string') {
+        name = arg;
+        arg = args.shift();
+    } else {
+        name = 'v' + nextId++;
+    }
+    if (arg && arg.extend) {
+        base = arg;
+        arg = args.shift();
+    } else {
+        base = defaultView;
+    }
+    if (typeof arg === 'function') {
+        fn = arg;
+        arg = args.shift();
+    } else {
+        fn = null;
+    }
+    opts = _.extend({}, arg || {}, {
+        Name: name
+    });
+    var baseReady = base.ready;
+    if (fn) {
+        opts.ready = baseReady === noop ? fn : function () {
+            baseReady.call(this);
+            fn.call(this);
+        };
+    }
+    return views[name] = base.extend(opts); // jshint ignore:line
+};
+
+
+var Backbone = root.Backbone;
+
+if (Backbone) {
+
+    getListenersHook.push(function (self, listeners) {
+        // Older backbone:
+        _.each(_.values(self._callbacks || {}), function (ll) {
+            var curr = ll.next;
+            while (true) {
+                if (curr.context) {
+                    listeners.push(curr.context);
+                    curr = curr.next;
+                } else {
+                    break;
+                }
+            }
+        });
+        // Newer backbone:
+        _.each(_.flatten(_.values(self._events || {})), function (ev) {
+            if (ev.context) {
+                listeners.push(ev.context);
+            }
+        });
+    });
+
+    var bbquery = function (flag, prop, value) {
+        var dontGetData = flag === DONT_GET_DATA;
+        var iterateOverModels = flag === ITERATE_OVER_MODELS;
+        var isToggle = flag === QUERY_TOGGLE;
+        var hasValue = arguments.length === 3;
+        var isSet = isToggle || hasValue;
+        if (typeof flag !== 'number') {
+            /**
+             * If no flag provided, shift the prop and value over.  We do it this way instead
+             * of having flag last so that we can type-check flag and discern optional flags
+             * from optional values.  And flag should only be used internally, anyway.
+             */
+            value = prop;
+            prop = flag;
+            flag = 0;
+            /**
+             * Use arguments.length to switch to set mode in order to properly support
+             * setting undefined.
+             */
+            if (arguments.length === 2) {
+                isSet = true;
+                hasValue = true;
+            }
+        }
+
+        /**
+         * Remove a trailing dot and __self__ references, if any, from the prop.
+         **/
+        prop = (prop || '').replace(/\.?(__self__)?\.?$/, '');
+        var args = prop.split('.');
+
+        var setprop;
+        if (isSet) {
+            /**
+             * For set operations, we only want to look up the parent of the property we
+             * are modifying; pop the final property we're setting from args and save it
+             * for later.
+             */
+            setprop = args[args.length - 1];
+        }
+
+        /**
+         * If this function was called with a bindable context (i.e. a Model or Collection),
+         * then use that as the root data object instead of the global tbone.data.
+         */
+        var last_data;
+
+        /**
+         * If DONT_GET_DATA, and there's no prop, then this is a self-reference.
+         */
+        var _data = dontGetData && !prop ? this :
+            this.isCollection ? this.models : this.attributes;
+
+        var name_parts = [];
+        var myRecentQuery = {};
+        var firstprop = args[0] || '';
+        var firstdata = prop ? _data[firstprop] : _data;
+        var id;
+        var arg;
+        var doSubQuery;
+
+        while ((arg = args.shift()) != null) {
+            // Ignore empty string arguments.
+            if (arg === QUERY_SELF) {
+                continue;
+            }
+
+            name_parts.push(arg);
+            last_data = _data;
+            _data = _data[arg];
+
+            if (_data == null) {
+                if (isSet) {
+                    /**
+                     * When doing an implicit mkdir -p while setting a deep-nested property
+                     * for the first time, we peek at the next arg and create either an array
+                     * for a numeric index and an object for anything else.
+                     */
+                    _data = rgxNumber.exec(args[0]) ? [] : {};
+                    last_data[arg] = _data;
+                } else {
+                    break;
+                }
+            } else if (isQueryable(_data)) {
+                doSubQuery = true;
+                break;
+            }
+        }
+
+        if (!isSet && recentLookups) {
+            id = uniqueId(this);
+            if (!recentLookups[id]) {
+                recentLookups[id] = {
+                    obj: this,
+                    props: {}
+                };
+            }
+            recentLookups[id].props[firstprop] = firstdata;
+        }
+
+        // Skip the sub-query if DONT_GET_DATA is set there are no more args
+        if (doSubQuery && (!dontGetData || args.length)) {
+            return hasValue ? _data.query(flag, args.join('.'), value) : _data.query(flag, args.join('.'));
+        }
+
+        if (isSet) {
+            if (last_data == null) {
+                // Set top-level of model/collection
+                /**
+                 * When setting to an entire model, we use different semantics; we want the
+                 * values provided to be set to the model, not replace the model.
+                 */
+                if (this.isCollection) {
+                    this.reset(value != null ? value : []);
+                } else {
+                    if (value) {
+                        /**
+                         * Remove any properties from the model that are not present in the
+                         * value we're setting it to.
+                         */
+                        for (var k in this.toJSON()) {
+                            if (value[k] === undefined) {
+                                this.unset(k);
+                            }
+                        }
+                        this.set(value);
+                    } else {
+                        this.clear();
+                    }
+                }
+            } else {
+                if (isToggle) {
+                    value = last_data[setprop] = !_data;
+                } else if (last_data[setprop] !== value) {
+                    /**
+                     * Set the value to a property on a regular JS object.
+                     */
+                    last_data[setprop] = value;
+                }
+                /**
+                 * If we're setting a nested property of a model (or collection?), then
+                 * trigger a change event for the top-level property.
+                 */
+                if (firstprop) {
+                    this.trigger('change:' + firstprop);
+                }
+                this.trigger('change');
+            }
+            return value;
+        } else if (_data && !iterateOverModels && this.isCollection && prop === QUERY_SELF) {
+            /**
+             * If iterateOverModels is not set and _data is a collection, return the
+             * raw data of each model in a list.  XXX is this ideal?  or too magical?
+             */
+            _data = _.map(_data, function (d) { return d.query(); });
+        }
+        return _data;
+    };
+
+    var bbbaseModel = Backbone.Model.extend({
+        isModel: true,
+        /**
+         * Constructor function to initialize each new model instance.
+         * @return {[type]}
+         */
+        initialize: function () {
+            var self = this;
+            uniqueId(self);
+            var isAsync = self.sleeping = self.isAsync();
+            var priority = isAsync ? BASE_PRIORITY_MODEL_ASYNC : BASE_PRIORITY_MODEL_SYNC;
+            /**
+             * Queue the autorun of update.  We want this to happen after the current JS module
+             * is loaded but before anything else gets updated.  We can't do that with setTimeout
+             * or _.defer because that could possibly fire after drainQueue.
+             */
+            queueExec({
+                execute: function () {
+                    self.scope = autorun(self.update, priority, self, 'model_' + self.Name,
+                                         self.onScopeExecute, self);
+                },
+                priority: priority + PRIORITY_INIT_DELTA
+            });
+        },
+        /**
+         * Indicates whether this function should use the asynchronous or
+         * synchronous logic.
+         * @return {Boolean}
+         */
+        isAsync: function () {
+            return !!this._url;
+        },
+        onScopeExecute: function (scope) {
+            log(INFO, this, 'lookups', scope.lookups);
+        },
+        /**
+         * Triggers scope re-execution.
+         */
+        reset: function () {
+            if (this.scope) {
+                this.scope.trigger();
+            }
+        },
+        isVisible: function () {
+            return hasViewListener(this);
+        },
+        update: function () {
+            var self = this;
+            if (self.isAsync()) {
+                self.updateAsync();
+            } else {
+                self.updateSync();
+            }
+        },
+        updateAsync: function () {
+            var self = this;
+            var myXhr;
+            function complete() {
+                if (myXhr === self.xhrInFlight) {
+                    removeInFlight(self);
+                    delete self.xhrInFlight;
+                }
+            }
+
+            var url = self.url();
+            var lastFetchedUrl = self.fetchedUrl;
+            self.sleeping = !this.isVisible();
+            if (self.sleeping) {
+                /**
+                 * Regardless of whether url is non-null, this model goes to sleep
+                 * if there's no view listener waiting for data (directly or through
+                 * a chain of other models) from this model.
+                 **/
+                log(INFO, self, 'sleep');
+                self.sleeping = true;
+            } else if (url != null) {
+                /**
+                 * If a defined URL function returns null, it will prevent fetching.
+                 * This can be used e.g. to prevent loading until all required
+                 * parameters are set.
+                 **/
+                self.fetchedUrl = url;
+                if (self.clearOnFetch) {
+                    self.clear();
+                }
+                self.fetch({
+                    dataType: 'text',
+                    success: function () {
+                        self.postFetch();
+                        self.trigger('fetch');
+                        log(INFO, self, 'updated', self.toJSON());
+                    },
+                    complete: complete,
+                    beforeSend: function (xhr) {
+                        // If we have an active XHR in flight, we should abort
+                        // it because we don't want that anymore.
+                        if (self.xhrInFlight) {
+                            log(WARN, self, 'abort',
+                                'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
+                                oldurl: lastFetchedUrl,
+                                newurl: url
+                            });
+                            self.xhrInFlight.abort();
+                            complete(); // Decrement inflight counter
+                        }
+                        addInFlight(self);
+                        myXhr = self.xhrInFlight = xhr;
+                    },
+                    url: url
+                });
+            }
+        },
+        updateSync: function () {
+            var self = this;
+            // this.state returns the new state, synchronously
+            if (self.state) {
+                self.query(QUERY_SELF, self.state());
+                log(INFO, self, 'updated', self.toJSON());
+            }
+        },
+        state: null,
+        postFetch: noop,
+
+        clearOnFetch: true
+    });
+
+    _.each([Backbone.Model.prototype, Backbone.Collection.prototype], function (proto) {
+        _.extend(proto, {
+            isBackbone: true,
+
+            /**
+             * Copy query and text onto the Model, View, and Collection.
+             *
+             */
+            query: bbquery,
+            text: queryText,
+
+            // deprecated?
+            lookup: bbquery,
+            lookupText: queryText,
+
+            /**
+             * Wake up this model as well as (recursively) any models that depend on
+             * it.  Any view that is directly or indirectly depended on by the current
+             * model may now be able to be awoken based on the newly-bound listener to
+             * this model.
+             * @param  {Object.<string, Boolean>} woken Hash map of model IDs already awoken
+             */
+            wake: function (woken) {
+                // Wake up this model if it was sleeping
+                if (this.sleeping) {
+                    this.trigger('wake');
+                    this.sleeping = false;
+                    this.reset();
+                }
+                /**
+                 * Wake up models that depend directly on this model that have not already
+                 * been woken up.
+                 */
+                _.each((this.scope && this.scope.lookups) || [], function (lookup) {
+                    var bindable = lookup.obj;
+                    if (bindable && !woken[uniqueId(bindable)]) {
+                        woken[uniqueId(bindable)] = true;
+                        bindable.wake(woken);
+                    }
+                });
+            }
+        });
+
+        /**
+         * We wrap proto.on in order to wake up and reset models
+         * that were previously sleeping because they did not need to be updated.
+         * This passes through execution to the original on function.
+         */
+        var originalOn = proto.on;
+        proto.on = function () {
+            this.wake({});
+            return originalOn.apply(this, arguments);
+        };
+    });
+
+    var bbModel = models.bbbase = bbbaseModel;
+    var bbCollection = collections.bbbase = Backbone.Collection.extend({
+        isCollection: true
+    });
+
+    _.each([bbModel, bbCollection], function (obj) {
+        _.extend(obj.prototype, {
+            /**
+             * Disable backbone-based validation; by using validation to prevent populating
+             * form input data to models, backbone validation is at odds with the TBone
+             * concept that all data in the UI should be backed by model data.
+             *
+             * By overriding _validate, we can still use isValid and validate, but Backbone
+             * will no longer prevent set() calls from succeeding with invalid data.
+             */
+            _validate: function () { return true; }
+        });
+    });
+}
+
 // This is used by BBVis to hook into the base model/collection/view
 // before they are modified.  You can, too.
 try{
