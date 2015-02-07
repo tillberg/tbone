@@ -142,7 +142,7 @@ _.each(versions, function (version, name) {
 
 gulp.task('build_all', _.map(_.keys(versions), function (name) { return 'test:' + name; }), function (cb) {
   if (process.env.TARGET_PATH) {
-    var srcFilename = 'tbone_full.js';
+    var srcFilename = 'tbone.js';
     gutil.log('Copying ' + gutil.colors.blue(srcFilename) + ' to ' + gutil.colors.blue(process.env.TARGET_PATH));
     fs.copy(path.join(dest, srcFilename), process.env.TARGET_PATH, cb);
   } else {
