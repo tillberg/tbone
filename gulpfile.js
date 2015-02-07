@@ -47,7 +47,6 @@ var coreFiles = [
 var extFiles = coreFiles.concat([
   'src/model/core/async.js',
   'src/model/core/collection.js',
-  'src/model/fancy/sync.js',
   'src/model/fancy/ajax.js',
   'src/model/fancy/localstorage.js',
   'src/model/fancy/location.js',

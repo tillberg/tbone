@@ -42,7 +42,9 @@ models.ajax = asyncModel.extend({
                     log(INFO, self, 'updated', self.attributes);
                 }
             };
-            sync('read', self, {
+            self.ajax({
+                url: url,
+                type: 'GET',
                 dataType: self.dataType,
                 success: onData,
                 error: function (xhr) {
@@ -52,7 +54,6 @@ models.ajax = asyncModel.extend({
                 beforeSend: function (xhr) {
                     myXhr = xhr;
                 },
-                url: url
             });
         }
         return {
