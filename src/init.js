@@ -167,6 +167,7 @@ function onLog (cb) {
     logCallbacks.push(cb);
 }
 
+var getListenersHook = [];
 /**
  * Returns the list of unique listeners attached to the specified model/view.
  * @param  {Queryable} self
@@ -174,29 +175,13 @@ function onLog (cb) {
  */
 function getListeners (self) {
     var listeners = [];
-    // Older backbone:
-    _.each(_.values(self._callbacks || {}), function (ll) {
-        var curr = ll.next;
-        while (true) {
-            if (curr.context) {
-                listeners.push(curr.context);
-                curr = curr.next;
-            } else {
-                break;
-            }
-        }
-    });
-    // Newer backbone:
-    _.each(_.flatten(_.values(self._events || {})), function (ev) {
-        if (ev.context) {
-            listeners.push(ev.context);
-        }
-    });
+    for (var i = 0; i < getListenersHook.length; i++) {
+        getListenersHook[i](self, listeners);
+    }
     // TBone-native:
     if (isQueryable(self) && _.isFunction(self)) {
         var stack = [ self._events ];
         var next, callbacks, k;
-
         while (!!(next = stack.pop())) {
             for (k in next) {
                 if (k === '') {
@@ -210,7 +195,6 @@ function getListeners (self) {
             }
         }
     }
-
     return _.uniq(listeners);
 }
 
@@ -225,8 +209,8 @@ function getListeners (self) {
 function hasViewListener (self) {
     var todo = [ self ];
     var usedModels = [ self ];
-    while (todo.length) {
-        var next = todo.pop();
+    var next;
+    while (next = todo.pop()) {
         var listeners = getListeners(next);
         for (var i = 0; i < listeners.length; i++) {
             var listener = listeners[i];

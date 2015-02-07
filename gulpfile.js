@@ -53,19 +53,19 @@ var extFiles = coreFiles.concat([
   'src/model/fancy/localstoragecoll.js',
 ]);
 
-var domFiles = extFiles.concat([
+var withReactFiles = extFiles.concat([
+  'src/ext/react_init.js',
+]);
+
+var fullFiles = withReactFiles.concat([
   'src/dom/template/init.js',
   'src/dom/template/render.js',
   'src/dom/view/hash.js',
   'src/dom/view/base.js',
   'src/dom/view/render.js',
   'src/dom/view/create.js',
-]);
-
-var fullFiles = domFiles.concat([
   'src/ext/bbsupport.js',
-  'src/ext/angular_init.js',
-  'src/ext/react_init.js',
+  // 'src/ext/angular_init.js',
 ]);
 
 function wrapFiles (files) {
@@ -80,6 +80,10 @@ var versions = {
   ext: {
     files: wrapFiles(extFiles),
     suffix: '_ext',
+  },
+  react: {
+    files: wrapFiles(withReactFiles),
+    suffix: '_react',
   },
   full: {
     files: wrapFiles(fullFiles),

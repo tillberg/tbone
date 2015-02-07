@@ -3,6 +3,27 @@ var Backbone = root.Backbone;
 
 if (Backbone) {
 
+    getListenersHook.push(function (self, listeners) {
+        // Older backbone:
+        _.each(_.values(self._callbacks || {}), function (ll) {
+            var curr = ll.next;
+            while (true) {
+                if (curr.context) {
+                    listeners.push(curr.context);
+                    curr = curr.next;
+                } else {
+                    break;
+                }
+            }
+        });
+        // Newer backbone:
+        _.each(_.flatten(_.values(self._events || {})), function (ev) {
+            if (ev.context) {
+                listeners.push(ev.context);
+            }
+        });
+    });
+
     var bbquery = function (flag, prop, value) {
         var dontGetData = flag === DONT_GET_DATA;
         var iterateOverModels = flag === ITERATE_OVER_MODELS;
