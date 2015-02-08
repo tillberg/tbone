@@ -164,12 +164,14 @@ function drainQueue () {
          */
         scope.execute();
     }
-    if (!remaining) {
-        log(WARN, 'scheduler', 'drainQueueOverflow', 'exceeded max drainQueue iterations');
+    if (TBONE_DEBUG) {
+        if (!remaining) {
+            log(WARN, 'scheduler', 'drainQueueOverflow', 'exceeded max drainQueue iterations');
+        }
+        log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
+            duration: now() - queueDrainStartTime
+        });
     }
-    log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
-        duration: now() - queueDrainStartTime
-    });
     updateIsReady();
     runListOfFunctions(onAfterSchedulerDrainQueue);
 }

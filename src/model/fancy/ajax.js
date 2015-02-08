@@ -39,7 +39,9 @@ models.ajax = asyncModel.extend({
                 if (dataCallback(self.parse(str))) {
                     self.postFetch();
                     self.trigger('fetch');
-                    log(INFO, self, 'updated', self.attributes);
+                    if (TBONE_DEBUG) {
+                        log(INFO, self, 'updated', self.attributes);
+                    }
                 }
             };
             self.ajax({
@@ -60,10 +62,12 @@ models.ajax = asyncModel.extend({
             onAbort: function () {
                 // If we have an active XHR in flight, we should abort
                 // it because we don't want that anymore.
-                log(WARN, self, 'abort',
-                    'aborting obsolete ajax request. old url: <%=oldurl%>', {
-                    oldurl: self.fetchedUrl
-                });
+                if (TBONE_DEBUG) {
+                    log(WARN, self, 'abort',
+                        'aborting obsolete ajax request. old url: <%=oldurl%>', {
+                        oldurl: self.fetchedUrl
+                    });
+                }
                 if (myXhr) {
                     myXhr.abort();
                 }

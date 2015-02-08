@@ -49,7 +49,9 @@ var boundModel = models.bound = baseModel.extend({
     },
 
     onScopeExecute: function (scope) {
-        log(INFO, this, 'lookups', scope.lookups);
+        if (TBONE_DEBUG) {
+            log(INFO, this, 'lookups', scope.lookups);
+        }
     },
 
     update: function () {
@@ -61,7 +63,9 @@ var boundModel = models.bound = baseModel.extend({
              * waiting for data (directly or through a chain of other models)
              * from this model.
              */
-            log(INFO, self, 'sleep');
+            if (TBONE_DEBUG) {
+                log(INFO, self, 'sleep');
+            }
         } else {
             self._update();
         }
@@ -70,7 +74,9 @@ var boundModel = models.bound = baseModel.extend({
     _update: function () {
         var flag = this.assumeChanged ? QUERY_ASSUME_CHANGED : QUERY_DEFAULT;
         this.query(flag, QUERY_SELF, this.state());
-        log(VERBOSE, this, 'updated', this.attributes);
+        if (TBONE_DEBUG) {
+            log(VERBOSE, this, 'updated', this.attributes);
+        }
     },
 
     /**
@@ -89,15 +95,6 @@ var boundModel = models.bound = baseModel.extend({
         this.unset(QUERY_SELF);
     },
 
-    disableSleep: function () {
-        // This is intended to be used only interactively for development.
-        if (TBONE_DEBUG && this.sleepEnabled) {
-            log(WARN, this, 'disableSleep', 'Disabling sleep mode for <%-Name%>.', this);
-            this.sleepEnabled = false;
-            this.wake();
-        }
-    },
-
     /**
      * returns the new state, synchronously
      */
@@ -105,6 +102,17 @@ var boundModel = models.bound = baseModel.extend({
 
     sleepEnabled: false
 });
+
+if (TBONE_DEBUG) {
+    boundModel.disableSleep = function () {
+        // This is intended to be used only interactively for development.
+        if (this.sleepEnabled) {
+            log(WARN, this, 'disableSleep', 'Disabling sleep mode for <%-Name%>.', this);
+            this.sleepEnabled = false;
+            this.wake();
+        }
+    };
+}
 
 function getQuerySetProp (flag, prop) {
     // This is a short version of the start of the `query` function, and it would be nice

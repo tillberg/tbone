@@ -40,7 +40,9 @@ var baseView = {
     },
 
     onScopeExecute: function (scope) {
-        log(INFO, this, 'lookups', scope.lookups);
+        if (TBONE_DEBUG) {
+            log(INFO, this, 'lookups', scope.lookups);
+        }
     },
 
     /**
@@ -50,7 +52,9 @@ var baseView = {
      */
     destroy: function (destroyRoot) {
         var self = this;
-        log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot.Name);
+        if (TBONE_DEBUG) {
+            log(VERBOSE, self, 'destroy', 'due to re-render of ' + destroyRoot.Name);
+        }
         self.destroyed = true;
         self.scope.destroy();
         _.each(self.subViews || [], function (view) {
@@ -106,7 +110,9 @@ var baseView = {
              */
             $old = $('<div>').append(this.$el.children());
             var newHtml = renderTemplate(self.templateId, self);
-            log(INFO, self, 'newhtml', newHtml);
+            if (TBONE_DEBUG) {
+                log(INFO, self, 'newhtml', newHtml);
+            }
             self.$el.html(newHtml);
         }
 
@@ -323,9 +329,11 @@ onBeforeSchedulerDrainQueue.push(function () {
 });
 
 onAfterSchedulerDrainQueue.push(function () {
-    log(VERBOSE, 'scheduler', 'viewRenders', 'rendered <%=viewRenders%> total', {
-        viewRenders: viewRenders
-    });
+    if (TBONE_DEBUG) {
+        log(VERBOSE, 'scheduler', 'viewRenders', 'rendered <%=viewRenders%> total', {
+            viewRenders: viewRenders
+        });
+    }
     if (scrollTop && !scrollTopChangedProgrammatically && scrollTop !== queryScrollTop()) {
         queryScrollTop(scrollTop);
     }

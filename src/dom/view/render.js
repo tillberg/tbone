@@ -38,7 +38,9 @@ var render = tbone.render = function ($els, parent, subViews) {
                  * the pre-existing element in place along with its undisturbed associated View.
                  */
                 var subView = subViewMap[outerHTML].shift();
-                log(VERBOSE, parent || 'render', 'reuse', subView);
+                if (TBONE_DEBUG) {
+                    log(VERBOSE, parent || 'render', 'reuse', subView);
+                }
                 $this.replaceWith(subView.el);
                 view = subView;
             } else {

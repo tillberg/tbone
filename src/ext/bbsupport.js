@@ -216,7 +216,9 @@ if (Backbone) {
             return !!this._url;
         },
         onScopeExecute: function (scope) {
-            log(INFO, this, 'lookups', scope.lookups);
+            if (TBONE_DEBUG) {
+                log(INFO, this, 'lookups', scope.lookups);
+            }
         },
         /**
          * Triggers scope re-execution.
@@ -256,7 +258,9 @@ if (Backbone) {
                  * if there's no view listener waiting for data (directly or through
                  * a chain of other models) from this model.
                  **/
-                log(INFO, self, 'sleep');
+                if (TBONE_DEBUG) {
+                    log(INFO, self, 'sleep');
+                }
                 self.sleeping = true;
             } else if (url != null) {
                 /**
@@ -273,18 +277,22 @@ if (Backbone) {
                     success: function () {
                         self.postFetch();
                         self.trigger('fetch');
-                        log(INFO, self, 'updated', self.toJSON());
+                        if (TBONE_DEBUG) {
+                            log(INFO, self, 'updated', self.toJSON());
+                        }
                     },
                     complete: complete,
                     beforeSend: function (xhr) {
                         // If we have an active XHR in flight, we should abort
                         // it because we don't want that anymore.
                         if (self.xhrInFlight) {
-                            log(WARN, self, 'abort',
-                                'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
-                                oldurl: lastFetchedUrl,
-                                newurl: url
-                            });
+                            if (TBONE_DEBUG) {
+                                log(WARN, self, 'abort',
+                                    'aborting obsolete ajax request. old: <%=oldurl%>, new: <%=newurl%>', {
+                                    oldurl: lastFetchedUrl,
+                                    newurl: url
+                                });
+                            }
                             self.xhrInFlight.abort();
                             complete(); // Decrement inflight counter
                         }
@@ -300,7 +308,9 @@ if (Backbone) {
             // this.state returns the new state, synchronously
             if (self.state) {
                 self.query(QUERY_SELF, self.state());
-                log(INFO, self, 'updated', self.toJSON());
+                if (TBONE_DEBUG) {
+                    log(INFO, self, 'updated', self.toJSON());
+                }
             }
         },
         state: null,

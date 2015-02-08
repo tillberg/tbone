@@ -83,12 +83,14 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
     // Kludge alert: if the objects are too deep, just assume there is
     // a change.
     if (depth > MAX_RECURSIVE_DIFF_DEPTH) {
-        log(WARN, self, 'recurseLimit', 'hit recursion depth limit of <%=limit%>', {
-            limit: MAX_RECURSIVE_DIFF_DEPTH
-        }, {
-            curr: curr,
-            prev: prev
-        });
+        if (TBONE_DEBUG) {
+            log(WARN, self, 'recurseLimit', 'hit recursion depth limit of <%=limit%>', {
+                limit: MAX_RECURSIVE_DIFF_DEPTH
+            }, {
+                curr: curr,
+                prev: prev
+            });
+        }
         return true;
     }
     evs = evs || {};
@@ -209,7 +211,9 @@ function serializeForComparison(model) {
                 }
             });
         } catch (e) {
-            log(WARN, model, 'aliascheck', 'Failed to serialize attributes to JSON');
+            if (TBONE_DEBUG) {
+                log(WARN, model, 'aliascheck', 'Failed to serialize attributes to JSON');
+            }
         }
     }
     return "null";
@@ -351,7 +355,7 @@ function query (flag, prop, value) {
              * for a numeric index and an object for anything else.  We set the
              * property via query() so as to fire change events appropriately.
              */
-            if (_data != null) {
+            if (TBONE_DEBUG && _data != null) {
                 log(WARN, this, 'mkdir', 'while writing <%=prop%>, had to overwrite ' +
                     'primitive value <%=primitive%> at <%=partial%>', {
                         prop: prop,
