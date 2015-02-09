@@ -18,53 +18,35 @@ if (React) {
                 }
             }
         }
-        function getWrapperFn (origFn, isFirstWrappedEvent) {
-            if (origFn || isFirstWrappedEvent) {
-                return function () {
-                    var self = this, args = arguments;
-                    if (isFirstWrappedEvent) {
-                        cleanUpTScopes(self);
-                        self.hasUpdateQueued = false;
-                    }
-                    var rval;
-                    if (origFn) {
-                        var firstRun = true;
-                        var tscope = T(function () {
-                            if (firstRun) {
-                                rval = origFn.apply(self, args);
-                                // console.log('render', self._currentElement.type.displayName);
-                                firstRun = false;
-                            } else {
-                                // console.log('update', self._currentElement.type.displayName);
-                                doUpdate(self);
-                            }
-                        }, tbone.priority.view);
-                        tscope.isView = true;
-                        if (!self.tscopes) {
-                            self.tscopes = [];
-                        }
-                        self.tscopes.push(tscope);
-                    }
-                    return rval;
-                };
-            } else {
-                return undefined;
-            }
-        }
-
-        var componentDidMount = origOpts.componentDidMount ? function () {
-            var self = this, args = arguments;
-            var rval;
-            var tscope = T(function () {
-                // Run and re-run componentDidMount until this component is
-                // no longer mounted.
-                if (self.isMounted()) {
-                    rval = origOpts.componentDidMount.apply(self, args);
+        function getWrapperFn (origFn, isWillUpdate) {
+            return function () {
+                var self = this, args = arguments;
+                if (isWillUpdate) {
+                    cleanUpTScopes(self);
+                    self.hasUpdateQueued = false;
                 }
-            });
-            tscope.isView = true;
-            return rval;
-        } : undefined;
+                var rval;
+                if (origFn) {
+                    var firstRun = true;
+                    var tscope = T(function () {
+                        if (firstRun) {
+                            rval = origFn.apply(self, args);
+                            // console.log('render', self._currentElement.type.displayName);
+                            firstRun = false;
+                        } else {
+                            // console.log('update', self._currentElement.type.displayName);
+                            doUpdate(self);
+                        }
+                    }, tbone.priority.view);
+                    tscope.isView = true;
+                    if (!self.tscopes) {
+                        self.tscopes = [];
+                    }
+                    self.tscopes.push(tscope);
+                }
+                return rval;
+            };
+        }
 
         var opts = _.extend({}, origOpts, {
             componentWillUnmount: function () {
@@ -75,11 +57,17 @@ if (React) {
                     return undefined;
                 }
             },
-            componentDidMount: componentDidMount,
             componentWillUpdate: getWrapperFn(origOpts.componentWillUpdate, true),
-            componentDidUpdate: getWrapperFn(origOpts.componentDidUpdate, false),
-            render: getWrapperFn(origOpts.render, false)
+            render: getWrapperFn(origOpts.render)
         });
+
+        if (origOpts.componentDidUpdate) {
+            opts.componentDidUpdate = getWrapperFn(origOpts.componentDidUpdate);
+        }
+        if (origOpts.componentDidMount) {
+            opts.componentDidMount = getWrapperFn(origOpts.componentDidMount);
+        }
+
         return origCreateClass(opts);
     };
 }
