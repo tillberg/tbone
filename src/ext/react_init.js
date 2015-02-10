@@ -1,5 +1,8 @@
 var React = window.React;
 if (React) {
+    var IS_WILL_UPDATE = 1;
+    var IS_POST_RENDER = 2;
+
     var origCreateClass = React.createClass;
     React.createClass = function (origOpts) {
         function cleanUpTScopes (inst) {
@@ -13,24 +16,33 @@ if (React) {
                 inst.hasUpdateQueued = true;
                 cleanUpTScopes(inst);
                 if (inst.isMounted()) {
+                    // console.log('update queued for ' + inst._currentElement.type.displayName);
                     inst.forceUpdate();
                     // console.log(inst.getDOMNode());
+                } else {
+                    // console.log('update NOT queued for ' + inst._currentElement.type.displayName);
                 }
             }
         }
-        function getWrapperFn (origFn, isWillUpdate) {
+        function getWrapperFn (origFn, special) {
             return function () {
                 var self = this, args = arguments;
-                if (isWillUpdate) {
+                if (special === IS_WILL_UPDATE) {
                     cleanUpTScopes(self);
                     self.hasUpdateQueued = false;
                 }
                 var rval;
-                if (origFn) {
+                var componentDidRender = special === IS_POST_RENDER && origOpts.componentDidRender;
+                if (origFn || componentDidRender) {
                     var firstRun = true;
                     var tscope = T(function () {
                         if (firstRun) {
-                            rval = origFn.apply(self, args);
+                            if (origFn) {
+                                rval = origFn.apply(self, args);
+                            }
+                            if (componentDidRender) {
+                                componentDidRender.call(self);
+                            }
                             // console.log('render', self._currentElement.type.displayName);
                             firstRun = false;
                         } else {
@@ -47,7 +59,6 @@ if (React) {
                 return rval;
             };
         }
-
         var opts = _.extend({}, origOpts, {
             componentWillUnmount: function () {
                 cleanUpTScopes(this);
@@ -57,16 +68,11 @@ if (React) {
                     return undefined;
                 }
             },
-            componentWillUpdate: getWrapperFn(origOpts.componentWillUpdate, true),
+            componentWillUpdate: getWrapperFn(origOpts.componentWillUpdate, IS_WILL_UPDATE),
+            componentDidUpdate: getWrapperFn(origOpts.componentDidUpdate, IS_POST_RENDER),
+            componentDidMount: getWrapperFn(origOpts.componentDidMount, IS_POST_RENDER),
             render: getWrapperFn(origOpts.render)
         });
-
-        if (origOpts.componentDidUpdate) {
-            opts.componentDidUpdate = getWrapperFn(origOpts.componentDidUpdate);
-        }
-        if (origOpts.componentDidMount) {
-            opts.componentDidMount = getWrapperFn(origOpts.componentDidMount);
-        }
 
         return origCreateClass(opts);
     };
