@@ -1,20 +1,27 @@
 var React = window.React;
 if (React) {
     var IS_WILL_UPDATE = 1;
-    var IS_POST_RENDER = 2;
+    var IS_DID_MOUNT = 2;
+    var IS_DID_UPDATE = 3;
 
     var origCreateClass = React.createClass;
     React.createClass = function (origOpts) {
-        function cleanUpTScopes (inst) {
-            _.each(inst.tscopes || [], function (tscope) {
+        function cleanUpMountTScopes (inst) {
+            _.each(inst.__tbone__.mount, function (tscope) {
                 tscope.destroy();
             });
-            inst.tscopes = null;
+            inst.__tbone__.mount = [];
+        }
+        function cleanUpRenderTScopes (inst) {
+            _.each(inst.__tbone__.render, function (tscope) {
+                tscope.destroy();
+            });
+            inst.__tbone__.render = [];
         }
         function doUpdate (inst) {
             if (!inst.hasUpdateQueued) {
-                inst.hasUpdateQueued = true;
-                cleanUpTScopes(inst);
+                inst.__tbone__.hasUpdateQueued = 1;
+                cleanUpRenderTScopes(inst);
                 if (inst.isMounted()) {
                     // console.log('update queued for ' + inst._currentElement.type.displayName);
                     inst.forceUpdate();
@@ -26,23 +33,20 @@ if (React) {
         }
         function getWrapperFn (origFn, special) {
             return function () {
-                var self = this, args = arguments;
+                var self = this;
+                var args = arguments;
                 if (special === IS_WILL_UPDATE) {
-                    cleanUpTScopes(self);
-                    self.hasUpdateQueued = false;
+                    cleanUpRenderTScopes(self);
+                    self.__tbone__.hasUpdateQueued = 0;
                 }
                 var rval;
-                var componentDidRender = special === IS_POST_RENDER && origOpts.componentDidRender;
-                if (origFn || componentDidRender) {
+                var tscope;
+                var isPostRender = special === IS_DID_UPDATE || special == IS_DID_MOUNT;
+                if (origFn) {
                     var firstRun = true;
-                    var tscope = T(function () {
+                    tscope = T(function () {
                         if (firstRun) {
-                            if (origFn) {
-                                rval = origFn.apply(self, args);
-                            }
-                            if (componentDidRender) {
-                                componentDidRender.call(self);
-                            }
+                            rval = origFn.apply(self, args);
                             // console.log('render', self._currentElement.type.displayName);
                             firstRun = false;
                         } else {
@@ -51,17 +55,34 @@ if (React) {
                         }
                     }, tbone.priority.view);
                     tscope.isView = true;
-                    if (!self.tscopes) {
-                        self.tscopes = [];
+                    if (special === IS_DID_MOUNT) {
+                        self.__tbone__.mount.push(tscope);
+                    } else {
+                        self.__tbone__.render.push(tscope);
                     }
-                    self.tscopes.push(tscope);
+                }
+                if (isPostRender && origOpts.componentDidRender) {
+                    tscope = T(origOpts.componentDidRender.bind(self), tbone.priority.view);
+                    tscope.isView = true;
+                    self.__tbone__.render.push(tscope);
                 }
                 return rval;
             };
         }
         var opts = _.extend({}, origOpts, {
+            componentWillMount: function () {
+                this.__tbone__ = {
+                    mount: [],
+                    render: [],
+                };
+                var origFn = origOpts.componentWillMount;
+                if (origFn) {
+                    return origFn.apply(this, arguments);
+                }
+            },
             componentWillUnmount: function () {
-                cleanUpTScopes(this);
+                cleanUpMountTScopes(this);
+                cleanUpRenderTScopes(this);
                 if (origOpts.componentWillUnmount) {
                     return origOpts.componentWillUnmount.apply(this, arguments);
                 } else {
@@ -69,8 +90,8 @@ if (React) {
                 }
             },
             componentWillUpdate: getWrapperFn(origOpts.componentWillUpdate, IS_WILL_UPDATE),
-            componentDidUpdate: getWrapperFn(origOpts.componentDidUpdate, IS_POST_RENDER),
-            componentDidMount: getWrapperFn(origOpts.componentDidMount, IS_POST_RENDER),
+            componentDidUpdate: getWrapperFn(origOpts.componentDidUpdate, IS_DID_UPDATE),
+            componentDidMount: getWrapperFn(origOpts.componentDidMount, IS_DID_MOUNT),
             render: getWrapperFn(origOpts.render)
         });
 
