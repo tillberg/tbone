@@ -26,9 +26,7 @@ models.ajax = asyncModel.extend({
              **/
             self.fetchedUrl = url;
             self.abortPrevious();
-            if (self.clearOnFetch) {
-                self.clear();
-            }
+            self.preFetch();
             addInFlight(self);
             var onData = function (str) {
                 /**
@@ -86,11 +84,13 @@ models.ajax = asyncModel.extend({
         return $.ajax.apply($, arguments);
     },
 
+    preFetch: function () {
+        this.clear();
+    },
+
     postFetch: noop,
 
     onComplete: noop,
-
-    clearOnFetch: true, // XXX move to async model
 
     sleepEnabled: true,
 

@@ -269,9 +269,7 @@ if (Backbone) {
                  * parameters are set.
                  **/
                 self.fetchedUrl = url;
-                if (self.clearOnFetch) {
-                    self.clear();
-                }
+                self.preFetch();
                 self.fetch({
                     dataType: 'text',
                     success: function () {
@@ -314,9 +312,10 @@ if (Backbone) {
             }
         },
         state: null,
+        preFetch: function () {
+            this.clear();
+        },
         postFetch: noop,
-
-        clearOnFetch: true
     });
 
     _.each([Backbone.Model.prototype, Backbone.Collection.prototype], function (proto) {
