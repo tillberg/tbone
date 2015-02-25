@@ -66,6 +66,7 @@ _.extend(Scope.prototype,
             self.lookups = recentLookups = {};
             var parentScope = currentExecutingScope;
             currentExecutingScope = self;
+            tbone.isExecuting = true;
 
             // ** Call the payload function **
             // This function must be synchronous.  Anything that is looked up using
@@ -95,6 +96,7 @@ _.extend(Scope.prototype,
                 // the values we saved above.
                 recentLookups = oldLookups;
                 currentExecutingScope = parentScope;
+                tbone.isExecuting = !!currentExecutingScope;
 
                 if (TBONE_DEBUG) {
                     var executionTimeMs = myTimer.done();
