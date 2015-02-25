@@ -6,17 +6,20 @@ if (React) {
 
     var origCreateClass = React.createClass;
     React.createClass = function (origOpts) {
-        function cleanUpMountTScopes (inst) {
-            _.each(inst.__tbone__.mount, function (tscope) {
+        function myAutorun (fn, inst, name) {
+            tscope = autorun(fn, tbone.priority.view, inst, inst.constructor.displayName + ':' + name, null, null, true);
+            tscope.isView = true;
+            return tscope;
+        }
+
+        function cleanUpTScopes(inst, key) {
+            _.each(inst.__tbone__[key], function (tscope) {
                 tscope.destroy();
             });
-            inst.__tbone__.mount = [];
+            inst.__tbone__[key] = [];
         }
         function cleanUpRenderTScopes (inst) {
-            _.each(inst.__tbone__.render, function (tscope) {
-                tscope.destroy();
-            });
-            inst.__tbone__.render = [];
+            cleanUpTScopes(inst, 'render');
         }
         function doUpdate (inst) {
             if (!inst.hasUpdateQueued) {
@@ -25,7 +28,6 @@ if (React) {
                 if (inst.isMounted()) {
                     // console.log('update queued for ' + inst._currentElement.type.displayName);
                     inst.forceUpdate();
-                    // console.log(inst.getDOMNode());
                 } else {
                     // console.log('update NOT queued for ' + inst._currentElement.type.displayName);
                 }
@@ -41,30 +43,29 @@ if (React) {
                 }
                 var rval;
                 var tscope;
-                var isPostRender = special === IS_DID_UPDATE || special == IS_DID_MOUNT;
+                var isDidMount = special == IS_DID_MOUNT;
+                var isPostRender = special === IS_DID_UPDATE || isDidMount;
                 if (origFn) {
-                    var firstRun = true;
-                    tscope = T(function () {
-                        if (firstRun) {
-                            rval = origFn.apply(self, args);
-                            // console.log('render', self._currentElement.type.displayName);
-                            firstRun = false;
-                        } else {
-                            // console.log('update', self._currentElement.type.displayName);
-                            doUpdate(self);
-                        }
-                    }, tbone.priority.view);
-                    tscope.isView = true;
-                    if (special === IS_DID_MOUNT) {
-                        self.__tbone__.mount.push(tscope);
+                    if (isDidMount) {
+                        self.__tbone__.mount.push(myAutorun(origFn.bind(self), self, 'DidMount'));
                     } else {
-                        self.__tbone__.render.push(tscope);
+                        var firstRun = true;
+                        var name = isPostRender ? 'DidUpdate' :
+                                   special ? 'WillUpdate' : 'Render';
+                        self.__tbone__.render.push(myAutorun(function () {
+                            if (firstRun) {
+                                rval = origFn.apply(self, args);
+                                // console.log('render', self._currentElement.type.displayName);
+                                firstRun = false;
+                            } else {
+                                // console.log('update', self._currentElement.type.displayName);
+                                doUpdate(self);
+                            }
+                        }, self, name));
                     }
                 }
                 if (isPostRender && origOpts.componentDidRender) {
-                    tscope = T(origOpts.componentDidRender.bind(self), tbone.priority.view);
-                    tscope.isView = true;
-                    self.__tbone__.render.push(tscope);
+                    self.__tbone__.render.push(myAutorun(origOpts.componentDidRender.bind(self), self, 'DidRender'));
                 }
                 return rval;
             };
@@ -81,7 +82,7 @@ if (React) {
                 }
             },
             componentWillUnmount: function () {
-                cleanUpMountTScopes(this);
+                cleanUpTScopes(this, 'mount');
                 cleanUpRenderTScopes(this);
                 if (origOpts.componentWillUnmount) {
                     return origOpts.componentWillUnmount.apply(this, arguments);
