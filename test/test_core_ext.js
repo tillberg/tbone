@@ -1,3 +1,4 @@
+var equal = strictEqual;
 
 test('tbone id queries', function () {
     var coll = tbone.collections.base.make();
@@ -121,7 +122,7 @@ test('async model with rolling update', function () {
         }
     });
     equal(callbacks.length, 1);
-    equal(model(''), null);
+    equal(model(''), undefined);
     me('prop', 1);
     T.drain();
     me('prop', 2);

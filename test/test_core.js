@@ -1,3 +1,5 @@
+var equal = strictEqual;
+
 var render = tbone.render;
 var drain = tbone.drain;
 
@@ -123,7 +125,7 @@ test('tbone.set', function () {
     equal(T('thing.other'), 4);
     equal(T('thing.count'), undefined);
 
-    var morethings = T('morethings', thingsType.make());
+    var morethings = T('morethings', T.make());
     morethings.push({ number: 6 });
     equal(T('morethings.0.number'), 6);
     equal(T('morethings.0.number', 100), 100);
@@ -201,6 +203,67 @@ test('model increment', function () {
     T.drain();
     equal(num, 42);
     equal(me('num'), 42);
+});
+
+function getWatcher(model, props) {
+    var obj = {};
+    _.each(props, function (prop) {
+        T(function () {
+            model(prop);
+
+            // If you hit this and there's not a bug in TBone, you
+            // forgot to add a reset() call:
+            notEqual(obj[prop], true, 'getWatchCounter obj.' + prop + ' should not be true');
+            obj[prop] = true;
+        });
+    });
+    obj.reset = function reset() {
+        _.each(props, function (prop) {
+            obj[prop] = false;
+        });
+    };
+    obj.reset();
+    return obj;
+}
+
+test('model array mutations', function () {
+    var me = tbone.make();
+    me('', []);
+    var watch = getWatcher(me, ['__self__', '0', '1', '2', 'length']);
+    me.push('hi');
+    equal(me('0'), 'hi');
+    equal(me('1'), undefined);
+    equal(me('length'), 1);
+    T.drain();
+    equal(JSON.stringify(watch), null);
+    equal(watch.__self__, true);
+    equal(watch['0'], true);
+    // equal(watch[1], false);
+    equal(watch['2'], false);
+    equal(watch.length, true);
+    watch.reset();
+    me.push('world');
+    equal(watch.__self__, false);
+    equal(me('1'), 'world');
+    equal(me('length'), 2);
+    T.drain();
+    equal(watch.__self__, true);
+    equal(watch['0'], false);
+    equal(watch['1'], true);
+    equal(watch.length, true);
+    watch.reset();
+    me.unshift('say');
+    equal(me('0'), 'say');
+    equal(me('1'), 'hi');
+    equal(me('2'), 'world');
+    equal(me('length'), 3);
+    T.drain();
+    equal(watch.__self__, true);
+    equal(watch[0], true);
+    equal(watch[1], true);
+    equal(watch[2], true);
+    equal(watch.length, true);
+
 });
 
 test('unbind property on second pass', function () {
