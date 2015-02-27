@@ -10,7 +10,9 @@ var asyncModel = models.async = boundModel.extend({
         // in flight for newer data, yet it will still accept earlier-generation
         // data that arrives as long as it is newer than what it had before.
         var reqGeneration = self.reqGeneration = (self.reqGeneration || 0) + 1;
+        var callbackCalledImmediately = false;
         var opts = self.state(function (value) {
+            callbackCalledImmediately = true;
             if (reqGeneration >= (self.updateGeneration || 0)) {
                 self.updateGeneration = reqGeneration;
                 self.abortCallback = null;
@@ -19,7 +21,9 @@ var asyncModel = models.async = boundModel.extend({
             }
             return undefined;
         });
-        self.abortCallback = opts && opts.onAbort;
+        if (!callbackCalledImmediately) {
+            self.abortCallback = opts && opts.onAbort;
+        }
     },
 
     abortPrevious: function () {

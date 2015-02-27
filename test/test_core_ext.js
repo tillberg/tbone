@@ -108,7 +108,7 @@ asyncTest('async model abort', function () {
     });
     setTimeout(function () {
         src('prop', 36);
-    }, 1);
+    }, 0);
 });
 
 test('async model with rolling update', function () {

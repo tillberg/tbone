@@ -24,8 +24,8 @@ models.ajax = asyncModel.extend({
              * This can be used e.g. to prevent loading until all required
              * parameters are set.
              **/
-            self.fetchedUrl = url;
             self.abortPrevious();
+            self.fetchedUrl = url;
             self.preFetch();
             addInFlight(self);
             var onData = function (str) {
