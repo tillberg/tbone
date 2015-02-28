@@ -4,8 +4,8 @@
 
 function changePathGen (method) {
     return function (path) {
-        window.history[method + 'State']({}, '', path);
-        $(window).trigger(method + 'state');
+        root.history[method + 'State']({}, '', path);
+        $(root).trigger(method + 'state');
     };
 }
 
@@ -32,7 +32,7 @@ models.location = baseModel.extend({
                 recentlyChanged = true;
             }
         }
-        $(window).bind('hashchange popstate pushstate replacestate', update);
+        $(root).bind('hashchange popstate pushstate replacestate', update);
         update();
 
         self(function () {

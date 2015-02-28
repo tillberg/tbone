@@ -1,4 +1,4 @@
-var React = window.React;
+var React = root.React;
 if (React) {
     var IS_WILL_UPDATE = 1;
     var IS_DID_MOUNT = 2;

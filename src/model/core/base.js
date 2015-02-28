@@ -256,16 +256,20 @@ if (TBONE_DEBUG) {
     onLog(logconsole);
 }
 
-var orig_tbone = root.tbone;
-var orig_T = root.T;
-
-root.tbone = tbone;
-root.T = tbone;
-
-tbone.noConflict = function () {
-    root.T = orig_T;
-    root.tbone = orig_tbone;
-};
+if (typeof module !== 'undefined') {
+    // Node-land
+    module.exports = tbone;
+} else {
+    // Browser-land
+    var orig_tbone = root.tbone;
+    var orig_T = root.T;
+    root.tbone = tbone;
+    root.T = tbone;
+    tbone.noConflict = function () {
+        root.T = orig_T;
+        root.tbone = orig_tbone;
+    };
+}
 
 var metrics = baseModel.make({ Name: 'tbone_metrics' });
 tbone.metrics = metrics;

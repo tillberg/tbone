@@ -297,7 +297,7 @@ function logRender (obj) {
  */
 
 var origScrollTop = $ && $.fn && $.fn.scrollTop;
-var $window = origScrollTop && $(window);
+var $window = origScrollTop && $(root);
 var scrollTopChangedProgrammatically;
 
 if (origScrollTop) {
