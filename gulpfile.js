@@ -10,8 +10,8 @@ var replace = require('gulp-replace');
 var jshint = require('gulp-jshint');
 var gzip = require('gulp-gzip');
 var size = require('gulp-size');
-var mocha = require('gulp-mocha');
-var qunit = require('node-qunit-phantomjs');
+var nodeunit = require('gulp-nodeunit');
+var beautify = require('gulp-jsbeautifier');
 var del = require('del');
 
 var path = require('path');
@@ -113,22 +113,56 @@ _.each(versions, function (version, name) {
     var tmpFolder = 'tmp/test_' + name;
     fs.copySync('test/', tmpFolder);
     fs.copySync(jsFullPath, path.join(tmpFolder, 'tbone.js'));
-    var mochaOpts = {
-      reporter: 'dot',
-      exit: false,
-    };
-    if (name === 'core') {
-      mochaOpts.grep = '@core';
-    }
     var sources = [
       tmpFolder + '/**/*.js',
       '!' + path.join(tmpFolder, 'tbone.js'),
     ];
-    gulp.src(sources, {read: false})
-      .pipe(mocha(mochaOpts))
-      .on('error', console.error)
-      .on('end', done);
+    return gulp.src(sources)
+      .pipe(nodeunit({
+        reporter: 'minimal',
+      }));
+    // var mochaOpts = {
+    //   reporter: 'dot',
+    //   exit: false,
+    // };
+    // if (name === 'core') {
+    //   mochaOpts.grep = '@core';
+    // }
+    // gulp.src(sources, {read: false})
+    //   .pipe(mocha(mochaOpts))
+    //   .on('error', console.error)
+    //   .on('end', done);
   });
+});
+
+var beautifyFiles = [
+  // 'src/**/*.js',
+  'test/**/*.js',
+];
+
+gulp.task('git-pre-js', function() {
+  // beautify ungracefully throws an exception to indicate failure
+  process.on('uncaughtException', function(err) {
+    console.error(err.stack);
+    process.exit(1);
+  });
+  var files = _.flatten();
+  gulp.src(beautifyFiles)
+    .pipe(beautify({
+      config: '.jsbeautifyrc',
+      mode: 'VERIFY_ONLY'
+    }))
+});
+
+gulp.task('format-js', function() {
+  gulp.src(beautifyFiles, {
+      base: './'
+    })
+    .pipe(beautify({
+      config: '.jsbeautifyrc',
+      mode: 'VERIFY_AND_WRITE'
+    }))
+    .pipe(gulp.dest('./'));
 });
 
 gulp.task('build_all', _.map(_.keys(versions), function (name) { return 'test:' + name; }), function (cb) {
@@ -150,5 +184,5 @@ gulp.task('restart-gulp', function () {
 
 gulp.task('watch', ['build_all'], function () {
   gulp.watch(['gulpfile.js'], ['restart-gulp']);
-  gulp.watch(['src/**/*.js', 'test/**/*'], ['build_all']);
+  gulp.watch(['src/**/*.js', 'test/**/*.js'], ['build_all']);
 });
