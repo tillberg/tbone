@@ -197,13 +197,6 @@ var baseModel = {
     },
 
     wake: noop,
-
-    queryText: queryText, // deprecated
-    text: queryText, // deprecated
-    lookup: query, // deprecated
-    lookupText: queryText, // deprecated
-    set: query, // deprecated
-    get: query // deprecated
 };
 
 if (TBONE_DEBUG) {

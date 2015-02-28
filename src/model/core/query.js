@@ -498,7 +498,3 @@ function query (flag, prop, value) {
     }
     return _data;
 }
-
-function queryText(flag, prop) {
-    return denullText(prop == null ? this.query(flag) : this.query(flag, prop));
-}

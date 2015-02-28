@@ -327,11 +327,6 @@ if (Backbone) {
              *
              */
             query: bbquery,
-            text: queryText,
-
-            // deprecated?
-            lookup: bbquery,
-            lookupText: queryText,
 
             /**
              * Wake up this model as well as (recursively) any models that depend on
