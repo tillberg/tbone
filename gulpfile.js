@@ -10,6 +10,7 @@ var replace = require('gulp-replace');
 var jshint = require('gulp-jshint');
 var gzip = require('gulp-gzip');
 var size = require('gulp-size');
+var mocha = require('gulp-mocha');
 var qunit = require('node-qunit-phantomjs');
 var del = require('del');
 
@@ -21,17 +22,6 @@ var dest = 'dist/';
 
 gulp.task('clean', function (cb) {
   del([dest, 'test/dist'], cb);
-});
-
-gulp.task('templates', function() {
-  var templateFiles = fs.readdirSync('test/templates');
-  var templates = {};
-  _.each(templateFiles, function (filename) {
-    var template = fs.readFileSync('test/templates/' + filename, 'utf8');
-    templates[filename.replace(/\.html$/, '')] = (' ' + template + ' ').replace(/\s+/g, ' ');
-  });
-  var templatesJS = 'var templates = ' + JSON.stringify(templates) + ';';
-  fs.writeFileSync('test/templates.js', templatesJS);
 });
 
 var coreFiles = [
@@ -55,17 +45,6 @@ var extFiles = coreFiles.concat([
   'src/ext/react_init.js',
 ]);
 
-var fullFiles = extFiles.concat([
-  'src/dom/template/init.js',
-  'src/dom/template/render.js',
-  'src/dom/view/hash.js',
-  'src/dom/view/base.js',
-  'src/dom/view/render.js',
-  'src/dom/view/create.js',
-  'src/ext/bbsupport.js',
-  // 'src/ext/angular_init.js',
-]);
-
 function wrapFiles (files) {
   return ['src/snippet/header.js'].concat(files).concat(['src/snippet/footer.js']);
 }
@@ -78,10 +57,6 @@ var versions = {
   main: {
     files: wrapFiles(extFiles),
     suffix: '',
-  },
-  legacy: {
-    files: wrapFiles(fullFiles),
-    suffix: '_legacy',
   },
 };
 
@@ -134,9 +109,25 @@ _.each(versions, function (version, name) {
 
   gulp.task(tn('build'), [tn('concat'), tn('compile'), tn('compress')], _.noop);
 
-  var print = require('gulp-print');
-  gulp.task(tn('test'), ['templates', tn('build')], function (cb) {
-    qunit('./test/index.html?variant=' + name, {}, cb);
+  gulp.task(tn('test'), [tn('build')], function (done) {
+    var tmpFolder = 'tmp/test_' + name;
+    fs.copySync('test/', tmpFolder);
+    fs.copySync(jsFullPath, path.join(tmpFolder, 'tbone.js'));
+    var mochaOpts = {
+      reporter: 'dot',
+      exit: false,
+    };
+    if (name === 'core') {
+      mochaOpts.grep = '@core';
+    }
+    var sources = [
+      tmpFolder + '/**/*.js',
+      '!' + path.join(tmpFolder, 'tbone.js'),
+    ];
+    gulp.src(sources, {read: false})
+      .pipe(mocha(mochaOpts))
+      .on('error', console.error)
+      .on('end', done);
   });
 });
 
