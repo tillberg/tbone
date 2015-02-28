@@ -35,7 +35,7 @@ var baseCollection = baseModel.extend({
         var removed;
         var update = function () {
             if (lastId != null) {
-                self.unset(lastId, null);
+                self.unset(lastId);
                 self.trigger('change:' + lastId);
                 delete self._removeCallbacks[lastId];
             }

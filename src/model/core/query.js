@@ -12,54 +12,6 @@ var QUERY_DEFAULT = 0;
  */
 var DONT_GET_DATA = 1;
 
-/**
- * "Iterate Over Models" - Special flag for query to return an iterator over the
- * models of the collection, enabling iteration over models, which is what we want
- * to do when using _.each(collection ...) in a template, as this allows us to
- * use model.query(...) and properly bind references to the models.
- * @const
- */
-var ITERATE_OVER_MODELS = 2;
-
-/**
- * @const
- */
-var MIN_QUERY_SET_FLAG = 3;
-
-/**
- * @const
- */
-var QUERY_PUSH = 3;
-
-/**
- * @const
- */
-var QUERY_UNSHIFT = 4;
-
-/**
- * @const
- */
-var QUERY_REMOVE_FIRST = 5;
-
-/**
- * @const
- */
-var QUERY_REMOVE_LAST = 6;
-
-/**
- * @const
- */
-var QUERY_TOGGLE = 7;
-
-/**
- * @const
- */
-var QUERY_UNSET = 8;
-
-/**
- * @const
- */
-var QUERY_INCREMENT = 9;
 
 /**
  * @const
@@ -243,7 +195,7 @@ function listDiffs(curr, prev, accum) {
 
 function query (flag, prop, value) {
     var self = this;
-    var hasValue = arguments.length === 3;
+    var isSet = arguments.length === 3;
     if (typeof flag !== 'number') {
         /**
          * If no flag provided, shift the prop and value over.  We do it this way instead
@@ -258,21 +210,11 @@ function query (flag, prop, value) {
          * setting undefined.
          */
         if (arguments.length === 2) {
-            hasValue = true;
+            isSet = true;
         }
     }
     var dontGetData = flag === DONT_GET_DATA;
-    var iterateOverModels = flag === ITERATE_OVER_MODELS;
-    var isPush = flag === QUERY_PUSH;
-    var isUnshift = flag === QUERY_UNSHIFT;
-    var isRemoveFirst = flag === QUERY_REMOVE_FIRST;
-    var isRemoveLast = flag === QUERY_REMOVE_LAST;
-    var isToggle = flag === QUERY_TOGGLE;
-    var isIncrement = flag === QUERY_INCREMENT;
-    var isListOp = isPush || isUnshift || isRemoveFirst || isRemoveLast;
-    var isUnset = flag === QUERY_UNSET;
     var assumeChanged = flag === QUERY_ASSUME_CHANGED;
-    var isSet = isListOp || isToggle || isUnset || hasValue || isIncrement;
 
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
@@ -339,16 +281,9 @@ function query (flag, prop, value) {
              *   - without DONT_GET_DATA: Do the sub-query.  Delegate getting that model's
              *                            data to the other model.
              */
-            doSubQuery = args.length || (isSet ? !isUnset && !isQueryable(value) : !dontGetData);
+            doSubQuery = args.length || (isSet ? !isQueryable(value) : !dontGetData);
             break;
-        } else if (isSet && !isRealObject(_data) && (args.length || isListOp)) {
-            /**
-             * Don't do implicit mkdir -p if we're just trying to unset something
-             * that doesn't exist.
-             */
-            if (isUnset) {
-                return;
-            }
+        } else if (isSet && !isRealObject(_data) && args.length) {
             /**
              * When doing an implicit mkdir -p while setting a deep-nested property
              * for the first time, we peek at the next arg and create either an array
@@ -372,7 +307,7 @@ function query (flag, prop, value) {
              * If there are no more args, then create an array if this is a list
              * operation; otherwise, an object.
              */
-            _data = (args.length ? rgxNumber.exec(args[0]) : isListOp) ? [] : {};
+            _data = rgxNumber.exec(args[0]) ? [] : {};
             self.query(name_parts.join('.'), _data);
         }
 
@@ -401,7 +336,7 @@ function query (flag, prop, value) {
     }
 
     if (doSubQuery) {
-        return hasValue ? _data.query(flag, args.join('.'), value) : _data.query(flag, args.join('.'));
+        return isSet ? _data.query(flag, args.join('.'), value) : _data.query(flag, args.join('.'));
     }
 
     if (isSet) {
@@ -430,28 +365,9 @@ function query (flag, prop, value) {
         // the typical T('modelName', model.make()) and T.push cases.
         var nameProp;
 
-        if (isPush) {
-            if (TBONE_DEBUG) {
-                nameProp = prop + '.' + _data.length;
-            }
-            _data.push(value);
-        } else if (isUnshift) {
-            _data.unshift(value);
-        } else if (isRemoveFirst) {
-            _data.shift(value);
-        } else if (isRemoveLast) {
-            _data.pop(value);
-        } else if (isUnset) {
-            delete last_data[setprop];
-        } else if (isToggle) {
-            value = last_data[setprop] = !_data;
-        } else if (isIncrement) {
-            value = last_data[setprop] = (_data || 0) + value;
-        } else {
-            last_data[setprop] = value;
-            if (TBONE_DEBUG) {
-                nameProp = prop;
-            }
+        last_data[setprop] = value;
+        if (TBONE_DEBUG) {
+            nameProp = prop;
         }
 
         if (TBONE_DEBUG && isQueryable(value)) {
@@ -480,21 +396,6 @@ function query (flag, prop, value) {
             self.prevJson = prop ? null : serializeForComparison(self);
         }
         return value;
-    } else if (!iterateOverModels && self.isCollection && prop === '') {
-        /**
-         * If iterateOverModels is not set and _data is a collection, return the
-         * raw data of each model in a list.  XXX is this ideal?  or too magical?
-         */
-        if (isArray(_data)) {
-            _data = _.map(_data, function (d) { return d.query(); });
-        } else if (_data) {
-            _data = _.reduce(_.keys(_data), function (memo, k) {
-                if (isQueryable(_data[k])) {
-                    memo[k] = _data[k].query();
-                }
-                return memo;
-            }, {});
-        }
     }
     return _data;
 }

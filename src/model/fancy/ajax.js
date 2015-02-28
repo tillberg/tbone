@@ -85,7 +85,7 @@ models.ajax = asyncModel.extend({
     },
 
     preFetch: function () {
-        this.clear();
+        this.unset();
     },
 
     postFetch: noop,

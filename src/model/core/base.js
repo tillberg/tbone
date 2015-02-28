@@ -19,6 +19,10 @@ function splitName (name) {
     return name.replace(/^change:/, 'change.').split(rgxEventSplitter);
 }
 
+function ensureArray(v) {
+    return _.isArray(v) ? v : [];
+}
+
 /**
  * baseModel
  * @constructor
@@ -153,7 +157,7 @@ var baseModel = {
     },
 
     toggle: function (prop) {
-        this.query(QUERY_TOGGLE, prop);
+        this.query(prop, !this.readSilent(prop));
     },
 
     push: function (prop, value) {
@@ -161,7 +165,7 @@ var baseModel = {
             value = prop;
             prop = '';
         }
-        this.query(QUERY_PUSH, prop, value);
+        return this.query(prop, ensureArray(this.readSilent(prop)).concat([value]));
     },
 
     unshift: function (prop, value) {
@@ -169,27 +173,32 @@ var baseModel = {
             value = prop;
             prop = '';
         }
-        this.query(QUERY_UNSHIFT, prop, value);
+        return this.query(prop, [value].concat(ensureArray(this.readSilent(prop))));
     },
 
     removeFirst: function (prop) {
-        this.query(QUERY_REMOVE_FIRST, prop);
+        return this.query(prop, ensureArray(this.readSilent(prop)).slice(1));
     },
 
     removeLast: function (prop) {
-        this.query(QUERY_REMOVE_LAST, prop);
+        return this.query(prop, ensureArray(this.readSilent(prop)).slice(0, -1));
     },
 
     unset: function (prop) {
-        this.query(QUERY_UNSET, prop);
+        if (prop) {
+            var parts = prop.split('.');
+            var child = parts.pop();
+            var parent = parts.join('.');
+            this.query(parent, _.omit(this.readSilent(parent), child));
+        } else {
+            this.query('', undefined);
+        }
     },
 
     increment: function (prop, value) {
-        this.query(QUERY_INCREMENT, prop, value != null ? value : 1);
-    },
-
-    clear: function () {
-        this.query('', undefined);
+        var curr = this.readSilent(prop);
+        var newval = (curr || 0) + (value != null ? value : 1);
+        this.query(prop, newval);
     },
 
     toJSON: function () {

@@ -1,5 +1,6 @@
 var T = require('../tbone').make();
 var tbone = T;
+var assert = require('assert');
 var _ = require('lodash');
 
 T('lights', function() {
@@ -46,16 +47,16 @@ exports['create model instance'] = function(test) {
 
 var thingsType = tbone.models.base.make();
 var things = T('things', thingsType.make());
-things.push({
+things.push('', {
   number: 2
 });
-things.push({
+things.push('', {
   number: 3
 });
-things.push({
+things.push('', {
   number: 7
 });
-things.push({
+things.push('', {
   number: 42
 });
 
@@ -132,7 +133,7 @@ exports['tbone.query to set'] = function(test) {
   test.equal(T('thing.count'), undefined);
 
   var morethings = T('morethings', T.make());
-  morethings.push({
+  morethings.push('', {
     number: 6
   });
   test.equal(T('morethings.0.number'), 6);
@@ -236,7 +237,7 @@ function getWatcher(model, props) {
 
       // If you hit this and there's not a bug in TBone, you
       // forgot to add a reset() call:
-      assert.nottest.equal(obj[prop], true, 'getWatchCounter obj.' + prop + ' should not be true');
+      assert.notEqual(obj[prop], true, 'getWatchCounter obj.' + prop + ' should not be true');
       obj[prop] = true;
     });
   });
@@ -249,45 +250,44 @@ function getWatcher(model, props) {
   return obj;
 }
 
-// exports['model array mutations'] = function(test) {
-// //     var me = tbone.make();
-//     me('', []);
-//     var watch = getWatcher(me, ['__self__', '0', '1', '2', 'length']);
-//     me.push('hi');
-//     test.equal(me('0'), 'hi');
-//     test.equal(me('1'), undefined);
-//     test.equal(me('length'), 1);
-//     T.drain();
-//     // test.equal(JSON.stringify(watch), null);
-//     test.equal(watch.__self__, true);
-//     test.equal(watch['0'], true);
-//     // test.equal(watch[1], false);
-//     test.equal(watch['2'], false);
-//     test.equal(watch.length, true);
-//     watch.reset();
-//     me.push('world');
-//     test.equal(watch.__self__, false);
-//     test.equal(me('1'), 'world');
-//     test.equal(me('length'), 2);
-//     T.drain();
-//     test.equal(watch.__self__, true);
-//     test.equal(watch['0'], false);
-//     test.equal(watch['1'], true);
-//     test.equal(watch.length, true);
-//     watch.reset();
-//     me.unshift('say');
-//     test.equal(me('0'), 'say');
-//     test.equal(me('1'), 'hi');
-//     test.equal(me('2'), 'world');
-//     test.equal(me('length'), 3);
-//     T.drain();
-//     test.equal(watch.__self__, true);
-//     test.equal(watch[0], true);
-//     test.equal(watch[1], true);
-//     test.equal(watch[2], true);
-//     test.equal(watch.length, true);
-//   });
-// });
+exports['model array mutations'] = function(test) {
+    var me = tbone.make();
+    me('', []);
+    var watch = getWatcher(me, ['__self__', '0', '1', '2', 'length']);
+    me.push('', 'hi');
+    test.equal(me('0'), 'hi');
+    test.equal(me('1'), undefined);
+    test.equal(me('length'), 1);
+    T.drain();
+    test.equal(watch.__self__, true);
+    test.equal(watch[0], true);
+    test.equal(watch[1], false);
+    test.equal(watch[2], false);
+    test.equal(watch.length, true);
+    watch.reset();
+    me.push('', 'world');
+    test.equal(watch.__self__, false);
+    test.equal(me('1'), 'world');
+    test.equal(me('length'), 2);
+    T.drain();
+    test.equal(watch.__self__, true);
+    test.equal(watch[0], false);
+    test.equal(watch[1], true);
+    test.equal(watch.length, true);
+    watch.reset();
+    me.unshift('say');
+    test.equal(me('0'), 'say');
+    test.equal(me('1'), 'hi');
+    test.equal(me('2'), 'world');
+    test.equal(me('length'), 3);
+    T.drain();
+    test.equal(watch.__self__, true);
+    test.equal(watch[0], true);
+    test.equal(watch[1], true);
+    test.equal(watch[2], true);
+    test.equal(watch.length, true);
+    test.done();
+};
 
 exports['unbind property on second pass'] = function(test) {
   var me = tbone.make();
