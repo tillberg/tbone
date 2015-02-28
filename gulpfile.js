@@ -113,10 +113,11 @@ _.each(versions, function (version, name) {
     var tmpFolder = 'tmp/test_' + name;
     fs.copySync('test/', tmpFolder);
     fs.copySync(jsFullPath, path.join(tmpFolder, 'tbone.js'));
-    var sources = [
-      tmpFolder + '/**/*.js',
-      '!' + path.join(tmpFolder, 'tbone.js'),
-    ];
+    var sources = [tmpFolder + '/core/**/*.js'];
+    if (name === 'main') {
+      sources.push(tmpFolder + '/ext/**/*.js');
+    }
+    sources.push('!' + path.join(tmpFolder, 'tbone.js'));
     return gulp.src(sources)
       .pipe(nodeunit({
         reporter: 'minimal',

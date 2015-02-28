@@ -1,4 +1,4 @@
-var T = require('./tbone').make();
+var T = require('../tbone').make();
 var tbone = T;
 var _ = require('lodash');
 
