@@ -28,15 +28,14 @@
     "gulp-gzip": "0.0.8",
     "gulp-jsbeautifier": "0.0.4",
     "gulp-jshint": "^1.9.2",
-    "gulp-nodeunit": "0.0.5",
+    "gulp-nodeunit": "git://github.com/tillberg/gulp-nodeunit.git#master",
     "gulp-print": "^1.1.0",
     "gulp-replace": "^0.5.2",
     "gulp-size": "^1.2.0",
     "gulp-sourcemaps": "^1.3.0",
     "gulp-uglify": "^1.1.0",
     "gulp-util": "^3.0.3",
-    "jshint-stylish": "^1.0.0",
-    "nodeunit": "^0.9.0"
+    "jshint-stylish": "^1.0.0"
   },
   "scripts": {
     "test": "gulp test"

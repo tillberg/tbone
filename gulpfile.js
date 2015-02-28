@@ -122,17 +122,6 @@ _.each(versions, function (version, name) {
       .pipe(nodeunit({
         reporter: 'minimal',
       }));
-    // var mochaOpts = {
-    //   reporter: 'dot',
-    //   exit: false,
-    // };
-    // if (name === 'core') {
-    //   mochaOpts.grep = '@core';
-    // }
-    // gulp.src(sources, {read: false})
-    //   .pipe(mocha(mochaOpts))
-    //   .on('error', console.error)
-    //   .on('end', done);
   });
 });
 
