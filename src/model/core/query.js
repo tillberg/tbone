@@ -200,44 +200,29 @@ function query (opts, prop, value) {
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
      **/
-    prop = (prop || '').replace('__self__', '');
-    var argParts = prop.split('.');
-    var args = [];
-    var i;
-    for (i = 0; i < argParts.length; i++) {
-        // Ignore empty string arguments.
-        if (argParts[i]) {
-            args.push(argParts[i]);
-        }
+    var args;
+    prop = prop.replace('__self__', '');
+    if (prop) {
+        args = prop.split('.');
+    } else if (dontGetData) {
+        return self;
     }
-
-    /**
-     * For set operations, we only want to look up the parent of the property we
-     * are modifying; pop the final property we're setting from args and save it
-     * for later.
-     * @type {string}
-     */
-    var setprop = args[args.length - 1] || 'attributes';
 
     /**
      * If this function was called with a bindable context (i.e. a Model or Collection),
      * then use that as the root data object instead of the global tbone.data.
      */
     var last_data = self;
-
-    /**
-     * If dontGetData is set, and there's no prop, then this is a self-reference.
-     */
-    var _data = dontGetData && !prop ? self : self.attributes;
+    var last_prop = 'attributes';
+    var _data = self.attributes;
 
     var name_parts = [];
-    var id;
     var arg;
     var doSubQuery;
     var parentCallbackContexts = {};
     var events = isSet && self._events.change;
 
-    while (true) {
+    while (args) {
         if (_data == null && !isSet) {
             // Couldn't even get to the level of the value we're trying to look up.
             // Concat the rest of args onto name_parts so that we record the full
@@ -252,19 +237,16 @@ function query (opts, prop, value) {
              * Always do the subquery if there are more args.
              * If there are no more args...
              * - and this is a set...
-             *   - (but really an unset): Don't do the sub-query regardless.
              *   -        to a queryable: Don't sub-query.  Set property to new queryable.
              *   -    to a non-queryable: Do the sub-query.  Push the value to the
              *                            other model (don't overwrite the model).  This
              *                            is kind of magical?
              * - and this is a get...
-             *   -      with dontGetData: Don't do sub-query.  Get the model itself.
-             *   -   without dontGetData: Do the sub-query.  Delegate getting that model's
-             *                            data to the other model.
+             *   -                always: Do the sub-query.
              */
-            doSubQuery = args.length || (isSet ? !isQueryable(value) : !dontGetData);
+            doSubQuery = (args && args.length) || !(isSet && isQueryable(value));
             break;
-        } else if (isSet && args.length && !isRealObject(_data)) {
+        } else if (isSet && args && args.length && !isRealObject(_data)) {
             /**
              * When doing an implicit mkdir -p while setting a deep-nested property
              * for the first time, we peek at the next arg and create either an array
@@ -294,6 +276,7 @@ function query (opts, prop, value) {
 
         name_parts.push(arg);
         last_data = _data;
+        last_prop = arg;
 
         _data = _data[arg];
         if (events) {
@@ -303,7 +286,7 @@ function query (opts, prop, value) {
     }
 
     if (!isSet && recentLookups) {
-        id = uniqueId(self);
+        var id = uniqueId(self);
         if (!recentLookups[id]) {
             recentLookups[id] = {
                 obj: self,
@@ -338,22 +321,17 @@ function query (opts, prop, value) {
             }
         }
 
-        // XXX Kludge Alert.  In practice, gives many models a Name that otherwise
-        // wouldn't have one by using the first prop name it is set to.  Works for
-        // the typical T('modelName', model.make()) and T.push cases.
-        var nameProp;
-
-        last_data[setprop] = value;
-        if (TBONE_DEBUG) {
-            nameProp = prop;
-        }
+        last_data[last_prop] = value;
 
         if (TBONE_DEBUG && isQueryable(value)) {
+            // XXX Kludge Alert.  In practice, gives many models a Name that otherwise
+            // wouldn't have one by using the first prop name it is set to.  Works for
+            // the typical T('modelName', model.make()) and T.push cases.
             if (value.Name == null) {
-                value.Name = nameProp;
+                value.Name = prop;
             }
             if (value.scope && value.scope.Name == null) {
-                value.scope.Name = 'model_' + nameProp;
+                value.scope.Name = 'model_' + prop;
             }
         }
 

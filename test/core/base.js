@@ -229,6 +229,22 @@ exports['model increment'] = function(test) {
   test.done();
 };
 
+function lookup(obj, prop) {
+  prop = prop.replace('__self__', '');
+  if (prop) {
+    var parts = prop.split('.');
+    var arg;
+    while (arg = parts.shift()) {
+      if (obj != null) {
+        obj = obj[arg];
+      } else {
+        return undefined;
+      }
+    }
+  }
+  return obj;
+}
+
 function getWatcher(model, props) {
   var fireds = {};
   _.each(props, function(prop, i) {
@@ -241,47 +257,114 @@ function getWatcher(model, props) {
     });
   });
   fireds = {};
-  return function() {
-    var firedProps = _(props)
-      .map(function (prop, i) {
-        return fireds[prop] ? props[i] : null;
-      })
-      .filter(function (prop) {
-        return prop != null;
-      })
-      .value()
-      .join(',');
+  function getState() {
+    return _.reduce(props, function(agg, prop) {
+      agg[prop] = JSON.stringify(lookup(model.attributes, prop));
+      return agg;
+    }, {});
+  }
+  var lastState = getState();
+  return function(test, skipAsserts) {
+    T.drain();
+    var state = getState();
+    _.each(props, function(prop) {
+      var didFire = !!fireds[prop];
+      var shouldHaveFired = state[prop] !== lastState[prop];
+      var msg = 'prop [' + prop + '] ';
+      if (shouldHaveFired) {
+        msg += 'should fire due to change from ' + lastState[prop] + ' to ' + state[prop];
+      } else {
+        msg += 'should not fire because value remained ' + state[prop];
+      }
+      if (!skipAsserts) {
+        test.equal(shouldHaveFired, didFire, msg);
+      }
+    });
+    lastState = state;
     fireds = {};
-    return firedProps;
   };
 }
 
 exports['model array mutations'] = function(test) {
-    var me = tbone.make();
-    me('', []);
-    var fired = getWatcher(me, ['__self__', '0', '1', '2', 'length']);
-    me.push('', 'hi');
-    test.equal(fired(), '');
-    test.equal(me('0'), 'hi');
-    test.equal(me('1'), undefined);
-    test.equal(me('length'), 1);
-    T.drain();
-    test.equal(fired(), '__self__,0,length');
-    me.push('', 'world');
-    test.equal(fired(), '');
-    test.equal(me('1'), 'world');
-    test.equal(me('length'), 2);
-    T.drain();
-    test.equal(fired(), '__self__,1,length');
-    me.unshift('say');
-    test.equal(fired(), '');
-    test.equal(me('0'), 'say');
-    test.equal(me('1'), 'hi');
-    test.equal(me('2'), 'world');
-    test.equal(me('length'), 3);
-    T.drain();
-    test.equal(fired(), '__self__,0,1,2,length');
-    test.done();
+  var me = tbone.make();
+  me('', []);
+  var drainAndCheckTriggers = getWatcher(me, ['__self__', '0', '1', '2', 'length']);
+  me.push('', 'hi');
+  test.equal(me('0'), 'hi');
+  test.equal(me('1'), undefined);
+  test.equal(me('length'), 1);
+  drainAndCheckTriggers(test);
+  me.push('', 'world');
+  test.equal(me('1'), 'world');
+  test.equal(me('length'), 2);
+  T.drain();
+  drainAndCheckTriggers(test);
+  me.unshift('say');
+  test.equal(me('0'), 'say');
+  test.equal(me('1'), 'hi');
+  test.equal(me('2'), 'world');
+  test.equal(me('length'), 3);
+  T.drain();
+  drainAndCheckTriggers(test);
+  test.done();
+};
+
+exports['object mutations'] = function(test) {
+  var me = tbone.make();
+  var watchProps = [
+    '__self__',
+    'sub',
+    'sub.prop',
+    'sub.prop.42',
+    'sub.prop.erties',
+    'subprop',
+    'hello',
+    'other',
+    'length',
+    '0',
+    'hi',
+    'hi.bob',
+  ];
+  var drainAndCheckTriggers = getWatcher(me, watchProps);
+  me('', null);
+  drainAndCheckTriggers(test, true);
+
+  me('', {
+    sub: {
+      prop: 42,
+    },
+    hello: 'world',
+  });
+  drainAndCheckTriggers(test, true);
+
+  me('sub.prop', 43);
+  drainAndCheckTriggers(test);
+
+  me('hi', {sally: 'smith'});
+  drainAndCheckTriggers(test);
+
+  me('sub', {prop: 43});
+  drainAndCheckTriggers(test);
+
+  me('sub', 'prop');
+  drainAndCheckTriggers(test);
+
+  me('hi', {sally: 'smith'});
+  drainAndCheckTriggers(test);
+
+  me('0', 'not really an array');
+  drainAndCheckTriggers(test);
+
+  me('length', 7);
+  drainAndCheckTriggers(test);
+
+  me('__self__', undefined);
+  drainAndCheckTriggers(test, true);
+
+  me('__self__', null);
+  drainAndCheckTriggers(test, true);
+
+  test.done();
 };
 
 exports['unbind property on second pass'] = function(test) {
