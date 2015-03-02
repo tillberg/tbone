@@ -112,68 +112,6 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
     return changed;
 }
 
-/**
- * serialize the model in a semi-destructive way.  We don't really care
- * about the result as long as we can use it to test for anything that
- * gets changed behind TBone's back (i.e. by changing arrays/objects that
- * TBone has stored).
- *
- * This is only ever called if TBONE_DEBUG is true.
- */
-function serializeForComparison(model) {
-    if (opts.aliasCheck) {
-        try {
-            var attributes = model.attributes;
-            return JSON.stringify(attributes === undefined ? null : attributes, function (key, value) {
-                // If value is an array or object, screen its keys for queryables.
-                // Queryables track their own changes, so we don't care to
-                // check that they haven't changed without this model knowing.
-                if (isRealObject(value)) {
-                    // This is not a way to serialize correctly, but
-                    // we just want to show that the original structures
-                    // were the same, minus queryables.
-                    var localized = {};
-                    for (var k in value) {
-                        if (!isQueryable(value[k])) {
-                            localized[k] = value[k];
-                        }
-                    }
-                    return localized;
-                } else {
-                    return value;
-                }
-            });
-        } catch (e) {
-            if (TBONE_DEBUG) {
-                log(WARN, model, 'aliascheck', 'Failed to serialize attributes to JSON');
-            }
-        }
-    }
-    return "null";
-}
-
-function listDiffs(curr, prev, accum) {
-    var diffs = {};
-    if (isRealObject(prev) && isRealObject(curr)) {
-        var searched = {};
-        var objs = [prev, curr];
-        for (var i = 0; i < 2; i++) {
-            var obj = objs[i];
-            for (var k in obj) {
-                if (!searched[k]) {
-                    searched[k] = true;
-                    _.extend(diffs, listDiffs(prev[k], curr[k], accum.concat(k)));
-                }
-            }
-        }
-    } else {
-        if (prev !== curr) {
-            diffs[accum.join('.')] = prev + ' -> ' + curr;
-        }
-    }
-    return diffs;
-}
-
 function query (opts, prop, value) {
     var self = this;
     var isSet = arguments.length === 3;
@@ -212,24 +150,17 @@ function query (opts, prop, value) {
      * If this function was called with a bindable context (i.e. a Model or Collection),
      * then use that as the root data object instead of the global tbone.data.
      */
-    var last_data = self;
-    var last_prop = 'attributes';
+    var datas = [];
+    var props = [];
     var _data = self.attributes;
 
-    var name_parts = [];
     var arg;
     var doSubQuery;
     var parentCallbackContexts = {};
     var events = isSet && self._events.change;
 
     while (args) {
-        if (_data == null && !isSet) {
-            // Couldn't even get to the level of the value we're trying to look up.
-            // Concat the rest of args onto name_parts so that we record the full
-            // path in the event binding.
-            name_parts = name_parts.concat(args);
-            break;
-        } else if (_data !== self && isQueryable(_data)) {
+        if (isQueryable(_data)) {
             /**
              * To avoid duplicating the recentLookups code here, we set a flag and do
              * the sub-query after recording queries.
@@ -246,7 +177,14 @@ function query (opts, prop, value) {
              */
             doSubQuery = (args && args.length) || !(isSet && isQueryable(value));
             break;
-        } else if (isSet && args && args.length && !isRealObject(_data)) {
+        }
+
+        arg = args.shift();
+        if (!arg) {
+            break;
+        }
+
+        if (isSet && !isRealObject(_data)) {
             /**
              * When doing an implicit mkdir -p while setting a deep-nested property
              * for the first time, we peek at the next arg and create either an array
@@ -267,18 +205,14 @@ function query (opts, prop, value) {
              * If there are args remaining, then use the next arg to determine;
              * for a number, create an array - anything else, an object.
              */
-            _data = rgxNumber.exec(args[0]) ? [] : {};
-            self.query(name_parts.join('.'), _data);
+            _data = rgxNumber.exec(arg) ? [] : {};
+            self.query(props.join('.'), _data);
         }
 
-        arg = args.shift();
-        if (arg == null) { break; }
+        props.push(arg);
+        datas.push(_data);
 
-        name_parts.push(arg);
-        last_data = _data;
-        last_prop = arg;
-
-        _data = _data[arg];
+        _data = _data != null ? _data[arg] : undefined;
         if (events) {
             _.extend(parentCallbackContexts, events[QUERY_SELF] || {});
             events = events[arg];
@@ -293,7 +227,7 @@ function query (opts, prop, value) {
                 props: {}
             };
         }
-        recentLookups[id].props[name_parts.join('.')] = _data;
+        recentLookups[id].props[props.join('.')] = _data;
     }
 
     if (doSubQuery) {
@@ -301,27 +235,30 @@ function query (opts, prop, value) {
     }
 
     if (isSet) {
-        /**
-         * Only do prevJson comparisons when setting the root property.
-         * It's kind of complicated to detect and avoid aliasing issues when
-         * setting other properties directly.  But at least this helps detect
-         * aliasing for bound models.
-         */
-        if (TBONE_DEBUG && self.prevJson && !prop) {
-            var json = serializeForComparison(self);
-            if (json !== self.prevJson) {
-                var before = JSON.parse(self.prevJson);
-                var after = JSON.parse(json);
-                var diffs = listDiffs(after, before, []);
-                log(WARN, self, 'aliascheck', 'aliased change detected', {}, {
-                    before: before,
-                    after: after,
-                    diffs: diffs
-                });
+        var last = value;
+        // Recursively freeze the new value:
+        if (typeof value === 'object') {
+            var toFreeze = [value];
+            while (arg = toFreeze.pop()) { // jshint ignore:line
+                for (var k in arg) {
+                    var newObj = arg[k];
+                    // Guard against reference cycles causing infinite loops:
+                    if (typeof newObj === 'object' && newObj !== arg && toFreeze.indexOf(newObj) === -1) {
+                        toFreeze.push(newObj);
+                    }
+                }
+                Object.freeze(arg);
             }
         }
-
-        last_data[last_prop] = value;
+        // Walk up the object tree, cloning every object and patching in new
+        // trees that include the new value in them:
+        for (var i = datas.length - 1; i >= 0; i--) {
+            var clone = _.clone(datas[i]);
+            clone[props[i]] = last;
+            Object.freeze(clone);
+            last = clone;
+        }
+        self.attributes = last;
 
         if (TBONE_DEBUG && isQueryable(value)) {
             // XXX Kludge Alert.  In practice, gives many models a Name that otherwise
@@ -348,9 +285,6 @@ function query (opts, prop, value) {
             recursiveDiff(self, events, _data, value, false, 0, assumeChanged);
         }
 
-        if (TBONE_DEBUG) {
-            self.prevJson = prop ? null : serializeForComparison(self);
-        }
         return value;
     }
     return _data;
