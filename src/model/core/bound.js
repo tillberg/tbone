@@ -113,14 +113,14 @@ if (TBONE_DEBUG) {
         }
     };
 
-    boundModel.query = function (flag, prop) {
+    boundModel.query = function (opts, prop) {
         var args = _.toArray(arguments);
         if (!this.isMutable) {
             // This is a short version of the start of the `query` function, and it would be nice
             // to refactor that to incorporate this feature without a duplication of that logic.
             var isSet = arguments.length === 3;
-            if (typeof flag !== 'number') {
-                prop = flag;
+            if (typeof opts === 'string') {
+                prop = opts;
                 if (arguments.length === 2) {
                     isSet = true;
                 }
