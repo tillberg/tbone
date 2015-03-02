@@ -147,7 +147,6 @@ function runListOfFunctions (list) {
  * Drain the Scope execution queue, in priority order.
  */
 function drainQueue () {
-    runListOfFunctions(onBeforeSchedulerDrainQueue);
     var queueDrainStartTime = now();
     var scope;
     drainQueueTimer = null;
@@ -173,11 +172,7 @@ function drainQueue () {
         });
     }
     updateIsReady();
-    runListOfFunctions(onAfterSchedulerDrainQueue);
 }
-
-var onBeforeSchedulerDrainQueue = [];
-var onAfterSchedulerDrainQueue = [];
 
 /**
  * Drain to the tbone drainQueue, executing all queued Scopes immediately.
