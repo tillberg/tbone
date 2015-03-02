@@ -87,7 +87,7 @@ _.each(versions, function (version, name) {
   gulp.task(tn('compile'), [tn('concat')], function () {
     return gulp.src([jsFullPath])
       .pipe(concat(minJsFilename))
-      .pipe(replace('var TBONE_DEBUG = !!root.TBONE_DEBUG;\n', '\n'))
+      .pipe(replace(/var TBONE_DEBUG.+?\n/, '\n'))
       .pipe(sourcemaps.init())
       .pipe(uglify({
         compress: {
