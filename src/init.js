@@ -50,9 +50,6 @@ var PRIORITY_INIT_DELTA = 5000;
 
 function noop () { return undefined; }
 
-var isString = _.isString;
-var isBoolean = _.isBoolean;
-var isArray = _.isArray;
 var isDate = _.isDate;
 
 function isRealObject (x) {
@@ -133,8 +130,8 @@ function log () {
  * @param  {Object=}                                   data    Relevant data
  */
 function logconsole (level, context, event, msg, data, moredata) {
-    var name = isString(context) ? context : context.Name;
-    var type = (isString(context) ? context :
+    var name = _.isString(context) ? context : context.Name;
+    var type = (_.isString(context) ? context :
                 context.isModel ? 'model' :
                 context.isView ? 'view' :
                 context.isScope ? 'scope' : '??');
@@ -152,7 +149,7 @@ function logconsole (level, context, event, msg, data, moredata) {
          * If a msg is a string, render it as a template with data as the data.
          * If msg is not a string, just output the data below.
          */
-        var templated = isString(msg) ? _.template(msg)(data || {}) : '';
+        var templated = _.isString(msg) ? _.template(msg)(data || {}) : '';
         var includeColon = !!templated || !!msg;
         var frame = type === name ? type : (type + ' ' + name);
         var message = frame + ' / ' + event + (includeColon ? ': ' : '');

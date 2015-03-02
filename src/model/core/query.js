@@ -70,26 +70,17 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
             var objs = [prev, curr];
             for (i = 0; i < 2 && !changed; i++) {
                 var obj = objs[i];
-                if (isArray(obj)) {
-                    if (prev.length !== curr.length) {
-                        changed = true;
-                    }
-                    for (k = 0; k < obj.length && !changed; k++) {
-                        if (!searched[k]) {
-                            searched[k] = true;
-                            if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
-                                changed = true;
-                            }
-                        }
-                    }
-                } else {
-                    for (k in obj) {
-                        if (!searched[k]) {
-                            searched[k] = true;
-                            if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
-                                changed = true;
-                                break;
-                            }
+                // Detect changes in length; this catches the difference
+                // between [] and [undefined]:
+                if (prev.length !== curr.length) {
+                    changed = true;
+                }
+                for (k in obj) {
+                    if (!searched[k]) {
+                        searched[k] = true;
+                        if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
+                            changed = true;
+                            break;
                         }
                     }
                 }
