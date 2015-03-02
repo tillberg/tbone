@@ -230,62 +230,57 @@ exports['model increment'] = function(test) {
 };
 
 function getWatcher(model, props) {
-  var obj = {};
-  _.each(props, function(prop) {
+  var fireds = {};
+  _.each(props, function(prop, i) {
     T(function() {
       model(prop);
-
       // If you hit this and there's not a bug in TBone, you
-      // forgot to add a reset() call:
-      assert.notEqual(obj[prop], true, 'getWatchCounter obj.' + prop + ' should not be true');
-      obj[prop] = true;
+      // forgot to do an assertion between `T.drain`s:
+      assert.notEqual(fireds[prop], true, 'getWatchCounter fireds.' + prop + ' should not be true');
+      fireds[prop] = true;
     });
   });
-  obj.reset = function reset() {
-    _.each(props, function(prop) {
-      obj[prop] = false;
-    });
+  fireds = {};
+  return function() {
+    var firedProps = _(props)
+      .map(function (prop, i) {
+        return fireds[prop] ? props[i] : null;
+      })
+      .filter(function (prop) {
+        return prop != null;
+      })
+      .value()
+      .join(',');
+    fireds = {};
+    return firedProps;
   };
-  obj.reset();
-  return obj;
 }
 
 exports['model array mutations'] = function(test) {
     var me = tbone.make();
     me('', []);
-    var watch = getWatcher(me, ['__self__', '0', '1', '2', 'length']);
+    var fired = getWatcher(me, ['__self__', '0', '1', '2', 'length']);
     me.push('', 'hi');
+    test.equal(fired(), '');
     test.equal(me('0'), 'hi');
     test.equal(me('1'), undefined);
     test.equal(me('length'), 1);
     T.drain();
-    test.equal(watch.__self__, true);
-    test.equal(watch[0], true);
-    test.equal(watch[1], false);
-    test.equal(watch[2], false);
-    test.equal(watch.length, true);
-    watch.reset();
+    test.equal(fired(), '__self__,0,length');
     me.push('', 'world');
-    test.equal(watch.__self__, false);
+    test.equal(fired(), '');
     test.equal(me('1'), 'world');
     test.equal(me('length'), 2);
     T.drain();
-    test.equal(watch.__self__, true);
-    test.equal(watch[0], false);
-    test.equal(watch[1], true);
-    test.equal(watch.length, true);
-    watch.reset();
+    test.equal(fired(), '__self__,1,length');
     me.unshift('say');
+    test.equal(fired(), '');
     test.equal(me('0'), 'say');
     test.equal(me('1'), 'hi');
     test.equal(me('2'), 'world');
     test.equal(me('length'), 3);
     T.drain();
-    test.equal(watch.__self__, true);
-    test.equal(watch[0], true);
-    test.equal(watch[1], true);
-    test.equal(watch[2], true);
-    test.equal(watch.length, true);
+    test.equal(fired(), '__self__,0,1,2,length');
     test.done();
 };
 

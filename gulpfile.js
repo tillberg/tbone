@@ -120,7 +120,7 @@ _.each(versions, function (version, name) {
     sources.push('!' + path.join(tmpFolder, 'tbone.js'));
     return gulp.src(sources)
       .pipe(nodeunit({
-        reporter: 'minimal',
+        reporter: 'minimal_nocrash',
       }));
   });
 });
