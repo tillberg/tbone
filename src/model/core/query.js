@@ -106,7 +106,7 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
 function query (opts, prop, value) {
     var self = this;
     var isSet = arguments.length === 3;
-    if (typeof opts === 'string') {
+    if (typeof opts !== 'object') {
         /**
          * If no opts provided, shift the prop and value over.  We do it this way instead
          * of having opts last so that we can type-check opts and discern it from the
@@ -130,7 +130,7 @@ function query (opts, prop, value) {
      * Remove a trailing dot and __self__ references, if any, from the prop.
      **/
     var args;
-    prop = prop.replace('__self__', '');
+    prop = (prop || '').replace('__self__', '');
     if (prop) {
         args = prop.split('.');
     } else if (dontGetData) {
@@ -255,10 +255,10 @@ function query (opts, prop, value) {
             // XXX Kludge Alert.  In practice, gives many models a Name that otherwise
             // wouldn't have one by using the first prop name it is set to.  Works for
             // the typical T('modelName', model.make()) and T.push cases.
-            if (value.Name == null) {
+            if (!value.Name) {
                 value.Name = prop;
             }
-            if (value.scope && value.scope.Name == null) {
+            if (value.scope && !value.scope.Name) {
                 value.scope.Name = 'model_' + prop;
             }
         }

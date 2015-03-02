@@ -2,7 +2,7 @@
  * model/core/bound.js
  */
 
-var boundModel = models.bound = baseModel.extend({
+boundModel = models.bound = baseModel.extend({
     /**
      * Constructor function to initialize each new model instance.
      * @return {[type]}

@@ -23,6 +23,8 @@ function ensureArray(v) {
     return _.isArray(v) ? v : [];
 }
 
+var boundModel;
+
 /**
  * baseModel
  * @constructor
@@ -36,7 +38,7 @@ var baseModel = {
             if (typeof arg0 === 'function') {
                 return autorun(arg0, arg1);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
-                return instance.query(arg0, boundModel.extend({ state: arg1 }).make());
+                return instance.query(arg0, instance.bound(arg1));
             } else {
                 return (arguments.length === 0 ? instance.query() :
                         arguments.length === 1 ? instance.query(arg0) :
@@ -44,19 +46,21 @@ var baseModel = {
                                                  instance.query(arg0, arg1, arg2));
             }
         };
-        _.extend(instance, self, _.isFunction(opts) ? { state: opts } : opts || {});
+        _.extend(instance, self, _.isFunction(opts) ? {
+            state: opts,
+            Name: opts.name,
+        } : opts || {});
 
         // Initialize the model instance
-        delete instance.tboneid;
-        delete instance.attributes;
-        if (TBONE_DEBUG) {
-            delete instance.prevJson;
-        }
+        instance.tboneid = undefined;
+        instance.attributes = undefined;
         instance._events = {};
         instance._removeCallbacks = {};
         uniqueId(instance);
+        if (!instance.Name) {
+            instance.Name = 'unnamed-' + instance.tboneid;
+        }
         instance.initialize();
-
         return instance;
     },
     extend: function (subclass) {
@@ -154,6 +158,10 @@ var baseModel = {
 
     queryId: function () {
         return this.query(this.idAttribute);
+    },
+
+    bound: function(fn) {
+        return boundModel.make(fn);
     },
 
     toggle: function (prop) {
