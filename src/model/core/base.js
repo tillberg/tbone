@@ -264,11 +264,8 @@ if (typeof module !== 'undefined') {
 } else {
     // Browser-land
     var orig_tbone = root.tbone;
-    var orig_T = root.T;
     root.tbone = tbone;
-    root.T = tbone;
     tbone.noConflict = function () {
-        root.T = orig_T;
         root.tbone = orig_tbone;
     };
 }
