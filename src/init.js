@@ -34,7 +34,7 @@ var priority = {
     view: BASE_PRIORITY_VIEW,
     afterViews: BASE_PRIORITY_VIEW - 500,
     async: BASE_PRIORITY_MODEL_ASYNC,
-    lowest: 0
+    lowest: 0,
 };
 
 /**
@@ -167,7 +167,6 @@ function onLog (cb) {
     logCallbacks.push(cb);
 }
 
-var getListenersHook = [];
 /**
  * Returns the list of unique listeners attached to the specified model/view.
  * @param  {Queryable} self
@@ -175,9 +174,6 @@ var getListenersHook = [];
  */
 function getListeners (self) {
     var listeners = [];
-    for (var i = 0; i < getListenersHook.length; i++) {
-        getListenersHook[i](self, listeners);
-    }
     // TBone-native:
     if (isQueryable(self) && _.isFunction(self)) {
         var stack = [ self._events ];
