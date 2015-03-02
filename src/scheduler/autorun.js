@@ -24,9 +24,6 @@ function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, de
     if (priority == null) {
         priority = currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY;
     }
-    if (!name && currentExecutingScope) {
-        name = currentExecutingScope.Name + '+';
-    }
 
     // Create a new scope for this function
     var scope = new Scope(fn, context, priority, name, onExecuteCb, onExecuteContext);

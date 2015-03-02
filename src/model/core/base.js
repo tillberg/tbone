@@ -57,9 +57,6 @@ var baseModel = {
         instance._events = {};
         instance._removeCallbacks = {};
         uniqueId(instance);
-        if (!instance.Name) {
-            instance.Name = 'unnamed-' + instance.tboneid;
-        }
         instance.initialize();
         return instance;
     },
@@ -162,6 +159,17 @@ var baseModel = {
 
     bound: function(fn) {
         return boundModel.make(fn);
+    },
+
+    getName: function(obj) {
+        if (obj.Name) {
+            return obj.Name;
+        }
+        var parent = obj.context || obj.parentScope;
+        if (parent) {
+            return this.getName(parent) + '+';
+        }
+        return 'na-' + obj.tboneid;
     },
 
     toggle: function (prop) {
