@@ -72,8 +72,8 @@ var boundModel = models.bound = baseModel.extend({
     },
 
     _update: function () {
-        var flag = this.assumeChanged ? QUERY_ASSUME_CHANGED : QUERY_DEFAULT;
-        this.query(flag, QUERY_SELF, this.state());
+        var opts = this.assumeChanged ? {assumeChanged : true} : {};
+        this.query(opts, QUERY_SELF, this.state());
         if (TBONE_DEBUG) {
             log(VERBOSE, this, 'updated', this.attributes);
         }
@@ -121,7 +121,6 @@ if (TBONE_DEBUG) {
             var isSet = arguments.length === 3;
             if (typeof flag !== 'number') {
                 prop = flag;
-                flag = QUERY_DEFAULT;
                 if (arguments.length === 2) {
                     isSet = true;
                 }

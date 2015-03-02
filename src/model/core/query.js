@@ -1,24 +1,5 @@
 
 /**
- * Default flag; passing this has the same effect as omitting the flag parameter.
- * @const
- */
-var QUERY_DEFAULT = 0;
-
-/**
- * "Don't Get Data" - Special flag for query to return the model/collection instead
- * of calling toJSON() on it.
- * @const
- */
-var DONT_GET_DATA = 1;
-
-
-/**
- * @const
- */
-var QUERY_ASSUME_CHANGED = 10;
-
-/**
  * If you want to select the root, you can either pass __self__ or just an empty
  * string; __self__ is converted to an empty string and this "flag" is used to
  * check for whether we are selecting either.
@@ -193,18 +174,18 @@ function listDiffs(curr, prev, accum) {
     return diffs;
 }
 
-function query (flag, prop, value) {
+function query (opts, prop, value) {
     var self = this;
     var isSet = arguments.length === 3;
-    if (typeof flag !== 'number') {
+    if (typeof opts === 'string') {
         /**
-         * If no flag provided, shift the prop and value over.  We do it this way instead
-         * of having flag last so that we can type-check flag and discern optional flags
-         * from optional values.  And flag should only be used internally, anyway.
+         * If no opts provided, shift the prop and value over.  We do it this way instead
+         * of having opts last so that we can type-check opts and discern it from the
+         * prop.
          */
         value = prop;
-        prop = flag;
-        flag = QUERY_DEFAULT;
+        prop = opts;
+        opts = {};
         /**
          * Use arguments.length to switch to set mode in order to properly support
          * setting undefined.
@@ -213,8 +194,8 @@ function query (flag, prop, value) {
             isSet = true;
         }
     }
-    var dontGetData = flag === DONT_GET_DATA;
-    var assumeChanged = flag === QUERY_ASSUME_CHANGED;
+    var dontGetData = opts.dontGetData;
+    var assumeChanged = opts.assumeChanged;
 
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
@@ -245,7 +226,7 @@ function query (flag, prop, value) {
     var last_data = self;
 
     /**
-     * If DONT_GET_DATA, and there's no prop, then this is a self-reference.
+     * If dontGetData is set, and there's no prop, then this is a self-reference.
      */
     var _data = dontGetData && !prop ? self : self.attributes;
 
@@ -277,13 +258,13 @@ function query (flag, prop, value) {
              *                            other model (don't overwrite the model).  This
              *                            is kind of magical?
              * - and this is a get...
-             *   -    with DONT_GET_DATA: Don't do sub-query.  Get the model itself.
-             *   - without DONT_GET_DATA: Do the sub-query.  Delegate getting that model's
+             *   -      with dontGetData: Don't do sub-query.  Get the model itself.
+             *   -   without dontGetData: Do the sub-query.  Delegate getting that model's
              *                            data to the other model.
              */
             doSubQuery = args.length || (isSet ? !isQueryable(value) : !dontGetData);
             break;
-        } else if (isSet && !isRealObject(_data) && args.length) {
+        } else if (isSet && args.length && !isRealObject(_data)) {
             /**
              * When doing an implicit mkdir -p while setting a deep-nested property
              * for the first time, we peek at the next arg and create either an array
@@ -303,9 +284,6 @@ function query (flag, prop, value) {
              *
              * If there are args remaining, then use the next arg to determine;
              * for a number, create an array - anything else, an object.
-             *
-             * If there are no more args, then create an array if this is a list
-             * operation; otherwise, an object.
              */
             _data = rgxNumber.exec(args[0]) ? [] : {};
             self.query(name_parts.join('.'), _data);
@@ -336,7 +314,7 @@ function query (flag, prop, value) {
     }
 
     if (doSubQuery) {
-        return isSet ? _data.query(flag, args.join('.'), value) : _data.query(flag, args.join('.'));
+        return isSet ? _data.query(opts, args.join('.'), value) : _data.query(opts, args.join('.'));
     }
 
     if (isSet) {

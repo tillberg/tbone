@@ -138,7 +138,7 @@ var baseModel = {
     query: query,
 
     queryModel: function (prop) {
-        return this.query(DONT_GET_DATA, prop);
+        return this.query({dontGetData: true}, prop);
     },
 
     // query `prop` without binding to changes in its value

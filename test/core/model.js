@@ -226,9 +226,9 @@ exports['self-reference'] = function(test) {
   var me = base.make();
   me.query('prop', 42);
   test.equal(me.attributes.prop, 42);
-  test.ok(me.query(1, ''));
-  test.ok(me.query(1, '').attributes);
-  test.equal(me.query(1, '').attributes.prop, 42);
+  test.ok(me.query({dontGetData: true}, ''));
+  test.ok(me.query({dontGetData: true}, '').attributes);
+  test.equal(me.query({dontGetData: true}, '').attributes.prop, 42);
   test.done();
 };
 
