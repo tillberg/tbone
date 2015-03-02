@@ -190,4 +190,9 @@ if (TBONE_DEBUG) {
     tbone.freeze = function () {
         frozen = true;
     };
+
+    tbone.unfreeze = function() {
+        frozen = false;
+        drain();
+    };
 }
