@@ -54,10 +54,18 @@ var versions = {
     files: wrapFiles(coreFiles),
     suffix: '_core',
   },
+  core_debug: {
+    files: wrapFiles(coreFiles),
+    suffix: '_core_debug',
+  },
   main: {
     files: wrapFiles(extFiles),
     suffix: '',
   },
+  main_debug: {
+    files: wrapFiles(extFiles),
+    suffix: '_debug',
+  }
 };
 
 _.each(versions, function (version, name) {
@@ -85,6 +93,7 @@ _.each(versions, function (version, name) {
   });
 
   gulp.task(tn('compile'), [tn('concat')], function () {
+    var isDebug = !!name.match(/debug/);
     return gulp.src([jsFullPath])
       .pipe(concat(minJsFilename))
       .pipe(replace(/var TBONE_DEBUG.+?\n/, '\n'))
@@ -92,7 +101,7 @@ _.each(versions, function (version, name) {
       .pipe(uglify({
         compress: {
           unsafe: true,
-          global_defs: { TBONE_DEBUG: false },
+          global_defs: { TBONE_DEBUG: isDebug },
         }
       }))
       .pipe(sourcemaps.write('./'))
@@ -114,7 +123,7 @@ _.each(versions, function (version, name) {
     fs.copySync('test/', tmpFolder);
     fs.copySync(jsFullPath, path.join(tmpFolder, 'tbone.js'));
     var sources = [tmpFolder + '/core/**/*.js'];
-    if (name === 'main') {
+    if (name.match(/^main/)) {
       sources.push(tmpFolder + '/ext/**/*.js');
     }
     sources.push('!' + path.join(tmpFolder, 'tbone.js'));
