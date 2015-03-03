@@ -129,7 +129,7 @@ function query (opts, prop, value) {
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
      **/
-    var args;
+    var args = [];
     prop = (prop || '').replace('__self__', '');
     if (prop) {
         args = prop.split('.');
@@ -150,7 +150,7 @@ function query (opts, prop, value) {
     var parentCallbackContexts = {};
     var events = isSet && self._events.change;
 
-    while (args) {
+    while (true) {
         if (isQueryable(_data)) {
             /**
              * To avoid duplicating the recentLookups code here, we set a flag and do

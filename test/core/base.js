@@ -458,6 +458,15 @@ exports['create bound model inside T-function'] = function(test) {
   test.done();
 };
 
+exports['model in a model'] = function(test) {
+  var a = T.make();
+  var b = T.make();
+  a('', b);
+  b('', 5);
+  test.equal(a(''), 5);
+  test.done();
+}
+
 exports['model destroy'] = function(test) {
   var me = tbone.make();
   var val;
