@@ -5,7 +5,10 @@
 collections.localStorage = baseCollection.extend({
     initialize: function () {
         var self = this;
-        var stored = JSON.parse(localStorage[self.key] || "null");
+        var stored;
+        try {
+            stored = JSON.parse(localStorage[self.key]);
+        } catch (e) {}
         _.each(stored || [], function (modelData) {
             self.add(modelData);
         });

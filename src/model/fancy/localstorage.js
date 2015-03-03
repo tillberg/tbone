@@ -16,7 +16,11 @@ models.localStorage = baseModel.extend({
 
     initialize: function () {
         var self = this;
-        self.query('', JSON.parse(localStorage[self.key] || "null"));
+        var data;
+        try {
+            data = JSON.parse(localStorage[self.key]);
+        } catch (e) {}
+        self.query('', data);
         autorun(function () {
             localStorage[self.key] = JSON.stringify(self.query(''));
         });
