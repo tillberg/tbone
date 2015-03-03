@@ -4,4 +4,4 @@ try{
     root.dispatchEvent(new root.CustomEvent('tbone_loaded'));
 } catch(e) {}
 
-}());
+}(this));
