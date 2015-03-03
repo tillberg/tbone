@@ -187,7 +187,7 @@ function query () {
              * property via query() so as to fire change events appropriately.
              */
             if (TBONE_DEBUG && _data != null) {
-                log(WARN, this, 'mkdir', 'while writing <%=prop%>, had to overwrite ' +
+                log(WARN, self, 'mkdir', 'while writing <%=prop%>, had to overwrite ' +
                     'primitive value <%=primitive%> at <%=partial%>', {
                         prop: prop,
                         primitive: _data,
@@ -230,30 +230,38 @@ function query () {
     }
 
     if (isSet) {
-        var last = value;
-        // Recursively freeze the new value:
-        if (typeof value === 'object') {
-            var toFreeze = [value];
-            while (arg = toFreeze.pop()) { // jshint ignore:line
-                for (var k in arg) {
-                    var newObj = arg[k];
-                    // Guard against reference cycles causing infinite loops:
-                    if (typeof newObj === 'object' && newObj !== arg && toFreeze.indexOf(newObj) === -1) {
-                        toFreeze.push(newObj);
+        if (TBONE_DEBUG && !self.disableFreeze) {
+            // Recursively freeze the new value:
+            if (typeof value === 'object') {
+                var toFreeze = [value];
+                while (arg = toFreeze.pop()) { // jshint ignore:line
+                    for (var k in arg) {
+                        var newObj = arg[k];
+                        // Guard against reference cycles causing infinite loops:
+                        if (typeof newObj === 'object' && newObj !== arg && toFreeze.indexOf(newObj) === -1) {
+                            toFreeze.push(newObj);
+                        }
                     }
+                    Object.freeze(arg);
                 }
-                Object.freeze(arg);
+            }
+            // Walk up the object tree, cloning every object and patching in new
+            // trees that include the new value in them:
+            var last = value;
+            for (var i = datas.length - 1; i >= 0; i--) {
+                var clone = _.clone(datas[i]);
+                clone[props[i]] = last;
+                Object.freeze(clone);
+                last = clone;
+            }
+            self.attributes = last;
+        } else {
+            if (datas.length) {
+                datas[datas.length - 1][props[props.length - 1]] = value;
+            } else {
+                self.attributes = value;
             }
         }
-        // Walk up the object tree, cloning every object and patching in new
-        // trees that include the new value in them:
-        for (var i = datas.length - 1; i >= 0; i--) {
-            var clone = _.clone(datas[i]);
-            clone[props[i]] = last;
-            Object.freeze(clone);
-            last = clone;
-        }
-        self.attributes = last;
 
         if (TBONE_DEBUG && isQueryable(value)) {
             // XXX Kludge Alert.  In practice, gives many models a Name that otherwise

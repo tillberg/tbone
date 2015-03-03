@@ -1,8 +1,6 @@
 var _ = root._ || require('lodash');
 var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? root.DEBUG : root.TBONE_DEBUG);
 
-var opts = TBONE_DEBUG ? { aliasCheck: false } : {};
-
 /**
  * Scheduling priority constants
  *

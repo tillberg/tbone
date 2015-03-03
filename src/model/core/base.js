@@ -270,7 +270,6 @@ if (TBONE_DEBUG) {
     tbone.watchLog = watchLog;
     tbone.getListeners = getListeners;
     tbone.onLog = onLog;
-    tbone.opts = opts;
     onLog(logconsole);
 }
 
