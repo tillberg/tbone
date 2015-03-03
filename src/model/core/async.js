@@ -32,5 +32,5 @@ var asyncModel = models.async = boundModel.extend({
         }
     },
 
-    scopePriority: BASE_PRIORITY_MODEL_ASYNC
+    priority: BASE_PRIORITY_MODEL_ASYNC
 });

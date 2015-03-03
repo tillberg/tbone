@@ -103,9 +103,13 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
     return changed;
 }
 
-function query (opts, prop, value) {
+function query () {
     var self = this;
-    var isSet = arguments.length === 3;
+    var myargs = arguments;
+    var opts = myargs[0];
+    var prop = myargs[1];
+    var value = myargs[2];
+    var isSet = myargs.length === 3;
     if (typeof opts !== 'object') {
         /**
          * If no opts provided, shift the prop and value over.  We do it this way instead
@@ -119,7 +123,7 @@ function query (opts, prop, value) {
          * Use arguments.length to switch to set mode in order to properly support
          * setting undefined.
          */
-        if (arguments.length === 2) {
+        if (myargs.length === 2) {
             isSet = true;
         }
     }
@@ -268,9 +272,9 @@ function query (opts, prop, value) {
             // callbacks for things we searched for.  Note that "parent" only includes
             // things from this model; change events don't bubble out to parent models.
             if (recursiveDiff(self, events, _data, value, true, 0, assumeChanged)) {
-                for (var contextId in parentCallbackContexts) {
-                    parentCallbackContexts[contextId].trigger.call(parentCallbackContexts[contextId]);
-                }
+                _.each(parentCallbackContexts, function(context) {
+                    context.trigger();
+                });
             }
         } else {
             recursiveDiff(self, events, _data, value, false, 0, assumeChanged);

@@ -14,12 +14,12 @@ boundModel = models.bound = baseModel.extend({
          * is loaded but before anything else gets updated.  We can't do that with setTimeout
          * or _.defer because that could possibly fire after drainQueue.
          */
-        self.scope = autorun(self.update, self.scopePriority, self,
+        self.scope = autorun(self.update, self.priority, self,
                              self.Name && ('model_' + self.Name),
                              self.onScopeExecute, self, true);
     },
 
-    scopePriority: BASE_PRIORITY_MODEL_SYNC,
+    priority: BASE_PRIORITY_MODEL_SYNC,
 
     /**
      * Wake up this model as well as (recursively) any models that depend on
