@@ -103,6 +103,13 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
     return changed;
 }
 
+function recursivelyFreeze(obj) {
+    if (typeof obj === 'object' && obj !== null && !Object.isFrozen(obj)) {
+        Object.freeze(obj);
+        _.each(obj, recursivelyFreeze);
+    }
+}
+
 function query () {
     var self = this;
     var myargs = arguments;
@@ -231,20 +238,7 @@ function query () {
 
     if (isSet) {
         if (TBONE_DEBUG && !self.disableFreeze) {
-            // Recursively freeze the new value:
-            if (typeof value === 'object') {
-                var toFreeze = [value];
-                while (arg = toFreeze.pop()) { // jshint ignore:line
-                    for (var k in arg) {
-                        var newObj = arg[k];
-                        // Guard against reference cycles causing infinite loops:
-                        if (typeof newObj === 'object' && newObj !== arg && toFreeze.indexOf(newObj) === -1) {
-                            toFreeze.push(newObj);
-                        }
-                    }
-                    Object.freeze(arg);
-                }
-            }
+            recursivelyFreeze(value);
             // Walk up the object tree, cloning every object and patching in new
             // trees that include the new value in them:
             var last = value;
