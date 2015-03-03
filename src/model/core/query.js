@@ -267,19 +267,12 @@ function query () {
             }
         }
 
-        if (!_.isEmpty(parentCallbackContexts)) {
-            // If there are any changes at all, then we need to fire one or more
-            // callbacks for things we searched for.  Note that "parent" only includes
-            // things from this model; change events don't bubble out to parent models.
-            if (recursiveDiff(self, events, _data, value, true, 0, assumeChanged)) {
-                _.each(parentCallbackContexts, function(context) {
-                    context.trigger();
-                });
-            }
-        } else {
-            recursiveDiff(self, events, _data, value, false, 0, assumeChanged);
+        var searchExhaustively = !_.isEmpty(parentCallbackContexts);
+        if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, assumeChanged)) {
+            _.each(parentCallbackContexts, function(context) {
+                context.trigger();
+            });
         }
-
         return value;
     }
     return _data;
