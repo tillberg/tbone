@@ -36,7 +36,6 @@ models.ajax = asyncModel.extend({
                  */
                 if (dataCallback(self.parse(str))) {
                     self.postFetch();
-                    self.trigger('fetch');
                     if (TBONE_DEBUG) {
                         log(INFO, self, 'updated', self.attributes);
                     }

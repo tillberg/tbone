@@ -79,10 +79,10 @@ _.extend(Scope.prototype,
                     var obj = propMap.obj;
                     var props = propMap.props;
                     if (props['']) {
-                        obj.on('change', self.trigger, self);
+                        obj.on('', self);
                     } else {
                         for (var prop in props) {
-                            obj.on('change:' + prop, self.trigger, self);
+                            obj.on(prop, self);
                         }
                     }
                 });
@@ -128,7 +128,7 @@ _.extend(Scope.prototype,
             var obj = propMap.obj;
             var props = propMap.props;
             for (var prop in props) {
-                obj.off('change:' + prop, null, self);
+                obj.off(prop, self);
             }
         }
     },
@@ -136,7 +136,7 @@ _.extend(Scope.prototype,
     /**
      * Destroy any execution scopes that were creation during execution of this function.
      */
-    destroySubScopes: function scipeDestroySubScopes() {
+    destroySubScopes: function scopeDestroySubScopes() {
         var self = this;
         for (var i = 0; i < self.subScopes.length; i++) {
             self.subScopes[i].destroy();

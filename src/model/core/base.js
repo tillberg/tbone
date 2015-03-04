@@ -2,25 +2,13 @@
  * model/core/base.js
  */
 
-/**
- * @type {RegExp}
- * @const
- */
-var rgxEventSplitter = /[.]+/;
-
-/**
- * Split name parameter into components (used in .on() and .trigger())
- *
- * For compatibility with backbone, we support using the colon as the
- * separator between "change" and the remainder of the terms, but only
- * dots after that.
- */
-function splitName (name) {
-    return name.replace(/^change:/, 'change.').split(rgxEventSplitter);
-}
-
 function ensureArray(v) {
     return _.isArray(v) ? v : [];
+}
+
+function splitQueryString(_prop) {
+    var prop = _prop ? _prop.replace('__self__', '') : '';
+    return prop ? prop.split('.') : [];
 }
 
 var boundModel;
@@ -64,9 +52,8 @@ var baseModel = {
         return _.extend({}, this, subclass);
     },
     initialize: noop,
-    on: function on(name, callback, context) {
-        // XXX callback is not supported.  assumes context.trigger is the callback
-        var parts = splitName(name);
+    on: function on(name, context) {
+        var parts = splitQueryString(name);
         var events = this._events;
         var arg;
 
@@ -92,10 +79,9 @@ var baseModel = {
          */
         this.wake({});
     },
-    off: function off(name, callback, context) {
-        // XXX only supports use with both name & context.
+    off: function off(name, context) {
         // XXX doesn't clean up when callbacks list goes to zero length
-        var parts = splitName(name);
+        var parts = splitQueryString(name);
         var events = this._events;
         var arg;
 
@@ -117,7 +103,7 @@ var baseModel = {
     trigger: function trigger(name) {
         var self = this;
         var events = self._events;
-        var parts = splitName(name);
+        var parts = splitQueryString(name);
         var arg;
         while ((arg = parts.shift()) != null) {
             if (arg === '') {

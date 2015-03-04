@@ -134,19 +134,15 @@ function query () {
             isSet = true;
         }
     }
-    var dontGetData = opts.dontGetData;
-    var assumeChanged = opts.assumeChanged;
+
+    if (!prop && opts.dontGetData) {
+        return self;
+    }
 
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
      **/
-    var args = [];
-    prop = (prop || '').replace('__self__', '');
-    if (prop) {
-        args = prop.split('.');
-    } else if (dontGetData) {
-        return self;
-    }
+    var args = splitQueryString(prop);
 
     /**
      * If this function was called with a bindable context (i.e. a Model or Collection),
@@ -159,7 +155,7 @@ function query () {
     var arg;
     var doSubQuery;
     var parentCallbackContexts = {};
-    var events = isSet && self._events.change;
+    var events = isSet && self._events;
 
     while (true) {
         if (isQueryable(_data)) {
@@ -270,7 +266,7 @@ function query () {
         }
 
         var searchExhaustively = !_.isEmpty(parentCallbackContexts);
-        if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, assumeChanged)) {
+        if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, opts.assumeChanged)) {
             _.each(parentCallbackContexts, function contextTriggerIter(context) {
                 context.trigger();
             });
