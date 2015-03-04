@@ -5,7 +5,7 @@ if (React) {
     var IS_DID_UPDATE = 3;
 
     var origCreateClass = React.createClass;
-    React.createClass = function (origOpts) {
+    React.createClass = function tboneReactClassWrapper(origOpts) {
         function myAutorun (fn, inst, name) {
             var tscope = autorun(fn, tbone.priority.view, inst, 'react_' + inst.constructor.displayName + ':' + name, null, null, true);
             tscope.isView = true;
@@ -13,7 +13,7 @@ if (React) {
         }
 
         function cleanUpTScopes(inst, key) {
-            _.each(inst.__tbone__[key], function (tscope) {
+            _.each(inst.__tbone__[key], function tboneReactDestroyScopes(tscope) {
                 tscope.destroy();
             });
             inst.__tbone__[key] = [];
@@ -34,7 +34,7 @@ if (React) {
             }
         }
         function getWrapperFn (origFn, special) {
-            return function () {
+            return function tboneReactWrapper() {
                 var self = this;
                 var args = arguments;
                 if (special === IS_WILL_UPDATE) {
@@ -52,7 +52,7 @@ if (React) {
                         var firstRun = true;
                         var name = isPostRender ? 'DidUpdate' :
                                    special ? 'WillUpdate' : 'Render';
-                        self.__tbone__.render.push(myAutorun(function () {
+                        self.__tbone__.render.push(myAutorun(function tboneReactAutorunWrapper() {
                             if (firstRun) {
                                 rval = origFn.apply(self, args);
                                 // console.log('render', self._currentElement.type.displayName);
@@ -71,7 +71,7 @@ if (React) {
             };
         }
         var opts = _.extend({}, origOpts, {
-            componentWillMount: function () {
+            componentWillMount: function tboneComponentWillMountWrapper() {
                 this.__tbone__ = {
                     mount: [],
                     render: [],
@@ -81,7 +81,7 @@ if (React) {
                     return origFn.apply(this, arguments);
                 }
             },
-            componentWillUnmount: function () {
+            componentWillUnmount: function tboneComponentWillUnmountWrapper() {
                 cleanUpTScopes(this, 'mount');
                 cleanUpRenderTScopes(this);
                 if (origOpts.componentWillUnmount) {

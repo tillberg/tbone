@@ -136,7 +136,7 @@ function logconsole (level, context, event, msg, data, moredata) {
                              logLevels.event[event] || 0,
                              logLevels.type[type] || 0) || logLevels.base;
     if (event === 'lookups') {
-        msg = _.reduce(msg, function(memo, map, id) {
+        msg = _.reduce(msg, function logconsoleReduce(memo, map, id) {
             memo[map.obj.Name || ('tboneid-' + map.obj.tboneid)] = map;
             return memo;
         }, {});

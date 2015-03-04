@@ -4,10 +4,10 @@
 
 models.ajax = asyncModel.extend({
 
-    state: function (dataCallback) {
+    state: function asyncState(dataCallback) {
         var self = this;
         var myXhr;
-        function complete () {
+        function complete() {
             removeInFlight(self);
             if (myXhr) {
                 myXhr = null;
@@ -28,7 +28,7 @@ models.ajax = asyncModel.extend({
             self.fetchedUrl = url;
             self.preFetch();
             addInFlight(self);
-            var onData = function (str) {
+            var onData = function asyncStateOnData(str) {
                 /**
                  * dataCallback returns true if this update was accepted (i.e.
                  * is of the current async update generation).  So only fire
@@ -47,17 +47,17 @@ models.ajax = asyncModel.extend({
                 type: 'GET',
                 dataType: self.dataType,
                 success: onData,
-                error: function (xhr) {
+                error: function error(xhr) {
                     onData(xhr && xhr.responseText);
                 },
                 complete: complete,
-                beforeSend: function (xhr) {
+                beforeSend: function beforeSend(xhr) {
                     myXhr = xhr;
                 },
             });
         }
         return {
-            onAbort: function () {
+            onAbort: function onAbort() {
                 // If we have an active XHR in flight, we should abort
                 // it because we don't want that anymore.
                 if (TBONE_DEBUG) {
@@ -80,11 +80,11 @@ models.ajax = asyncModel.extend({
      * By default, async models will use $.ajax to fetch data; override this
      * with something else if desired.
      */
-    ajax: function () {
+    ajax: function ajax() {
         return $.ajax.apply($, arguments);
     },
 
-    preFetch: function () {
+    preFetch: function preFetch() {
         this.unset();
     },
 

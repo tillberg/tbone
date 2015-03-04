@@ -31,7 +31,7 @@ var boundModel;
  */
 var baseModel = {
     isModel: true,
-    make: function (opts) {
+    make: function make(opts) {
         var self = this;
         // Each TBone model/collection is an augmented copy of this TBoneModel function
         var instance = function TBoneModel (arg0, arg1, arg2) {
@@ -60,11 +60,11 @@ var baseModel = {
         instance.initialize();
         return instance;
     },
-    extend: function (subclass) {
+    extend: function extend(subclass) {
         return _.extend({}, this, subclass);
     },
     initialize: noop,
-    on: function (name, callback, context) {
+    on: function on(name, callback, context) {
         // XXX callback is not supported.  assumes context.trigger is the callback
         var parts = splitName(name);
         var events = this._events;
@@ -92,7 +92,7 @@ var baseModel = {
          */
         this.wake({});
     },
-    off: function (name, callback, context) {
+    off: function off(name, callback, context) {
         // XXX only supports use with both name & context.
         // XXX doesn't clean up when callbacks list goes to zero length
         var parts = splitName(name);
@@ -114,7 +114,7 @@ var baseModel = {
             delete contexts[contextId];
         }
     },
-    trigger: function (name) {
+    trigger: function trigger(name) {
         var self = this;
         var events = self._events;
         var parts = splitName(name);
@@ -138,12 +138,12 @@ var baseModel = {
 
     query: query,
 
-    queryModel: function (prop) {
+    queryModel: function queryModel(prop) {
         return this.query({dontGetData: true}, prop);
     },
 
     // query `prop` without binding to changes in its value
-    readSilent: function (prop) {
+    readSilent: function readSilent(prop) {
         var tmp = recentLookups;
         recentLookups = null;
         var rval = this.query(prop);
@@ -153,15 +153,15 @@ var baseModel = {
 
     idAttribute: 'id',
 
-    queryId: function () {
+    queryId: function queryId() {
         return this.query(this.idAttribute);
     },
 
-    bound: function(fn) {
+    bound: function bound(fn) {
         return boundModel.make(fn);
     },
 
-    getName: function(obj) {
+    getName: function getName(obj) {
         if (obj.Name) {
             return obj.Name;
         }
@@ -172,11 +172,11 @@ var baseModel = {
         return 'na-' + obj.tboneid;
     },
 
-    toggle: function (prop) {
+    toggle: function toggle(prop) {
         this.query(prop, !this.readSilent(prop));
     },
 
-    push: function (prop, value) {
+    push: function push(prop, value) {
         if (arguments.length === 1) {
             value = prop;
             prop = '';
@@ -184,7 +184,7 @@ var baseModel = {
         return this.query(prop, ensureArray(this.readSilent(prop)).concat([value]));
     },
 
-    unshift: function (prop, value) {
+    unshift: function unshift(prop, value) {
         if (arguments.length === 1) {
             value = prop;
             prop = '';
@@ -192,15 +192,15 @@ var baseModel = {
         return this.query(prop, [value].concat(ensureArray(this.readSilent(prop))));
     },
 
-    removeFirst: function (prop) {
+    removeFirst: function removeFirst(prop) {
         return this.query(prop, ensureArray(this.readSilent(prop)).slice(1));
     },
 
-    removeLast: function (prop) {
+    removeLast: function removeLast(prop) {
         return this.query(prop, ensureArray(this.readSilent(prop)).slice(0, -1));
     },
 
-    unset: function (prop) {
+    unset: function unset(prop) {
         if (prop) {
             var parts = prop.split('.');
             var child = parts.pop();
@@ -211,13 +211,13 @@ var baseModel = {
         }
     },
 
-    increment: function (prop, value) {
+    increment: function increment(prop, value) {
         var curr = this.readSilent(prop);
         var newval = (curr || 0) + (value != null ? value : 1);
         this.query(prop, newval);
     },
 
-    toJSON: function () {
+    toJSON: function toJSON() {
         return this.attributes;
     },
 
@@ -225,7 +225,7 @@ var baseModel = {
 };
 
 if (TBONE_DEBUG) {
-    baseModel.find = function (obj) {
+    baseModel.find = function find(obj) {
         function recurse(o, depth) {
             if (depth > 10) {
                 return [];
@@ -280,7 +280,7 @@ if (typeof module !== 'undefined') {
     // Browser-land
     var orig_tbone = root.tbone;
     root.tbone = tbone;
-    tbone.noConflict = function () {
+    tbone.noConflict = function noConflict() {
         root.tbone = orig_tbone;
     };
 }

@@ -9,7 +9,7 @@ var baseCollection = baseModel.extend({
     isModel: true,
     model: baseModel,
 
-    add: function (data) {
+    add: function add(data) {
         var self = this;
         var child;
         var lastId;
@@ -33,7 +33,7 @@ var baseCollection = baseModel.extend({
          * included when iterating over the collection.
          */
         var removed;
-        var update = function () {
+        function update() {
             if (lastId != null) {
                 self.unset(lastId);
                 self.trigger('change:' + lastId);
@@ -47,16 +47,16 @@ var baseCollection = baseModel.extend({
                 id = '#' + id;
                 self.query(id, child);
                 self.trigger('change:' + id);
-                self._removeCallbacks[id] = remove;
+                self._removeCallbacks[id] = removeCallback;
                 lastId = id;
             }
-        };
+        }
         self.increment('size');
-        var remove = function () {
+        function removeCallback() {
             self.increment('size', -1);
             removed = true;
             update();
-        };
+        }
         autorun(update);
     },
 
@@ -69,7 +69,7 @@ var baseCollection = baseModel.extend({
     /**
      * Remove a model by ID or by model instance.
      */
-    remove: function (modelOrId) {
+    remove: function remove(modelOrId) {
         modelOrId = '#' + (isQueryable(modelOrId) ? modelOrId.queryId() : modelOrId);
         if (this._removeCallbacks[modelOrId]) {
             this._removeCallbacks[modelOrId]();

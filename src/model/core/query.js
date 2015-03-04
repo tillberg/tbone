@@ -271,7 +271,7 @@ function query () {
 
         var searchExhaustively = !_.isEmpty(parentCallbackContexts);
         if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, assumeChanged)) {
-            _.each(parentCallbackContexts, function(context) {
+            _.each(parentCallbackContexts, function contextTriggerIter(context) {
                 context.trigger();
             });
         }

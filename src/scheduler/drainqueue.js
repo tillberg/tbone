@@ -48,7 +48,7 @@ function pop() {
      * everyone, hopefully.
      */
     if (dirty) {
-        schedulerQueue.sort(function (a, b) {
+        schedulerQueue.sort(function schedulerSortFn(a, b) {
             /**
              * TODO for sync models, use dependency graph in addition to priority
              * to order execution in such a way as to avoid immediate re-execution.
@@ -89,14 +89,14 @@ function removeInFlight (model) {
     }
 }
 
-tbone.isReady = function () {
+tbone.isReady = function isReady() {
     return metrics.query('isReady');
 };
 
 var isReadyTimer;
 function updateIsReady () {
     if (!isReadyTimer) {
-        isReadyTimer = setTimeout(function () {
+        isReadyTimer = setTimeout(function _updateIsReady() {
             var numInFlight = _.keys(inflight).length;
             metrics.query('isReady', _.isEmpty(inflight) && !drainQueueTimer);
             metrics.query('ajax.modelsInFlight', _.clone(inflight));
@@ -139,14 +139,10 @@ function queueExec (scope) {
 
 var frozen = false;
 
-function runListOfFunctions (list) {
-    _.each(list, function (cb) { cb(); });
-}
-
 /**
  * Drain the Scope execution queue, in priority order.
  */
-function drainQueue () {
+function drainQueue() {
     var queueDrainStartTime = now();
     var scope;
     drainQueueTimer = null;
@@ -179,7 +175,7 @@ function drainQueue () {
  * This is useful both for testing and MAYBE also for optimizing responsiveness by
  * draining at the end of a keyboard / mouse event handler.
  */
-var drain = tbone.drain = function () {
+var drain = tbone.drain = function tboneDrain() {
     if (drainQueueTimer) {
         clearTimeout(drainQueueTimer);
     }
@@ -187,11 +183,11 @@ var drain = tbone.drain = function () {
 };
 
 if (TBONE_DEBUG) {
-    tbone.freeze = function () {
+    tbone.freeze = function freeze() {
         frozen = true;
     };
 
-    tbone.unfreeze = function() {
+    tbone.unfreeze = function unfreeze() {
         frozen = false;
         drain();
     };

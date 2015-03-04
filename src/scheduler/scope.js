@@ -40,7 +40,7 @@ _.extend(Scope.prototype,
     /**
      * Queue function execution in the scheduler
      */
-    trigger: function () {
+    trigger: function scopeTrigger() {
         queueExec(this);
     },
 
@@ -50,7 +50,7 @@ _.extend(Scope.prototype,
      * those values change.  Each execution re-tracks and re-binds all data sources; the
      * actual sources bound on each execution may differ depending on what is looked up.
      */
-    execute: function () {
+    execute: function scopeExecute() {
         var self = this;
         var myTimer;
         if (!self.destroyed) {
@@ -75,7 +75,7 @@ _.extend(Scope.prototype,
             try {
                 self.fn.call(self.context);
             } finally {
-                _.each(recentLookups, function (propMap) {
+                _.each(recentLookups, function executeRecentLookupsIter(propMap) {
                     var obj = propMap.obj;
                     var props = propMap.props;
                     if (props['']) {
@@ -120,7 +120,7 @@ _.extend(Scope.prototype,
      * For each model which we've bound, tell it to unbind all events where this
      * scope is the context of the binding.
      */
-    unbindAll: function () {
+    unbindAll: function scopeUnbindAll() {
         var self = this;
         var lookups = self.lookups || {};
         for (var objId in lookups) {
@@ -136,7 +136,7 @@ _.extend(Scope.prototype,
     /**
      * Destroy any execution scopes that were creation during execution of this function.
      */
-    destroySubScopes: function () {
+    destroySubScopes: function scipeDestroySubScopes() {
         var self = this;
         for (var i = 0; i < self.subScopes.length; i++) {
             self.subScopes[i].destroy();
@@ -148,7 +148,7 @@ _.extend(Scope.prototype,
      * Destroy this scope.  Which means to unbind everything, destroy scopes recursively,
      * and ignore any execute calls which may already be queued in the scheduler.
      */
-    destroy: function () {
+    destroy: function scopeDestroy() {
         var self = this;
         self.destroyed = true;
         delete self.parentScope;

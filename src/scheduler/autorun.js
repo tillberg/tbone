@@ -45,7 +45,7 @@ function autorun (fn, priority, context, name, onExecuteCb, onExecuteContext, de
 
 function runOnlyOnce (fn) {
     var alreadyRun;
-    autorun(function () {
+    autorun(function runOnlyOnceWrapper() {
         if (!alreadyRun) {
             fn();
         }

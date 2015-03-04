@@ -3,7 +3,7 @@
  */
 
 function changePathGen (method) {
-    return function (path) {
+    return function changePath(path) {
         root.history[method + 'State']({}, '', path);
         $(root).trigger(method + 'state');
     };
@@ -18,7 +18,7 @@ models.location = baseModel.extend({
      * });
      * loc('hash', '#this-is-the-new-hash');
      */
-    initialize: function () {
+    initialize: function initialize() {
         var self = this;
         var recentlyChanged;
         function update (ev) {
@@ -35,7 +35,7 @@ models.location = baseModel.extend({
         $(root).bind('hashchange popstate pushstate replacestate', update);
         update();
 
-        self(function () {
+        autorun(function initializeAutorun() {
             var pathname = self('pathname');
             var search = self('search');
             var hash = self('hash');

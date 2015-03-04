@@ -16,13 +16,13 @@ function timer() {
     var started;
     var cumulative;
     var me = {
-        stop: function () {
+        stop: function stop() {
             cumulative = now() - started;
         },
-        start: function () {
+        start: function start() {
             started = now();
         },
-        done: function () {
+        done: function done() {
             me.stop();
             timers.pop();
             if (timers.length) {

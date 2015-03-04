@@ -7,7 +7,7 @@ boundModel = models.bound = baseModel.extend({
      * Constructor function to initialize each new model instance.
      * @return {[type]}
      */
-    initialize: function () {
+    initialize: function initialize() {
         var self = this;
         /**
          * Queue the autorun of update.  We want this to happen after the current JS module
@@ -28,7 +28,7 @@ boundModel = models.bound = baseModel.extend({
      * this model.
      * @param  {Object.<string, Boolean>} woken Hash map of model IDs already awoken
      */
-    wake: function (woken) {
+    wake: function wake(woken) {
         // Wake up this model if it was sleeping
         if (this.sleeping) {
             this.sleeping = false;
@@ -39,7 +39,7 @@ boundModel = models.bound = baseModel.extend({
          * been woken up.
          * XXX - how does this work?
          */
-        _.each((this.scope && this.scope.lookups) || [], function (lookup) {
+        _.each((this.scope && this.scope.lookups) || [], function wakeIter(lookup) {
             var bindable = lookup.obj;
             if (bindable && !woken[uniqueId(bindable)]) {
                 woken[uniqueId(bindable)] = true;
@@ -48,13 +48,13 @@ boundModel = models.bound = baseModel.extend({
         });
     },
 
-    onScopeExecute: function (scope) {
+    onScopeExecute: function onScopeExecute(scope) {
         if (TBONE_DEBUG) {
             log(INFO, this, 'lookups', scope.lookups);
         }
     },
 
-    update: function () {
+    update: function update() {
         var self = this;
         self.sleeping = self.sleepEnabled && !hasViewListener(self);
         if (self.sleeping) {
@@ -71,7 +71,7 @@ boundModel = models.bound = baseModel.extend({
         }
     },
 
-    _update: function () {
+    _update: function _update() {
         var opts = this.assumeChanged ? {assumeChanged : true} : {};
         this.query(opts, QUERY_SELF, this.state());
         if (TBONE_DEBUG) {
@@ -82,13 +82,13 @@ boundModel = models.bound = baseModel.extend({
     /**
      * Triggers scope re-execution.
      */
-    reset: function () {
+    reset: function reset() {
         if (this.scope) {
             this.scope.trigger();
         }
     },
 
-    destroy: function () {
+    destroy: function destroy() {
         if (this.scope) {
             this.scope.destroy();
         }
@@ -104,7 +104,7 @@ boundModel = models.bound = baseModel.extend({
 });
 
 if (TBONE_DEBUG) {
-    boundModel.disableSleep = function () {
+    boundModel.disableSleep = function disableSleep() {
         // This is intended to be used only interactively for development.
         if (this.sleepEnabled) {
             log(WARN, this, 'disableSleep', 'Disabling sleep mode for <%-Name%>.', this);
@@ -113,7 +113,7 @@ if (TBONE_DEBUG) {
         }
     };
 
-    boundModel.query = function (opts, prop) {
+    boundModel.query = function boundQueryWrapper(opts, prop) {
         var args = _.toArray(arguments);
         if (!this.isMutable) {
             // This is a short version of the start of the `query` function, and it would be nice

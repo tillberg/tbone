@@ -14,14 +14,14 @@ models.localStorage = baseModel.extend({
      * console.log(metrics.query('pageloads'));
      */
 
-    initialize: function () {
+    initialize: function initialize() {
         var self = this;
         var data;
         try {
             data = JSON.parse(localStorage[self.key]);
         } catch (e) {}
         self.query('', data);
-        autorun(function () {
+        autorun(function initializeAutorun() {
             localStorage[self.key] = JSON.stringify(self.query(''));
         });
     }
