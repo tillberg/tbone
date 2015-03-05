@@ -22,9 +22,9 @@ var baseModel = {
     make: function make(opts) {
         var self = this;
         // Each TBone model/collection is an augmented copy of this TBoneModel function
-        var instance = function TBoneModel (arg0, arg1, arg2) {
+        var instance = function TBoneModel (arg0, arg1, arg2, arg3, arg4) {
             if (typeof arg0 === 'function') {
-                return autorun(arg0, arg1);
+                return autorun(arg0, arg1, arg2, arg3, arg4);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
                 return instance.query(arg0, instance.bound(arg1));
             } else {

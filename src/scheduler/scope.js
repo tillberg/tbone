@@ -11,25 +11,7 @@ var currentExecutingScope;
 
 var recentLookups;
 
-/**
- * An autobinding function execution scope.  See autorun for details.
- * @constructor
- */
-function Scope(fn, context, priority, name, onExecuteCb, onExecuteContext) {
-    _.extend(this, {
-        fn: fn,
-        context: context,
-        priority: priority,
-        Name: name,
-        onExecuteCb: onExecuteCb,
-        onExecuteContext: onExecuteContext,
-        subScopes: [],
-    });
-}
-
-_.extend(Scope.prototype,
-
-    /** @lends {Scope.prototype} */ {
+var scopeBase = {
 
     /**
      * Used to identify that an object is a Scope
@@ -53,66 +35,63 @@ _.extend(Scope.prototype,
     execute: function scopeExecute() {
         var self = this;
         var myTimer;
-        if (!self.destroyed) {
-            if (TBONE_DEBUG) {
-                myTimer = timer();
+        if (TBONE_DEBUG) {
+            myTimer = timer();
+        }
+
+        self.unbindAll();
+        self.destroySubScopes();
+        // Save our parent's lookups and subscopes.  It's like pushing our own values
+        // onto the top of each stack.
+        var oldLookups = recentLookups;
+        self.lookups = recentLookups = {};
+        var parentScope = currentExecutingScope;
+        currentExecutingScope = self;
+        tbone.isExecuting = true;
+
+        // ** Call the payload function **
+        // This function must be synchronous.  Anything that is looked up using
+        // tbone.lookup before this function returns (that is not inside a subscope)
+        // will get bound below.
+        try {
+            self.fn();
+        } finally {
+            _.each(recentLookups, function executeRecentLookupsIter(propMap) {
+                var obj = propMap.obj;
+                var props = propMap.props;
+                if (props['']) {
+                    obj.on('', self);
+                } else {
+                    for (var prop in props) {
+                        obj.on(prop, self);
+                    }
+                }
+            });
+
+            // This is intended primarily for diagnostics.
+            if (self.onExecuteCb) {
+                self.onExecuteCb();
             }
 
-            self.unbindAll();
-            self.destroySubScopes();
-            // Save our parent's lookups and subscopes.  It's like pushing our own values
-            // onto the top of each stack.
-            var oldLookups = recentLookups;
-            self.lookups = recentLookups = {};
-            var parentScope = currentExecutingScope;
-            currentExecutingScope = self;
-            tbone.isExecuting = true;
+            // Pop our own lookups and parent scope off the stack, restoring them to
+            // the values we saved above.
+            recentLookups = oldLookups;
+            currentExecutingScope = parentScope;
+            tbone.isExecuting = !!currentExecutingScope;
 
-            // ** Call the payload function **
-            // This function must be synchronous.  Anything that is looked up using
-            // tbone.lookup before this function returns (that is not inside a subscope)
-            // will get bound below.
-            try {
-                self.fn.call(self.context);
-            } finally {
-                _.each(recentLookups, function executeRecentLookupsIter(propMap) {
-                    var obj = propMap.obj;
-                    var props = propMap.props;
-                    if (props['']) {
-                        obj.on('', self);
-                    } else {
-                        for (var prop in props) {
-                            obj.on(prop, self);
-                        }
-                    }
+            if (TBONE_DEBUG) {
+                var executionTimeMs = myTimer.done();
+                log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                    priority: self.priority,
+                    duration: executionTimeMs
                 });
-
-                // This is intended primarily for diagnostics.
-                if (self.onExecuteCb) {
-                    self.onExecuteCb.call(self.onExecuteContext, self);
-                }
-
-                // Pop our own lookups and parent scope off the stack, restoring them to
-                // the values we saved above.
-                recentLookups = oldLookups;
-                currentExecutingScope = parentScope;
-                tbone.isExecuting = !!currentExecutingScope;
-
-                if (TBONE_DEBUG) {
-                    var executionTimeMs = myTimer.done();
-                    log(VERBOSE, self, 'exec', '<%=priority%> <%=duration%>ms <%=name%>', {
+                if (executionTimeMs > 10) {
+                    log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
                         priority: self.priority,
                         duration: executionTimeMs
                     });
-                    if (executionTimeMs > 10) {
-                        log(VERBOSE, self, 'slowexec', '<%=priority%> <%=duration%>ms <%=name%>', {
-                            priority: self.priority,
-                            duration: executionTimeMs
-                        });
-                    }
                 }
             }
-
         }
     },
 
@@ -150,9 +129,61 @@ _.extend(Scope.prototype,
      */
     destroy: function scopeDestroy() {
         var self = this;
-        self.destroyed = true;
         delete self.parentScope;
         self.unbindAll();
         self.destroySubScopes();
     }
-});
+};
+
+/**
+ * tbone.autorun
+ *
+ * Wrap a function call with automatic binding for any model properties accessed
+ * during the function's execution.
+ *
+ * Models and views update automatically by wrapping their reset functions with this.
+ *
+ * Additionally, this can be used within view `ready` callbacks to section off a smaller
+ * block of code to repeat when its own referenced properties are updated, without
+ * needing to re-render the entire view.
+ * @param  {Function}    fn        Function to invoke
+ * @param  {number}      priority  Scheduling priority: higher goes sooner
+ * @param  {Object}      context   Context to pass on invocation
+ * @param  {string}      name      Name for debugging purposes
+ * @return {Scope}                 A new Scope created to wrap this function
+ */
+function autorun (fn, priority, context, name, detached) {
+    // Default priority and name if not specified.  Priority is important in
+    // preventing unnecessary refreshes of views/subscopes that may be slated
+    // for destruction by a parent; the parent should have priority so as
+    // to execute first.
+    if (priority == null) {
+        priority = currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY;
+    }
+
+    var scope = _.extend({}, scopeBase, {
+        fn: fn.bind(context),
+        context: context,
+        priority: priority,
+        Name: name,
+        subScopes: [],
+    });
+
+    if (context && context.onScopeExecute) {
+        scope.onExecuteCb = context.onScopeExecute.bind(context, scope);
+    }
+
+    // If this is a subscope, add it to its parent's list of subscopes, and add a reference
+    // to the parent scope.
+    if (!detached && currentExecutingScope) {
+        currentExecutingScope.subScopes.push(scope);
+        scope.parentScope = currentExecutingScope;
+    }
+
+    // Run the associated function (and bind associated models)
+    scope.execute();
+
+    // Return the scope object. Many consumers use the destroy method
+    // to kill the scope and all its bindings.
+    return scope;
+}

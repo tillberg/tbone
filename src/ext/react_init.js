@@ -7,7 +7,7 @@ if (React) {
     var origCreateClass = React.createClass;
     React.createClass = function tboneReactClassWrapper(origOpts) {
         function myAutorun (fn, inst, name) {
-            var tscope = autorun(fn, tbone.priority.view, inst, 'react_' + inst.constructor.displayName + ':' + name, null, null, true);
+            var tscope = autorun(fn, tbone.priority.view, inst, 'react_' + inst.constructor.displayName + ':' + name, true);
             tscope.isView = true;
             return tscope;
         }

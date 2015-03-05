@@ -294,7 +294,7 @@ exports['model array mutations'] = function(test) {
   test.equal(me('1'), undefined);
   test.equal(me('length'), 1);
   drainAndCheckTriggers(test);
-  me.push('', 'world');
+  me.push('world');
   test.equal(me('1'), 'world');
   test.equal(me('length'), 2);
   T.drain();
@@ -646,4 +646,23 @@ exports['autorun js error handling'] = function(test) {
     }
   }
   check();
+};
+
+exports['autorun scope destruction'] = function(test) {
+  var scope1;
+  var scope2;
+  var scope3;
+  scope1 = T(function() {
+    scope2 = T(function() {
+      scope3 = T(function() {
+
+      });
+    }, null, null, null, true);
+  });
+  test.equal(scope1.parentScope, undefined);
+  test.equal(scope2.parentScope, undefined);
+  test.equal(scope3.parentScope, scope2);
+  scope2.destroy();
+  test.equal(scope3.parentScope, undefined);
+  test.done();
 };
