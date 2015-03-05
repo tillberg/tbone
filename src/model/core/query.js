@@ -78,12 +78,14 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
                     }
                 }
                 if (!changed) {
+                    // If there are any entries in prev that were not in curr,
+                    // then this has changed.
+                    // XXX really, it's the parent that has changed. If you queried
+                    // for curr directly, you'd get back undefined before and after.
                     for (k in prev) {
                         if (curr[k] === undefined) {
-                            if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
-                                changed = true;
-                                break;
-                            }
+                            changed = true;
+                            break;
                         }
                     }
                 }

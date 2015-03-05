@@ -408,6 +408,61 @@ exports['only top-level binding'] = function(test) {
   test.done();
 };
 
+exports['objects with cycles'] = function(test) {
+  var me = T.make();
+  var count = 0;
+  T(function () {
+    me('');
+    count++;
+  });
+  var b = [];
+  b.push(b);
+  me('arr1', b);
+  var b2 = [];
+  b2.push(b2);
+  T.drain();
+  me('arr1', b2);
+  T.drain();
+  var c = [];
+  c.push([c]);
+  me('arr2', c);
+  T.drain();
+  var d = {};
+  d.prop = d;
+  me('obj1', d);
+  T.drain();
+  var e = {};
+  e.prop = {prop: e};
+  me('obj2', e);
+  T.drain();
+  test.equal(count, 6);
+  test.done();
+};
+
+exports['removing a prop with only a global binding'] = function(test) {
+  var me = T.make();
+  var drainAndCheckTriggers = getWatcher(me, ['']);
+  me('sub', {hello: 1});
+  drainAndCheckTriggers(test);
+  me('sub', {hello: 1, sdkjfhs: 2});
+  drainAndCheckTriggers(test);
+  me('sub', {hello: 1});
+  drainAndCheckTriggers(test);
+  me('sub', {hello: 1, sdkjfhs: undefined});
+  drainAndCheckTriggers(test, true); // XXX remove this true
+  test.done();
+};
+
+exports['changing a date with only a global binding'] = function(test) {
+  var me = T.make();
+  var drainAndCheckTriggers = getWatcher(me, ['']);
+  me('sub', {date: new Date(2398523132)});
+  drainAndCheckTriggers(test);
+  me('sub', {date: new Date(2398523133)});
+  drainAndCheckTriggers(test);
+  test.done();
+};
+
 exports['dates'] = function(test) {
   var me = T.make();
   var drainAndCheckTriggers = getWatcher(me, ['']);
