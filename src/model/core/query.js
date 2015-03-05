@@ -63,24 +63,27 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
         // through all keys until we find one (note that this could duplicate
         // some searching done while searching the event tree)
         // This may not be super-efficient to call recursiveDiff all the time.
-        if (isRealObject(prev) && isRealObject(curr)) {
+        if (isRealObject(prev) && isRealObject(curr) && prev !== curr) {
             // prev and curr are both objects/arrays
             // search through them recursively for any differences
-            var searched = {};
-            var objs = [prev, curr];
-            for (i = 0; i < 2 && !changed; i++) {
-                var obj = objs[i];
-                // Detect changes in length; this catches the difference
-                // between [] and [undefined]:
-                if (prev.length !== curr.length) {
-                    changed = true;
+            // Detect changes in length; this catches the difference
+            // between [] and [undefined]:
+            if (prev.length !== curr.length) {
+                changed = true;
+            } else {
+                for (k in curr) {
+                    if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
+                        changed = true;
+                        break;
+                    }
                 }
-                for (k in obj) {
-                    if (!searched[k]) {
-                        searched[k] = true;
-                        if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
-                            changed = true;
-                            break;
+                if (!changed) {
+                    for (k in prev) {
+                        if (curr[k] === undefined) {
+                            if (recursiveDiff(self, evs[k], curr[k], prev[k], true, depth + 1, false)) {
+                                changed = true;
+                                break;
+                            }
                         }
                     }
                 }

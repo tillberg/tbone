@@ -264,7 +264,7 @@ function getWatcher(model, props) {
     }, {});
   }
   var lastState = getState();
-  return function(test, skipAsserts) {
+  return function(test, onlyTestForMisses) {
     T.drain();
     var state = getState();
     _.each(props, function(prop) {
@@ -276,7 +276,7 @@ function getWatcher(model, props) {
       } else {
         msg += 'should not fire because value remained ' + state[prop];
       }
-      if (!skipAsserts) {
+      if (shouldHaveFired || !onlyTestForMisses) {
         test.equal(shouldHaveFired, didFire, msg);
       }
     });
@@ -327,43 +327,81 @@ exports['object mutations'] = function(test) {
   ];
   var drainAndCheckTriggers = getWatcher(me, watchProps);
   me('', null);
-  drainAndCheckTriggers(test, true);
-
+  drainAndCheckTriggers(test, true); // XXX remove this true
   me('', {
     sub: {
       prop: 42,
     },
     hello: 'world',
   });
-  drainAndCheckTriggers(test, true);
-
+  drainAndCheckTriggers(test, true); // XXX remove this true
   me('sub.prop', 43);
   drainAndCheckTriggers(test);
-
   me('hi', {sally: 'smith'});
   drainAndCheckTriggers(test);
-
   me('sub', {prop: 43});
   drainAndCheckTriggers(test);
-
   me('sub', 'prop');
   drainAndCheckTriggers(test);
-
   me('hi', {sally: 'smith'});
   drainAndCheckTriggers(test);
-
   me('0', 'not really an array');
   drainAndCheckTriggers(test);
-
   me('length', 7);
   drainAndCheckTriggers(test);
-
   me('__self__', undefined);
-  drainAndCheckTriggers(test, true);
-
+  drainAndCheckTriggers(test);
   me('__self__', null);
-  drainAndCheckTriggers(test, true);
+  drainAndCheckTriggers(test, true); // XXX remove this true
+  test.done();
+};
 
+exports['recursiveDiff with similar objects'] = function(test) {
+  var me = T.make();
+  var drainAndCheckTriggers = getWatcher(me, ['', 'prop', 'prop.erty']);
+  me('prop.erty', 42);
+  drainAndCheckTriggers(test);
+  me('prop', {erty: 42});
+  drainAndCheckTriggers(test);
+  me('prop', {erty: 42});
+  drainAndCheckTriggers(test);
+  me('', {prop:{erty: 42}});
+  drainAndCheckTriggers(test);
+  me('prop.erty', 42);
+  drainAndCheckTriggers(test);
+  me('prop.erty', 42);
+  drainAndCheckTriggers(test);
+  me('prop', {erty: 42});
+  drainAndCheckTriggers(test);
+  test.done();
+};
+
+
+exports['length property'] = function(test) {
+  var me = T.make();
+  var drainAndCheckTriggers = getWatcher(me, ['text.length']);
+  me('text', '123456');
+  drainAndCheckTriggers(test);
+  me('text', '654321');
+  drainAndCheckTriggers(test);
+  me('text', {length: 6});
+  drainAndCheckTriggers(test);
+  me('text.length', 6);
+  drainAndCheckTriggers(test);
+  me('text', [1,2,3,4,5,6]);
+  drainAndCheckTriggers(test);
+  me('text.length', 6);
+  drainAndCheckTriggers(test);
+  test.done();
+};
+
+exports['only top-level binding'] = function(test) {
+  var me = T.make();
+  var drainAndCheckTriggers = getWatcher(me, ['']);
+  me('sub.prop', 5);
+  drainAndCheckTriggers(test);
+  me('other.prop', 5);
+  drainAndCheckTriggers(test);
   test.done();
 };
 
@@ -465,7 +503,7 @@ exports['model in a model'] = function(test) {
   b('', 5);
   test.equal(a(''), 5);
   test.done();
-}
+};
 
 exports['model destroy'] = function(test) {
   var me = tbone.make();
