@@ -30,8 +30,7 @@ var baseModel = {
             } else {
                 return (arguments.length === 0 ? instance.query() :
                         arguments.length === 1 ? instance.query(arg0) :
-                        arguments.length === 2 ? instance.query(arg0, arg1) :
-                                                 instance.query(arg0, arg1, arg2));
+                                                 instance.query(arg0, arg1));
             }
         };
         _.extend(instance, self, _.isFunction(opts) ? {

@@ -79,6 +79,7 @@ _.each(versions, function (version, name) {
   var jsFullPath = path.join(dest, jsFilename);
   var minJsFilename = 'tbone' + suffix + '.min.js';
   var minJsFullPath = path.join(dest, minJsFilename);
+  var tmpFolder = 'tmp/test_' + name;
 
   gulp.task(tn('concat'), function () {
     return gulp.src(files)
@@ -118,18 +119,27 @@ _.each(versions, function (version, name) {
 
   gulp.task(tn('build'), [tn('concat'), tn('compile'), tn('compress')], _.noop);
 
-  gulp.task(tn('test'), [tn('build')], function (done) {
-    var tmpFolder = 'tmp/test_' + name;
+  var testSources = [tmpFolder + '/core/**/*.js'];
+  if (name.match(/^main/)) {
+    testSources.push(tmpFolder + '/ext/**/*.js');
+  }
+  testSources.push('!' + path.join(tmpFolder, 'tbone.js'));
+
+  gulp.task(tn('test'), [tn('build')], function() {
     fs.copySync('test/', tmpFolder);
     var tboneSrc = fs.readFileSync(jsFullPath, 'utf8');
-    tboneSrc = tboneSrc.replace(/var TBONE_DEBUG.+?\n/, 'var TBONE_DEBUG = true;\n');
+    tboneSrc = tboneSrc.replace(/var TBONE_DEBUG.+?\n/, '\n');
+    tboneSrc = tboneSrc.replace(/TBONE_DEBUG/g, 'global.TBONE_DEBUG');
     fs.writeFileSync(path.join(tmpFolder, 'tbone.js'), tboneSrc, 'utf8');
-    var sources = [tmpFolder + '/core/**/*.js'];
-    if (name.match(/^main/)) {
-      sources.push(tmpFolder + '/ext/**/*.js');
-    }
-    sources.push('!' + path.join(tmpFolder, 'tbone.js'));
-    return gulp.src(sources)
+    global.TBONE_DEBUG = false;
+    return gulp.src(testSources)
+      .pipe(nodeunit({
+        reporter: 'minimal_nocrash',
+      }));
+  });
+  gulp.task(tn('test_debug'), [tn('test')], function() {
+    global.TBONE_DEBUG = true;
+    return gulp.src(testSources)
       .pipe(nodeunit({
         reporter: 'minimal_nocrash',
       }));

@@ -402,6 +402,9 @@ exports['only top-level binding'] = function(test) {
   drainAndCheckTriggers(test);
   me('other.prop', 5);
   drainAndCheckTriggers(test);
+  me('', 'hi');
+  drainAndCheckTriggers(test);
+  test.equal(me(), 'hi');
   test.done();
 };
 
