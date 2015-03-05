@@ -58,9 +58,6 @@ var baseModel = {
         var arg;
 
         while ((arg = parts.shift()) != null) {
-            if (arg === '') {
-                continue;
-            }
             if (!events[arg]) {
                 events[arg] = {};
             }
@@ -86,9 +83,6 @@ var baseModel = {
         var arg;
 
         while ((arg = parts.shift()) != null) {
-            if (arg === '') {
-                continue;
-            }
             if (!events[arg]) {
                 events[arg] = {};
             }
@@ -106,9 +100,6 @@ var baseModel = {
         var parts = splitQueryString(name);
         var arg;
         while ((arg = parts.shift()) != null) {
-            if (arg === '') {
-                continue;
-            }
             if (!events[arg]) {
                 events[arg] = {};
             }
@@ -120,7 +111,9 @@ var baseModel = {
         }
     },
 
-    runOnlyOnce: runOnlyOnce,
+    runOnlyOnce: function runOnlyOnce(fn) {
+        autorun(fn).destroy();
+    },
 
     query: query,
 

@@ -1,4 +1,11 @@
 {
-    "eqnull": true,
-    "sub": true
+  "eqnull": true,
+  "sub": true,
+  "esnext": true,
+  "newcap": false,
+  "latedef": true,
+  "validthis": true,
+  "globalstrict": true,
+  "node": true,
+  "browser": true
 }

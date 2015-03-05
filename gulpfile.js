@@ -26,12 +26,12 @@ gulp.task('clean', function (cb) {
 
 var coreFiles = [
   'src/init.js',
+  'src/model/core/query.js',
   'src/model/core/base.js',
   'src/scheduler/timer.js',
   'src/scheduler/autorun.js',
   'src/scheduler/scope.js',
   'src/scheduler/drainqueue.js',
-  'src/model/core/query.js',
   'src/model/core/bound.js',
 ];
 
@@ -80,19 +80,19 @@ _.each(versions, function (version, name) {
   var minJsFilename = 'tbone' + suffix + '.min.js';
   var minJsFullPath = path.join(dest, minJsFilename);
 
-  gulp.task(tn('jshint'), function () {
-    return gulp.src(files.concat(['!src/snippet/*.js']))
-      .pipe(jshint())
-      .pipe(jshint.reporter('jshint-stylish'));
-  });
-
-  gulp.task(tn('concat'), [tn('jshint')], function () {
+  gulp.task(tn('concat'), function () {
     return gulp.src(files)
       .pipe(concat(jsFilename))
       .pipe(gulp.dest(dest));
   });
 
-  gulp.task(tn('compile'), [tn('concat')], function () {
+  gulp.task(tn('jshint'), [tn('concat')], function () {
+    return gulp.src([jsFullPath])
+      .pipe(jshint())
+      .pipe(jshint.reporter('jshint-stylish'));
+  });
+
+  gulp.task(tn('compile'), [tn('concat'), tn('jshint')], function () {
     var isDebug = !!name.match(/debug/);
     return gulp.src([jsFullPath])
       .pipe(concat(minJsFilename))
@@ -121,7 +121,9 @@ _.each(versions, function (version, name) {
   gulp.task(tn('test'), [tn('build')], function (done) {
     var tmpFolder = 'tmp/test_' + name;
     fs.copySync('test/', tmpFolder);
-    fs.copySync(jsFullPath, path.join(tmpFolder, 'tbone.js'));
+    var tboneSrc = fs.readFileSync(jsFullPath, 'utf8');
+    tboneSrc = tboneSrc.replace(/var TBONE_DEBUG.+?\n/, 'var TBONE_DEBUG = true;\n');
+    fs.writeFileSync(path.join(tmpFolder, 'tbone.js'), tboneSrc, 'utf8');
     var sources = [tmpFolder + '/core/**/*.js'];
     if (name.match(/^main/)) {
       sources.push(tmpFolder + '/ext/**/*.js');

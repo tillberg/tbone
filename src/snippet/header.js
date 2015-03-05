@@ -1,3 +1,2 @@
-;
-(function tboneWrap(root){
 'use strict';
+(function tboneWrap(root){

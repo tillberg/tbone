@@ -405,6 +405,19 @@ exports['only top-level binding'] = function(test) {
   test.done();
 };
 
+exports['dates'] = function(test) {
+  var me = T.make();
+  var drainAndCheckTriggers = getWatcher(me, ['']);
+  var a = new Date(928374938);
+  me('', a);
+  drainAndCheckTriggers(test);
+  me('', new Date(928374938));
+  drainAndCheckTriggers(test);
+  me('', new Date(928374939));
+  drainAndCheckTriggers(test);
+  test.done();
+};
+
 exports['unbind property on second pass'] = function(test) {
   var me = tbone.make();
   var count = 0;

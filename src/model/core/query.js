@@ -47,8 +47,8 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
                 // something to a deep copy of itself.
                 if (isRealObject(prev) && isRealObject(curr)) {
                     exhaustive = true;
-                } else if (isDate(prev) && isDate(curr)) {
-                    changed = (prev.getTime() !== curr.getTime()) || changed;
+                } else if (isDate(prev) && isDate(curr) && !changed) {
+                    changed = prev.getTime() !== curr.getTime();
                 } else {
                     changed = true;
                 }
@@ -197,7 +197,7 @@ function query () {
                     'primitive value <%=primitive%> at <%=partial%>', {
                         prop: prop,
                         primitive: _data,
-                        partial: name_parts.join('.')
+                        partial: args.join('.')
                     });
             }
             /**
