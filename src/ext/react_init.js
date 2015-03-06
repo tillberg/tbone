@@ -7,15 +7,14 @@ if (React) {
     var origCreateClass = React.createClass;
     React.createClass = function tboneReactClassWrapper(origOpts) {
         function myAutorun (fn, inst, name) {
-            var tscope = autorun({
+            return autorun({
                 fn: fn,
                 priority: tbone.priority.view,
                 context: inst,
                 detached: true,
                 Name: 'react_' + inst.constructor.displayName + ':' + name,
+                isView: true,
             });
-            tscope.isView = true;
-            return tscope;
         }
 
         function cleanUpTScopes(inst, key) {

@@ -617,6 +617,40 @@ exports['assumeChanged'] = function(test) {
   test.done();
 };
 
+exports['bound model sleeping'] = function(test) {
+  var bound = T.bound({
+    state: function () {
+      return 7;
+    },
+    sleepEnabled: true,
+  });
+  T.drain();
+  test.equal(bound.sleeping, true, 'bound should be sleeping initially');
+  var bound2 = T.bound({
+    state: function() {
+      return bound();
+    },
+    sleepEnabled: true,
+  });
+  T.drain();
+  test.equal(bound.sleeping, true, 'bound should still be sleeping');
+  test.equal(bound2.sleeping, true, 'bound2 should be sleeping initially');
+  test.equal(bound(''), undefined);
+  test.equal(bound2(''), undefined);
+  var view = T({
+    fn: function() {
+      bound2('');
+    },
+    isView: true,
+  });
+  T.drain();
+  test.equal(bound.sleeping, false, 'bound should have woken up');
+  test.equal(bound2.sleeping, false, 'bound2 should have woken up');
+  test.equal(bound(''), 7);
+  test.equal(bound2(''), 7);
+  test.done();
+};
+
 exports['autorun js error handling'] = function(test) {
   // autorun should not intercept JS errors -- they should break all the way
   // out past scope.execute and drainqueue -- but we should still continue to
