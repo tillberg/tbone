@@ -139,6 +139,9 @@ var baseModel = {
     },
 
     getName: function getName(obj) {
+        if (!obj) {
+            obj = this;
+        }
         if (obj.Name) {
             return obj.Name;
         }

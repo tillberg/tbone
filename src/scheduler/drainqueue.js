@@ -145,10 +145,9 @@ var frozen = false;
 function drainQueue() {
     var queueDrainStartTime = now();
     var scope;
-    drainQueueTimer = null;
     drainQueueTimer = schedulerQueue.length ? _.defer(drainQueue) : null;
     var remaining = 5000;
-    while (!(TBONE_DEBUG && frozen) && --remaining && !!(scope = pop())) {
+    while (!(TBONE_DEBUG && frozen) && --remaining && (scope = pop())) {
         /**
          * Update the scopesQueued map so that this Scope may be requeued.
          */

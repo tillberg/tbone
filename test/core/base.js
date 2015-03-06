@@ -673,3 +673,23 @@ exports['autorun scope destruction'] = function(test) {
   test.equal(scope3.parentScope, undefined);
   test.done();
 };
+
+exports['getName'] = function(test) {
+  var me = T.bound(function fn1() {});
+  test.equal(T.getName(me), 'fn1');
+  test.equal(me.getName(), 'fn1');
+  var scope1;
+  var scope2;
+  var scope3;
+  scope1 = T(function fn2() {
+    scope2 = T(function() {
+      scope3 = T(function() {});
+    });
+  });
+  test.equal(T.getName(scope1), 'fn2');
+  test.equal(T.getName(scope2), 'fn2+');
+  test.equal(T.getName(scope3), 'fn2++');
+  var scope4 = T(function() {});
+  test.equal(T.getName(scope4), 'na-' + scope4.tboneid);
+  test.done();
+};
