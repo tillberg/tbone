@@ -152,7 +152,10 @@ var scopeBase = {
  * @param  {string}      name      Name for debugging purposes
  * @return {Scope}                 A new Scope created to wrap this function
  */
-function autorun (fn, priority, context, name, detached) {
+function autorun (opts) {
+    if (_.isFunction(opts)) {
+        opts = {fn: opts};
+    }
     // Default priority and name if not specified.  Priority is important in
     // preventing unnecessary refreshes of views/subscopes that may be slated
     // for destruction by a parent; the parent should have priority so as
@@ -161,11 +164,11 @@ function autorun (fn, priority, context, name, detached) {
         priority = currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY;
     }
 
+    var context = opts.context;
     var scope = _.extend({}, scopeBase, {
-        fn: fn.bind(context),
-        context: context,
-        priority: priority,
-        Name: name,
+        Name: opts.fn.name,
+    }, opts, {
+        fn: opts.fn.bind(context),
         subScopes: [],
     });
 
@@ -175,7 +178,7 @@ function autorun (fn, priority, context, name, detached) {
 
     // If this is a subscope, add it to its parent's list of subscopes, and add a reference
     // to the parent scope.
-    if (!detached && currentExecutingScope) {
+    if (!scope.detached && currentExecutingScope) {
         currentExecutingScope.subScopes.push(scope);
         scope.parentScope = currentExecutingScope;
     }

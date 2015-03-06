@@ -22,16 +22,15 @@ var baseModel = {
     make: function make(opts) {
         var self = this;
         // Each TBone model/collection is an augmented copy of this TBoneModel function
-        var instance = function TBoneModel (arg0, arg1, arg2, arg3, arg4) {
-            if (typeof arg0 === 'function') {
-                return autorun(arg0, arg1, arg2, arg3, arg4);
+        var instance = function TBoneModel (arg0, arg1) {
+            if (typeof arg0 === 'function' || isRealObject(arg0)) {
+                return autorun(arg0);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
                 return instance.query(arg0, instance.bound(arg1));
-            } else {
-                return (arguments.length === 0 ? instance.query() :
-                        arguments.length === 1 ? instance.query(arg0) :
-                                                 instance.query(arg0, arg1));
             }
+            return (arguments.length === 0 ? instance.query() :
+                    arguments.length === 1 ? instance.query(arg0) :
+                                             instance.query(arg0, arg1));
         };
         _.extend(instance, self, _.isFunction(opts) ? {
             state: opts,

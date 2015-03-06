@@ -607,19 +607,25 @@ exports['autorun js error handling'] = function(test) {
   var ranSecond = false;
   var threwException = false;
   try {
-    me(function() {
-      me('prop');
-      ranFirst = true;
-      me.nonExistent.prop = 'boom';
-    }, 2);
+    me({
+      fn: function() {
+        me('prop');
+        ranFirst = true;
+        me.nonExistent.prop = 'boom';
+      },
+      priority: 2,
+    });
   } catch (e) {
     threwException = true;
   }
   test.equal(threwException, true, 'exception bubbles out of autorun invocation');
-  me(function() {
-    me('prop');
-    ranSecond = true;
-  }, 1);
+  me({
+    fn: function() {
+      me('prop');
+      ranSecond = true;
+    },
+    priority: 1,
+  });
   test.equal(ranFirst, true, 'first function ran');
   test.equal(ranSecond, true, 'second function ran');
   me('prop', 20);
@@ -653,11 +659,12 @@ exports['autorun scope destruction'] = function(test) {
   var scope2;
   var scope3;
   scope1 = T(function() {
-    scope2 = T(function() {
-      scope3 = T(function() {
-
-      });
-    }, null, null, null, true);
+    scope2 = T({
+      fn:function() {
+        scope3 = T(function() {});
+      },
+      detached: true,
+    });
   });
   test.equal(scope1.parentScope, undefined);
   test.equal(scope2.parentScope, undefined);
