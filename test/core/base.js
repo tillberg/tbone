@@ -674,6 +674,31 @@ exports['autorun scope destruction'] = function(test) {
   test.done();
 };
 
+exports['autorun priority'] = function(test) {
+  var scope1;
+  var scope2;
+  var scope3;
+  scope1 = T(function() {
+    scope2 = T(function() {
+      scope3 = T(function() {});
+    });
+  });
+  test.equal(scope1.priority, 4000); // a.k.a. DEFAULT_AUTORUN_PRIORITY
+  test.equal(scope2.priority, 3999);
+  test.equal(scope3.priority, 3998);
+  var scope4;
+  var scope5;
+  scope4 = T({
+    fn: function() {
+      scope5 = T(function() {});
+    },
+    priority: tbone.priority.highest,
+  });
+  test.equal(scope4.priority, tbone.priority.highest);
+  test.equal(scope5.priority, tbone.priority.highest - 1);
+  test.done();
+};
+
 exports['getName'] = function(test) {
   var me = T.bound(function fn1() {});
   test.equal(T.getName(me), 'fn1');

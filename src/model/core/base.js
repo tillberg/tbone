@@ -23,7 +23,8 @@ var baseModel = {
         var self = this;
         // Each TBone model/collection is an augmented copy of this TBoneModel function
         var instance = function TBoneModel (arg0, arg1) {
-            if (typeof arg0 === 'function' || isRealObject(arg0)) {
+            var typeofArg0 = typeof arg0;
+            if (typeofArg0 === 'function' || typeofArg0 === 'object') {
                 return autorun(arg0);
             } else if (typeof arg1 === 'function' && !isQueryable(arg1)) {
                 return instance.query(arg0, instance.bound(arg1));

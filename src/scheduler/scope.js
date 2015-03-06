@@ -156,16 +156,14 @@ function autorun (opts) {
     if (_.isFunction(opts)) {
         opts = {fn: opts};
     }
-    // Default priority and name if not specified.  Priority is important in
-    // preventing unnecessary refreshes of views/subscopes that may be slated
-    // for destruction by a parent; the parent should have priority so as
-    // to execute first.
-    if (priority == null) {
-        priority = currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY;
-    }
 
     var context = opts.context;
     var scope = _.extend({}, scopeBase, {
+        // Default priority and name if not specified.  Priority is important in
+        // preventing unnecessary refreshes of views/subscopes that may be slated
+        // for destruction by a parent; the parent should have priority so as
+        // to execute first.
+        priority: currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY,
         Name: opts.fn.name,
     }, opts, {
         fn: opts.fn.bind(context),
