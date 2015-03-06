@@ -93,10 +93,12 @@ boundModel = models.bound = baseModel.extend({
     },
 
     destroy: function destroy() {
-        if (this.scope) {
-            this.scope.destroy();
+        var self = this;
+        if (self.scope) {
+            self.scope.destroy();
         }
-        this.unset(QUERY_SELF);
+        delete self.scope;
+        self.unset(QUERY_SELF);
     },
 
     /**

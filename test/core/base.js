@@ -593,6 +593,27 @@ exports['model destroy'] = function(test) {
   T.drain();
   test.equal(val, 42);
   test.equal(me('prop'), undefined);
+  prop.destroy();
+  test.done();
+};
+
+exports['assumeChanged'] = function(test) {
+  var me = T.make();
+  var count = 0;
+  var bound = T.bound({
+    state: function() {
+      me('');
+      count++;
+      return 42;
+    },
+    assumeChanged: true,
+  });
+  me('prop', 7);
+  T.drain();
+  test.equal(count, 2);
+  me('prop', 8);
+  T.drain();
+  test.equal(count, 3);
   test.done();
 };
 
