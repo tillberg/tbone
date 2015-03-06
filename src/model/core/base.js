@@ -197,10 +197,6 @@ var baseModel = {
         this.query(prop, newval);
     },
 
-    toJSON: function toJSON() {
-        return this.attributes;
-    },
-
     wake: noop,
 };
 
