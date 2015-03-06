@@ -35,17 +35,6 @@ var priority = {
     lowest: 0,
 };
 
-/**
- * We also use the drainQueue to initialize models & views.  By adding this delta
- * to priorities for initialization, we ensure that initialization happens in the
- * same order as execution and that it happens before execution.  For example, it
- * may be inefficient for a model to reset before a model that it depends on has
- * initialized, as dependency chains will not yet be established.
- * XXX Does this really matter?  Or matter much?
- * @const
- */
-var PRIORITY_INIT_DELTA = 5000;
-
 function noop () { return undefined; }
 
 var isDate = _.isDate;
@@ -64,17 +53,6 @@ function isQueryable (x) {
  * @const
  */
 var rgxNumber = /^\d+$/;
-
-function warn () {
-    if (TBONE_DEBUG) {
-        console.warn.apply(console, arguments);
-    }
-}
-function error () {
-    if (TBONE_DEBUG) {
-        console.error.apply(console, arguments);
-    }
-}
 
 /** @const */
 var ERROR = 1;
@@ -104,8 +82,6 @@ function watchLog (name, level) {
     logLevels.context[name] = VERBOSE;
     logLevels.event[name] = VERBOSE;
 }
-
-var events = [];
 
 var logCallbacks = [];
 
