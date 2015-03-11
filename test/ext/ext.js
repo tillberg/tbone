@@ -156,3 +156,47 @@ exports['async model with rolling update'] = function(test) {
   test.equal(model(''), 'yo');
   test.done()
 };
+
+var ajaxBase = T.models.ajax.make({
+  url: '/',
+  ajax: function (opts) {
+    var self = this;
+    setTimeout(function () {
+      var data = self.successData || self.errorData;
+      if (self.successData) {
+        opts.success(data);
+      } else {
+        opts.error(data);
+      }
+      if (opts.complete) {
+        opts.complete(data);
+      }
+    }, self.delay);
+  },
+  delay: 0,
+});
+
+exports['ajax model stuff'] = function(test) {
+  test.expect(5);
+  var me = ajaxBase.make({
+    successData: { hello: 'world' },
+  });
+  var done = _.once(test.done.bind(test));
+  var firstRun = true;
+  T({
+    fn: function() {
+      if (firstRun) {
+        test.equal(me('hello'), undefined);
+        test.equal(me.sleeping, true);
+        firstRun = false;
+      } else {
+        test.equal(me('hello'), 'world');
+        test.equal(me().hello, 'world');
+        test.equal(me.sleeping, false);
+        done();
+      }
+    },
+    isView: true,
+  });
+  setTimeout(done, 100);
+};
