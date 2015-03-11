@@ -145,20 +145,17 @@ function onLog (cb) {
  */
 function getListeners (self) {
     var listeners = [];
-    // TBone-native:
-    if (isQueryable(self) && _.isFunction(self)) {
-        var stack = [ self._events ];
-        var next, callbacks, k;
-        while (!!(next = stack.pop())) {
-            for (k in next) {
-                if (k === '') {
-                    callbacks = next[''];
-                    for (var contextId in callbacks) {
-                        listeners.push(callbacks[contextId]);
-                    }
-                } else {
-                    stack.push(next[k]);
+    var stack = [ self._events ];
+    var next, callbacks, k;
+    while (!!(next = stack.pop())) {
+        for (k in next) {
+            if (k === '') {
+                callbacks = next[''];
+                for (var contextId in callbacks) {
+                    listeners.push(callbacks[contextId]);
                 }
+            } else {
+                stack.push(next[k]);
             }
         }
     }
