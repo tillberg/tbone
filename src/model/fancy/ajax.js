@@ -6,12 +6,8 @@ models.ajax = asyncModel.extend({
 
     state: function asyncState(dataCallback) {
         var self = this;
-        var myXhr;
         function complete() {
             removeInFlight(self);
-            if (myXhr) {
-                myXhr = null;
-            }
             self.onComplete();
         }
 
@@ -50,9 +46,6 @@ models.ajax = asyncModel.extend({
                     onData(xhr && xhr.responseText);
                 },
                 complete: complete,
-                beforeSend: function beforeSend(xhr) {
-                    myXhr = xhr;
-                },
             });
         }
         return {
@@ -64,9 +57,6 @@ models.ajax = asyncModel.extend({
                         'aborting obsolete ajax request. old url: <%=oldurl%>', {
                         oldurl: self.fetchedUrl
                     });
-                }
-                if (myXhr) {
-                    myXhr.abort();
                 }
                 complete();
             }
