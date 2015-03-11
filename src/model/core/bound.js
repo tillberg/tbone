@@ -33,23 +33,26 @@ boundModel = models.bound = baseModel.extend({
      * @param  {Object.<string, Boolean>} woken Hash map of model IDs already awoken
      */
     wake: function wake(woken) {
-        // Wake up this model if it was sleeping
-        if (this.sleeping) {
-            this.sleeping = false;
-            this.reset();
-        }
-        /**
-         * Wake up models that depend directly on this model that have not already
-         * been woken up.
-         * XXX - how does this work?
-         */
-        _.each((this.scope && this.scope.lookups) || [], function wakeIter(lookup) {
-            var bindable = lookup.obj;
-            if (bindable && !woken[uniqueId(bindable)]) {
-                woken[uniqueId(bindable)] = true;
-                bindable.wake(woken);
+        var self = this;
+        if (self.scope) {
+            // Wake up this model if it was sleeping
+            if (self.sleeping) {
+                self.sleeping = false;
+                self.reset();
             }
-        });
+
+            /**
+             * Wake up models that depend directly on this model that have not already
+             * been woken up.
+             */
+            _.each(self.scope.lookups, function wakeIter(lookup) {
+                var bindable = lookup.obj;
+                if (bindable && !woken[uniqueId(bindable)]) {
+                    woken[uniqueId(bindable)] = true;
+                    bindable.wake(woken);
+                }
+            });
+        }
     },
 
     onScopeExecute: function onScopeExecute(scope) {
@@ -96,8 +99,8 @@ boundModel = models.bound = baseModel.extend({
         var self = this;
         if (self.scope) {
             self.scope.destroy();
+            self.scope = null;
         }
-        delete self.scope;
         self.unset(QUERY_SELF);
     },
 

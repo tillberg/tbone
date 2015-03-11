@@ -233,3 +233,62 @@ exports['ajax hold while url is null'] = function(test) {
   test.equal(me.sleeping, false);
   test.done();
 };
+
+exports['wake with circular dependencies'] = function(test) {
+  var me = T.make();
+  me('bound1', tbone.models.bound.make({
+    state: function() {
+      return {
+        prop: me('bound2.prop'),
+      };
+    },
+    sleepEnabled: false,
+  }));
+  me('bound2', tbone.models.bound.make({
+    state: function() {
+      return {
+        prop: me('bound3.prop'),
+      };
+    },
+    sleepEnabled: true,
+  }));
+  me('bound3', tbone.models.bound.make({
+    state: function() {
+      return {
+        prop: 'hello',
+        bound1: me('bound1.prop'),
+      };
+    },
+    sleepEnabled: true,
+  }));
+  me('bound4', tbone.models.bound.make({
+    state: function() {
+      return 'hi';
+    },
+    sleepEnabled: true,
+  }))
+  me('firstprop', function() {
+    return me('bound1.prop');
+  });
+  T.drain();
+  test.equal(me.queryModel('bound1').sleeping, false);
+  test.equal(me.queryModel('bound2').sleeping, true);
+  test.equal(me.queryModel('bound3').sleeping, true);
+  test.equal(me.queryModel('bound4').sleeping, true);
+  test.equal(me('firstprop'), undefined);
+  // Test resiliency also with attempting to wake destroyed models
+  me.queryModel('bound4').destroy();
+  T({
+    fn: function() {
+      me('bound1.prop');
+      me('bound4');
+    },
+    isView: true,
+  });
+  T.drain();
+  test.equal(me.queryModel('bound1').sleeping, false);
+  test.equal(me.queryModel('bound2').sleeping, false);
+  test.equal(me.queryModel('bound3').sleeping, false);
+  test.equal(me('firstprop'), 'hello');
+  test.done();
+};
