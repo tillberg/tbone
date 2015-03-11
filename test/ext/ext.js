@@ -176,12 +176,23 @@ var ajaxBase = T.models.ajax.make({
   delay: 0,
 });
 
+function failAfterTimeout(test, timeout) {
+  var origDone = test.done;
+  var timer = setTimeout(function() {
+    test.fail('timed out after ' + timeout + 'ms');
+    origDone();
+  }, timeout);
+  test.done = function() {
+    clearTimeout(timer);
+    origDone.call(test);
+  };
+}
+
 exports['ajax model stuff'] = function(test) {
   test.expect(5);
   var me = ajaxBase.make({
     successData: { hello: 'world' },
   });
-  var done = _.once(test.done.bind(test));
   var firstRun = true;
   T({
     fn: function() {
@@ -193,10 +204,32 @@ exports['ajax model stuff'] = function(test) {
         test.equal(me('hello'), 'world');
         test.equal(me().hello, 'world');
         test.equal(me.sleeping, false);
-        done();
+        test.done();
       }
     },
     isView: true,
   });
-  setTimeout(done, 100);
+  failAfterTimeout(test, 100);
+};
+
+exports['ajax hold while url is null'] = function(test) {
+  var me = T.models.ajax.make({
+    url: function() {
+      return null;
+    },
+    ajax: function() {
+      test.fail('should not call model.ajax');
+    },
+  });
+  test.equal(me.sleeping, true);
+  T({
+    fn: function() {
+      test.equal(me(), undefined);
+    },
+    isView: true,
+  });
+  T.drain();
+  test.equal(me(), undefined);
+  test.equal(me.sleeping, false);
+  test.done();
 };
