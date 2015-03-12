@@ -799,3 +799,43 @@ exports['getName'] = function(test) {
   test.equal(T.getName(scope4), 'na-' + scope4.tboneid);
   test.done();
 };
+
+exports['recursiveDiff handling of model changes'] = function(test) {
+  var me = T.make();
+  var me2 = T.make();
+  var count1 = 0;
+  var count2 = 0;
+  T(function() {
+    me('');
+    count1++;
+  });
+  T(function() {
+    me('other');
+    count2++;
+  });
+  test.equal(count1, 1);
+  test.equal(count2, 1);
+  me('other', me2);
+  T.drain();
+  test.equal(count1, 2);
+  test.equal(count2, 2);
+  me('other', me2);
+  T.drain();
+  test.equal(count1, 2);
+  test.equal(count2, 2);
+  me('', { other: me2 });
+  T.drain();
+  test.equal(count1, 2);
+  test.equal(count2, 2);
+  test.done();
+};
+
+exports['recursiveDiff with only a top-level binding'] = function(test) {
+  var me = T.make();
+  var drainAndCheckTriggers = getWatcher(me, ['__self__']);
+  me('', { prop: new Date(238423) });
+  drainAndCheckTriggers(test);
+  me('', { prop: new Date(238424) });
+  drainAndCheckTriggers(test);
+  test.done();
+};

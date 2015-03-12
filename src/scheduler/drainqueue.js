@@ -103,7 +103,7 @@ function updateIsReady () {
             metrics.query('ajax.isReady', numInFlight === 0);
             metrics.query('ajax.numInFlight', numInFlight);
             isReadyTimer = null;
-        }, 20);
+        }, 0);
     }
 }
 

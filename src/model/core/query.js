@@ -12,7 +12,7 @@ var QUERY_SELF = '';
  */
 var MAX_RECURSIVE_DIFF_DEPTH = 16;
 
-function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
+function recursiveDiff (self, evs, curr, prev, _exhaustive, depth, fireAll) {
     // Kludge alert: if the objects are too deep, just assume there is
     // a change.
     if (depth > MAX_RECURSIVE_DIFF_DEPTH) {
@@ -26,36 +26,35 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
         }
         return true;
     }
-    evs = evs || {};
+    evs = evs || EMPTY_OBJECT;
     curr = curr;
     prev = prev;
-    if (isQueryable(prev) || isQueryable(curr)) {
-        // The only reason either prev or curr should be queryable is if
-        // we're setting a model where there previous was none (or vice versa).
-        // In this case, *all* descendant events must be rebound to the new
-        // model by firing them all immediately.
-        fireAll = true;
-    }
     var changed = fireAll;
-    var k, i, n;
-    for (k in evs) {
-        if (k === QUERY_SELF) {
-            if (prev !== curr) {
-                // If prev and curr are both "object" types (but not null),
-                // then we need to search recursively for "real" changes.
-                // We want to avoid firing change events when the user sets
-                // something to a deep copy of itself.
-                if (isRealObject(prev) && isRealObject(curr)) {
-                    exhaustive = true;
-                } else if (isDate(prev) && isDate(curr) && !changed) {
-                    changed = prev.getTime() !== curr.getTime();
-                } else {
-                    changed = true;
-                }
+    var exhaustive = _exhaustive;
+    var k;
+    if (prev !== curr) {
+        // If prev and curr are both "object" types (but not null),
+        // then we need to search recursively for "real" changes.
+        // We want to avoid firing change events when the user sets
+        // something to a deep copy of itself.
+        if (isQueryable(prev) || isQueryable(curr)) {
+            changed = true;
+            fireAll = true;
+        } else if (isObjectOrArray(prev) && isObjectOrArray(curr)) {
+            exhaustive = true;
+        } else if (isDate(prev) && isDate(curr)) {
+            if (prev.getTime() !== curr.getTime()) {
+                changed = true;
             }
         } else {
-            changed = recursiveDiff(
-                self, evs[k], curr && curr[k], prev && prev[k], false, depth + 1, fireAll) || changed;
+            changed = true;
+        }
+    }
+    for (k in evs) {
+        if (k !== QUERY_SELF) {
+            if (recursiveDiff(self, evs[k], curr && curr[k], prev && prev[k], false, depth + 1, fireAll)) {
+                changed = true;
+            }
         }
     }
     if (exhaustive && !changed) {
@@ -63,7 +62,7 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
         // through all keys until we find one (note that this could duplicate
         // some searching done while searching the event tree)
         // This may not be super-efficient to call recursiveDiff all the time.
-        if (isRealObject(prev) && isRealObject(curr) && prev !== curr) {
+        if (isObjectOrArray(prev) && isObjectOrArray(curr)) {
             // prev and curr are both objects/arrays
             // search through them recursively for any differences
             // Detect changes in length; this catches the difference
@@ -90,17 +89,10 @@ function recursiveDiff (self, evs, curr, prev, exhaustive, depth, fireAll) {
                     }
                 }
             }
-        } else if (isDate(prev) && isDate(curr)) {
-            changed = prev.getTime() !== curr.getTime();
-        } else if (prev !== curr) {
-            // at least one of prev and curr is a primitive (i.e. not arrays/objects)
-            // and they are different.  thus, we've found a change and will pass this
-            // outward so that we know to fire all parent callbacks
-            changed = true;
         }
     }
     if (changed) {
-        var contexts = evs[QUERY_SELF] || {};
+        var contexts = evs[QUERY_SELF] || EMPTY_OBJECT;
         for (var contextId in contexts) {
             contexts[contextId].trigger();
         }
@@ -187,7 +179,7 @@ function query () {
             break;
         }
 
-        if (isSet && !isRealObject(_data)) {
+        if (isSet && !isObjectOrArray(_data)) {
             /**
              * When doing an implicit mkdir -p while setting a deep-nested property
              * for the first time, we peek at the next arg and create either an array

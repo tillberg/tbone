@@ -39,11 +39,11 @@ function noop () { return undefined; }
 
 var isDate = _.isDate;
 
-function isRealObject (x) {
+function isObjectOrArray(x) {
     return x !== null && typeof x === 'object' && !isDate(x);
 }
 
-function isQueryable (x) {
+function isQueryable(x) {
     return !!(x && typeof x.query === 'function');
 }
 
