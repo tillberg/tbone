@@ -710,13 +710,17 @@ exports['autorun js error handling'] = function(test) {
 };
 
 exports['autorun scope destruction'] = function(test) {
+  var me = T.make();
   var scope1;
   var scope2;
   var scope3;
+  var count = 0;
   scope1 = T(function() {
     scope2 = T({
       fn:function() {
-        scope3 = T(function() {});
+        scope3 = T(function() {
+          count = me('count');
+        });
       },
       detached: true,
     });
@@ -724,8 +728,22 @@ exports['autorun scope destruction'] = function(test) {
   test.equal(scope1.parentScope, undefined);
   test.equal(scope2.parentScope, undefined);
   test.equal(scope3.parentScope, scope2);
+  test.equal(count, undefined);
+  me.increment('count');
+  T.drain();
+  test.equal(count, 1);
+  scope1.destroy();
+  // scope 2 and 3 should not be affected by destroying scope1:
+  me.increment('count');
+  T.drain();
+  test.equal(count, 2);
+  test.equal(scope3.parentScope, scope2);
+  // scope3 should be destroyed recursively when scope2 is destroyed:
   scope2.destroy();
   test.equal(scope3.parentScope, undefined);
+  me.increment('count');
+  T.drain();
+  test.equal(count, 2);
   test.done();
 };
 

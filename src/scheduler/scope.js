@@ -101,13 +101,14 @@ var scopeBase = {
      */
     unbindAll: function scopeUnbindAll() {
         var self = this;
-        var lookups = self.lookups || {};
-        for (var objId in lookups) {
-            var propMap = lookups[objId];
-            var obj = propMap.obj;
-            var props = propMap.props;
-            for (var prop in props) {
-                obj.off(prop, self);
+        if (self.lookups) {
+            for (var objId in self.lookups) {
+                var propMap = self.lookups[objId];
+                var obj = propMap.obj;
+                var props = propMap.props;
+                for (var prop in props) {
+                    obj.off(prop, self);
+                }
             }
         }
     },
@@ -117,7 +118,7 @@ var scopeBase = {
      */
     destroySubScopes: function scopeDestroySubScopes() {
         var self = this;
-        for (var i = 0; i < self.subScopes.length; i++) {
+        for (var i in self.subScopes) {
             self.subScopes[i].destroy();
         }
         self.subScopes = [];
@@ -129,7 +130,7 @@ var scopeBase = {
      */
     destroy: function scopeDestroy() {
         var self = this;
-        delete self.parentScope;
+        self.parentScope = null;
         self.unbindAll();
         self.destroySubScopes();
     }
