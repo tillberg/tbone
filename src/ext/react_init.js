@@ -17,19 +17,17 @@ if (React) {
             });
         }
 
-        function cleanUpTScopes(inst, key) {
-            _.each(inst.__tbone__[key], function tboneReactDestroyScopes(tscope) {
-                tscope.destroy();
-            });
+        function destroyTScopes(inst, key) {
+            var scopes = inst.__tbone__[key];
+            for (var i in scopes) {
+                scopes[i].destroy();
+            }
             inst.__tbone__[key] = [];
-        }
-        function cleanUpRenderTScopes (inst) {
-            cleanUpTScopes(inst, 'render');
         }
         function doUpdate (inst) {
             if (!inst.hasUpdateQueued) {
                 inst.__tbone__.hasUpdateQueued = 1;
-                cleanUpRenderTScopes(inst);
+                destroyTScopes(inst, 'render');
                 if (inst.isMounted()) {
                     // console.log('update queued for ' + inst._currentElement.type.displayName);
                     inst.forceUpdate();
@@ -43,7 +41,7 @@ if (React) {
                 var self = this;
                 var args = arguments;
                 if (special === IS_WILL_UPDATE) {
-                    cleanUpRenderTScopes(self);
+                    destroyTScopes(self, 'render');
                     self.__tbone__.hasUpdateQueued = 0;
                 }
                 var rval;
@@ -87,12 +85,10 @@ if (React) {
                 }
             },
             componentWillUnmount: function tboneComponentWillUnmountWrapper() {
-                cleanUpTScopes(this, 'mount');
-                cleanUpRenderTScopes(this);
+                destroyTScopes(this, 'mount');
+                destroyTScopes(this, 'render');
                 if (origOpts.componentWillUnmount) {
                     return origOpts.componentWillUnmount.apply(this, arguments);
-                } else {
-                    return undefined;
                 }
             },
             componentWillUpdate: getWrapperFn(origOpts.componentWillUpdate, IS_WILL_UPDATE),
