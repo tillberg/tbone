@@ -110,6 +110,7 @@ var scopeBase = {
                     obj.off(prop, self);
                 }
             }
+            self.lookups = null;
         }
     },
 
@@ -133,7 +134,9 @@ var scopeBase = {
         self.parentScope = null;
         self.unbindAll();
         self.destroySubScopes();
-    }
+        // Prevent execution even if this scope is already queued to run:
+        self.execute = noop;
+    },
 };
 
 /**
@@ -154,7 +157,7 @@ var scopeBase = {
  * @return {Scope}                 A new Scope created to wrap this function
  */
 function autorun (opts) {
-    if (_.isFunction(opts)) {
+    if (typeof opts === 'function') {
         opts = {fn: opts};
     }
 
@@ -169,6 +172,7 @@ function autorun (opts) {
     }, opts, {
         fn: opts.fn.bind(context),
         subScopes: [],
+        lookups: null,
     });
 
     if (context && context.onScopeExecute) {

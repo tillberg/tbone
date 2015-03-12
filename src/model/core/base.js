@@ -106,7 +106,7 @@ var baseModel = {
         }
         var contexts = events[QUERY_SELF] || {};
         for (var contextId in contexts) {
-            contexts[contextId].trigger.call(contexts[contextId]);
+            contexts[contextId].trigger();
         }
     },
 
