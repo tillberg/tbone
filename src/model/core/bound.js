@@ -38,7 +38,7 @@ boundModel = models.bound = baseModel.extend({
             // Wake up this model if it was sleeping
             if (self.sleeping) {
                 self.sleeping = false;
-                self.scope.trigger();
+                self.reset();
             }
 
             /**
@@ -79,10 +79,19 @@ boundModel = models.bound = baseModel.extend({
     },
 
     _update: function _update() {
-        var opts = this.assumeChanged ? {assumeChanged : true} : {};
+        var opts = this.assumeChanged ? {assumeChanged : true} : EMPTY_OBJECT;
         this.query(opts, QUERY_SELF, this.state());
         if (TBONE_DEBUG) {
             log(VERBOSE, this, 'updated', this.attributes);
+        }
+    },
+
+    /**
+     * Triggers scope re-execution.
+     */
+    reset: function reset() {
+        if (this.scope) {
+            this.scope.trigger();
         }
     },
 
