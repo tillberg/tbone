@@ -47,6 +47,9 @@ function isQueryable (x) {
     return !!(x && typeof x.query === 'function');
 }
 
+var EMPTY_OBJECT = {};
+Object.freeze(EMPTY_OBJECT);
+
 /**
  * Use to test whether a string is a number literal.
  * @type {RegExp}
@@ -123,7 +126,7 @@ function logconsole (level, context, event, msg, data, moredata) {
          * If a msg is a string, render it as a template with data as the data.
          * If msg is not a string, just output the data below.
          */
-        var templated = _.isString(msg) ? _.template(msg)(data || {}) : '';
+        var templated = _.isString(msg) ? _.template(msg)(data || EMPTY_OBJECT) : '';
         var includeColon = !!templated || !!msg;
         var frame = type === name ? type : (type + ' ' + name);
         var message = frame + ' / ' + event + (includeColon ? ': ' : '');

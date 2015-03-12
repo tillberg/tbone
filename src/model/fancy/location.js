@@ -4,7 +4,7 @@
 
 function changePathGen (method) {
     return function changePath(path) {
-        root.history[method + 'State']({}, '', path);
+        root.history[method + 'State'](EMPTY_OBJECT, '', path);
         $(root).trigger(method + 'state');
     };
 }

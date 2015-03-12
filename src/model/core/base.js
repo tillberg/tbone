@@ -36,7 +36,7 @@ var baseModel = {
         _.extend(instance, self, _.isFunction(opts) ? {
             state: opts,
             Name: opts.name,
-        } : opts || {});
+        } : opts || EMPTY_OBJECT);
 
         // Initialize the model instance
         instance.tboneid = undefined;
@@ -104,7 +104,7 @@ var baseModel = {
             }
             events = events[arg];
         }
-        var contexts = events[QUERY_SELF] || {};
+        var contexts = events[QUERY_SELF] || EMPTY_OBJECT;
         for (var contextId in contexts) {
             contexts[contextId].trigger();
         }

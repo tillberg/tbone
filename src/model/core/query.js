@@ -130,7 +130,7 @@ function query () {
          */
         value = prop;
         prop = opts;
-        opts = {};
+        opts = EMPTY_OBJECT;
         /**
          * Use arguments.length to switch to set mode in order to properly support
          * setting undefined.
@@ -217,7 +217,7 @@ function query () {
 
         _data = _data != null ? _data[arg] : undefined;
         if (events) {
-            _.extend(parentCallbackContexts, events[QUERY_SELF] || {});
+            _.extend(parentCallbackContexts, events[QUERY_SELF] || EMPTY_OBJECT);
             events = events[arg];
         }
     }
