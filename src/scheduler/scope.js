@@ -186,8 +186,13 @@ function autorun (opts) {
         scope.parentScope = currentExecutingScope;
     }
 
-    // Run the associated function (and bind associated models)
-    scope.execute();
+    if (scope.deferExec) {
+        // Queue the scope for execution
+        scope.trigger();
+    } else {
+        // Run the associated function (and bind associated models)
+        scope.execute();
+    }
 
     // Return the scope object. Many consumers use the destroy method
     // to kill the scope and all its bindings.

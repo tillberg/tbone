@@ -169,6 +169,15 @@ function drainQueue() {
     updateIsReady();
 }
 
+tbone.defer = function tboneDefer(_opts) {
+    var opts = _.extend({
+        priority: PRIORITY_HIGHEST,
+        detached: true,
+        deferExec: true,
+    }, _.isFunction(_opts) ? {fn: _opts} : _opts);
+    autorun(opts);
+};
+
 /**
  * Drain to the tbone drainQueue, executing all queued Scopes immediately.
  * This is useful both for testing and MAYBE also for optimizing responsiveness by

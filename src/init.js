@@ -17,6 +17,8 @@ var $ = root.$;
  *   UI needs its data.
  */
 /** @const */
+var PRIORITY_HIGHEST = 10000;
+/** @const */
 var DEFAULT_AUTORUN_PRIORITY = 4000;
 /** @const */
 var BASE_PRIORITY_MODEL_SYNC = 3000;
@@ -26,7 +28,7 @@ var BASE_PRIORITY_VIEW = 2000;
 var BASE_PRIORITY_MODEL_ASYNC = 1000;
 
 var priority = {
-    highest: 10000,
+    highest: PRIORITY_HIGHEST,
     bound: BASE_PRIORITY_MODEL_SYNC,
     beforeViews: BASE_PRIORITY_VIEW + 500,
     view: BASE_PRIORITY_VIEW,
