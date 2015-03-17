@@ -143,30 +143,36 @@ var frozen = false;
  * Drain the Scope execution queue, in priority order.
  */
 function drainQueue() {
-    var queueDrainStartTime = now();
-    var scope;
-    drainQueueTimer = schedulerQueue.length ? _.defer(drainQueue) : null;
-    var remaining = 5000;
-    while (!(TBONE_DEBUG && frozen) && --remaining && (scope = pop())) {
-        /**
-         * Update the scopesQueued map so that this Scope may be requeued.
-         */
-        delete scopesQueued[uniqueId(scope)];
+    drainQueueTimer = null;
+    if (schedulerQueue.length) {
+        var queueDrainStartTime = now();
+        var scope;
+        drainQueueTimer = _.defer(drainQueue);
+        var remaining = 5000;
+        // console.log('drain start');
+        while (!(TBONE_DEBUG && frozen) && --remaining && (scope = pop())) {
+            /**
+             * Update the scopesQueued map so that this Scope may be requeued.
+             */
+            delete scopesQueued[uniqueId(scope)];
 
-        /**
-         * Execute the scope, and in turn, the wrapped function.
-         */
-        scope.execute();
-    }
-    if (TBONE_DEBUG) {
-        if (!remaining) {
-            log(WARN, 'scheduler', 'drainQueueOverflow', 'exceeded max drainQueue iterations');
+            /**
+             * Execute the scope, and in turn, the wrapped function.
+             */
+            // console.log('exec scope ' + scope.priority + ' ' + tbone.getName(scope));
+            scope.execute();
         }
-        log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
-            duration: now() - queueDrainStartTime
-        });
+        // console.log('drain end');
+        if (TBONE_DEBUG) {
+            if (!remaining) {
+                log(WARN, 'scheduler', 'drainQueueOverflow', 'exceeded max drainQueue iterations');
+            }
+            log(VERBOSE, 'scheduler', 'drainQueue', 'ran for <%=duration%>ms', {
+                duration: now() - queueDrainStartTime
+            });
+        }
+        updateIsReady();
     }
-    updateIsReady();
 }
 
 tbone.defer = function tboneDefer(_opts) {
