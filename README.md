@@ -1,9 +1,7 @@
 TBone [![GitHub version](https://badge.fury.io/gh/appneta%2Ftbone.png)](https://badge.fury.io/gh/appneta%2Ftbone) [![Build Status](https://travis-ci.org/appneta/tbone.png)](https://travis-ci.org/appneta/tbone)
 =====
 
-### Data-Flow-Oriented Programming for JavaScript
-
-TBone is a data-flow-oriented/reactive programming library for JavaScript.
+### Dataflow-Oriented Programming for JavaScript
 
 TBone brings the power and expressive ease of live HTML templates to
 JavaScript code, giving you the ability to build complex applications
