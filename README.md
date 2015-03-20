@@ -1,14 +1,50 @@
 TBone [![GitHub version](https://badge.fury.io/gh/appneta%2Ftbone.png)](https://badge.fury.io/gh/appneta%2Ftbone) [![Build Status](https://travis-ci.org/appneta/tbone.png)](https://travis-ci.org/appneta/tbone)
 =====
 
-### Reactive Programming for JavaScript
+### Data-Flow-Oriented Programming for JavaScript
 
-TBone extends live template binding to Javascript functions.
+TBone is a data-flow-oriented/reactive programming library for JavaScript.
 
-Similarly to how live templates bind automatically to changes in any of the
-properties used to render them, TBone uses T-functions to track all the
-dependencies of a function, and will re-run them any time those values
-change.
+TBone brings the power and expressive ease of live HTML templates to
+JavaScript code, giving you the ability to build complex applications
+using declarative/idempotent code.
+
+TBone concepts:
+
+- `tbone.models.base`:
+  - Set data to it via `.query(prop, value)`.
+  - Read and bind to data via `.query(prop)`.
+  - Supports deep-lookups and deep-binding, e.g. `.query('users.2.name.first')`.
+  - Supports Object, Array, Number, String, Date, null, and undefined.
+- `tbone.models.bound`:
+  - Extends `tbone.models.base`.
+  - Instead of setting data via `query`, the data held is bound to the
+    return value of a `state` function.
+  - This `state` function can query values from other models as part of
+    its calculation; whenever those other models are update, the `state`
+    function is automatically re-run in order to recalculate.
+- tbone.models.async:
+  - Extends `tbone.models.bound`.
+  - Similar to bound models, but the `state` function returns data via
+    an async callback.
+  - Handles update generations for you, preventing older, slower updates
+    from overwriting newer, faster updates.
+- `tbone.models.ajax`:
+  - Extends `tbone.models.async`.
+  - A special case of async model where the `state` function calls
+    `.url()` to build a URL to GET. The `url` function can `query` other
+    models to build the URL, enabling ajax models to respond to state
+    transitions by fetching new data.
+
+- `tbone.autorun`:
+  - Creates a `FunctionRunner` that wraps a function, executes it,
+    attaches bindings to all models `query`ed during execution, then
+    re-runs the function whenever any of those bindings fire.
+  - Execution is controlled by a central Scheduler that orders functions
+    by priority and executes all waiting FunctionRunners synchronously
+    after a 0ms-timeout. The short delay removes the need for using
+    _.defer to prevent multiple bindings from causing multiple update
+    calls to the same FunctionRunner.
 
 ### Example
 
@@ -141,8 +177,6 @@ Binds **prop** to the live result of **fn**
   or set it to **value** if specified.
 - `model.queryModel(prop)`: Look up **prop** and return the the model found there
   instead of extracting its data.
-- `model.text(prop)`: read **prop** from the model, except return an empty string
-  if the value is not a string, Number other than NaN, or a Date.
 - `model.toggle(prop)`: sets **prop** to !**prop**, i.e. alternate between
   true and false.
 - `model.push(prop, value)`: Add **value** at the end of the list at **prop**.
@@ -183,7 +217,6 @@ ID of the model.  For example, `T('users.#42.name')`.
 
 ## Even more fun stuff!
 
-- `tbone.models`, `tbone.collections`: All the stuff you've added to TBone.
 - `TBONE_DEBUG`: Set to true just before loading TBone in order to enable
   debug output & features (not available using Production minified source).
 - `tbone.freeze()`: Freeze the page; no further TBone updates will occur.
@@ -206,6 +239,6 @@ ID of the model.  For example, `T('users.#42.name')`.
 
 ## License
 
-Copyright (c) 2012-2014 Dan Tillberg, AppNeta
+Copyright (c) 2012-2015 Dan Tillberg, AppNeta
 
 TBone is freely redistributable under the MIT License.  See LICENSE for details.
