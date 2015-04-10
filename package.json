@@ -1,8 +1,8 @@
 {
   "name": "tbone",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "Dan Tillberg <dan@tillberg.us>",
-  "description": "Reactive Programming for JavaScript",
+  "description": "Dataflow-oriented programming for JavaScript",
   "license": "MIT",
   "main": "dist/tbone.js",
   "directories": {

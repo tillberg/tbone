@@ -1,5 +1,59 @@
 ## TBone Change Log
 
+### 2.0.0
+
+This release removes the DOM-manipulation portions of TBone. TBone's
+view & template components were never first in class, and this move
+focuses on TBone's strengths in setting up data dependencies.
+
+React functions in a very similar fashion to TBone's old view module,
+and TBone-React integration (though entirely optional) is now bundled
+with the regular TBone build.
+
+In addition, it includes some significant breaking changes:
+- Removed support for Backbone model interoperability.
+- Removed `clearOnFetch` from ajax models. Replaced with `preFetch`
+  callback, which in the default implementation clears the model.
+  Set `preFetch: _.noop` for the old `clearOnFetch: false` behavior.
+- TBone models now throw an exception when attempting to set DOM
+  elements or functions to them as values, either at the root of the
+  model or in any descendent. This change was made to discourage
+  using TBone as a general storage container for non-data JS objects,
+  and to keep with the overall strategy where TBone forms a pipeline
+  of serializable data.
+- `autorun` now takes either a function or an object as its single
+  argument. The old style of T(fn, priority) is no longer supported.
+- Removed previously-deprecated `queryText`, `text`, `lookup`,
+  `lookupText`, `set`, and `get` functions from the base model.
+- Removed little-used `find` method from the base model.
+- TBone no longer guards against extensions made to `Array.prototype`.
+
+Additional notes:
+- When run in DEBUG mode, TBone now executes a recursive
+  `Object.freeze` on anything that is set to a TBone model. This
+  replaces the previous `aliasCheck` that depended on using JSON
+  serialization to detect changes made behind TBone's back. With
+  `Object.freeze`, some browsers (e.g. Chrome) will now throw
+  JS exceptions when an attempt is made to modify an object that
+  has been previously passed to TBone. You should fix these
+  errors by `_.clone`ing the object and making modifications to
+  your own copy. `Object.freeze`ing is disabled when not in
+  DEBUG mode in order to maximize performance.
+- Refactored the `query` function to be much simpler by removing
+  all the array mutations.
+- Unit tests are now executed in nodeunit, though this is perhaps
+  one step forward and one step back, as the tests no longer run
+  in the browser. womp womp.
+- Significantly increased unit test coverage via Istanbul. Unit
+  tests now cover almost all of the non-debug, non-browser code
+  branches.
+- A number of changes were made to the React integration to make
+  it more robust and to eliminate memory leaks.
+- Added `tbone.isExecuting` flag which is set to true while any
+  TBone Scope is executing.
+- Fix bug whereby destroyed scopes would still execute if they'd
+  already been queued.
+
 ### 1.0.0
 
 This release includes some breaking changes:
