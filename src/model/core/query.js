@@ -101,6 +101,9 @@ function recursiveDiff (self, evs, curr, prev, _exhaustive, depth, fireAll) {
 }
 
 function recursivelyFreeze(obj) {
+    if (isNonQueryableFunction(obj) || _.isElement(obj)) {
+        throw 'Functions and DOM elements should not be set to TBone models.';
+    }
     if (typeof obj === 'object' && obj !== null && !Object.isFrozen(obj)) {
         Object.freeze(obj);
         _.each(obj, recursivelyFreeze);

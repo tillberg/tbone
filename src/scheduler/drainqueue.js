@@ -180,7 +180,7 @@ tbone.defer = function tboneDefer(_opts) {
         priority: PRIORITY_HIGHEST,
         detached: true,
         deferExec: true,
-    }, _.isFunction(_opts) ? {fn: _opts} : _opts);
+    }, isFunction(_opts) ? {fn: _opts} : _opts);
     autorun(opts);
 };
 

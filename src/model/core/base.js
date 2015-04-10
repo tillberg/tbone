@@ -33,7 +33,7 @@ var baseModel = {
                     arguments.length === 1 ? instance.query(arg0) :
                                              instance.query(arg0, arg1));
         };
-        _.extend(instance, self, _.isFunction(opts) ? {
+        _.extend(instance, self, isFunction(opts) ? {
             state: opts,
             Name: opts.name,
         } : opts || EMPTY_OBJECT);
