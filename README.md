@@ -76,18 +76,18 @@ TBone was originally built as an extension upon [Backbone](http://backbonejs.org
 
 ## Download
 
-* [Development version, with comments](//cdn.tbonejs.org/tbone-1.0.0.js) **62kb**
-* [Production version, minified](//cdn.tbonejs.org/tbone-1.0.0.min.js) **5kb gzipped**
+* [Development version, with comments](//cdn.tbonejs.org/tbone-2.0.0.js) **54kb**
+* [Production version, minified](//cdn.tbonejs.org/tbone-2.0.0.min.js) **4.3kb gzipped**
 
 ```html
-Development: <script src="//cdn.tbonejs.org/tbone-1.0.0.js"></script>
-Production: <script src="//cdn.tbonejs.org/tbone-1.0.0.min.js"></script>
+Development: <script src="//cdn.tbonejs.org/tbone-2.0.0.js"></script>
+Production: <script src="//cdn.tbonejs.org/tbone-2.0.0.min.js"></script>
 ```
 
 ## Requirements
 
-* JQuery or Zepto.
 * Underscore.js or Lodash.
+* JQuery or Zepto (TBone uses either only for the provided `ajax` function).
 
 ## Contribute
 
