@@ -218,9 +218,12 @@ if (typeof module !== 'undefined') {
     module.exports = tbone;
 } else {
     // Browser-land
+    var orig_T = root.T;
     var orig_tbone = root.tbone;
+    root.T = tbone;
     root.tbone = tbone;
     tbone.noConflict = function noConflict() {
+        root.T = orig_T;
         root.tbone = orig_tbone;
     };
 }
