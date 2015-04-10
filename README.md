@@ -232,8 +232,6 @@ ID of the model.  For example, `T('users.#42.name')`.
   either directly or indirectly (i.e. through other model dependencies) for
   changes to **model**.  This is used internally by TBone to prevent loading
   ajax data for any models that are not needed as part of the UI currently.
-- `model.find(value)`: Search for **value**, and return the prop path of the
-  first match found (using referential equality, ===).
 
 ## License
 
