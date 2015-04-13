@@ -1,5 +1,9 @@
 ## TBone Change Log
 
+### 2.0.2
+
+- Fix issues that prevented using browserify to `require` tbone.
+
 ### 2.0.0
 
 This release removes the DOM-manipulation portions of TBone. TBone's
