@@ -4,7 +4,7 @@
   "author": "Dan Tillberg <dan@tillberg.us>",
   "description": "Dataflow-oriented programming for JavaScript",
   "license": "MIT",
-  "main": "dist/tbone.js",
+  "main": "tbone.js",
   "directories": {
     "doc": "docs",
     "example": "examples",
