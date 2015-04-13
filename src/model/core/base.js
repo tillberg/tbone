@@ -216,17 +216,17 @@ if (TBONE_DEBUG) {
 if (typeof module !== 'undefined') {
     // Node-land
     module.exports = tbone;
-} else {
-    // Browser-land
-    var orig_T = root.T;
-    var orig_tbone = root.tbone;
-    root.T = tbone;
-    root.tbone = tbone;
-    tbone.noConflict = function noConflict() {
-        root.T = orig_T;
-        root.tbone = orig_tbone;
-    };
 }
+
+// Browser-land
+var orig_T = root.T;
+var orig_tbone = root.tbone;
+root.T = tbone;
+root.tbone = tbone;
+tbone.noConflict = function noConflict() {
+    root.T = orig_T;
+    root.tbone = orig_tbone;
+};
 
 var metrics = baseModel.make({ Name: 'tbone_metrics' });
 tbone.metrics = metrics;

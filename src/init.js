@@ -1,6 +1,11 @@
-var _ = root._ || require('lodash');
+var _ = root._ || (typeof require !== 'undefined' && require('lodash'));
 var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? root.DEBUG : root.TBONE_DEBUG);
 var $ = root.$;
+
+if (TBONE_DEBUG && !_) {
+    console.error('TBone requires lodash or underscore. Found nothing at window._');
+    return;
+}
 
 /**
  * Scheduling priority constants
