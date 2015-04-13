@@ -1,5 +1,5 @@
 {
-  "name": "tbone",
+  "name": "tillberg-tbone",
   "version": "2.0.0",
   "author": "Dan Tillberg <dan@tillberg.us>",
   "description": "Dataflow-oriented programming for JavaScript",
