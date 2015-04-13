@@ -1,9 +1,15 @@
 'use strict';
-(function tboneWrap(root){
+(function tboneWrap(){
 
-var _ = root._ || require('lodash');
+var root = typeof window === 'undefined' ? {} : window;
+var _ = typeof require === 'undefined' ? root._ : require('lodash');
 var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? root.DEBUG : root.TBONE_DEBUG);
 var $ = root.$;
+
+if (TBONE_DEBUG && !_) {
+    console.error('TBone requires lodash or underscore. Found nothing at window._');
+    return;
+}
 
 /**
  * Scheduling priority constants
@@ -713,20 +719,20 @@ if (TBONE_DEBUG) {
     onLog(logconsole);
 }
 
+// Export for node:
 if (typeof module !== 'undefined') {
-    // Node-land
     module.exports = tbone;
-} else {
-    // Browser-land
-    var orig_T = root.T;
-    var orig_tbone = root.tbone;
-    root.T = tbone;
-    root.tbone = tbone;
-    tbone.noConflict = function noConflict() {
-        root.T = orig_T;
-        root.tbone = orig_tbone;
-    };
 }
+
+// Browser-land
+var orig_T = root.T;
+var orig_tbone = root.tbone;
+root.T = tbone;
+root.tbone = tbone;
+tbone.noConflict = function noConflict() {
+    root.T = orig_T;
+    root.tbone = orig_tbone;
+};
 
 var metrics = baseModel.make({ Name: 'tbone_metrics' });
 tbone.metrics = metrics;
@@ -1649,7 +1655,7 @@ collections.localStorage = baseCollection.extend({
     }
 });
 
-var React = root.React;
+var React = root && root.React;
 if (React) {
     var IS_WILL_UPDATE = 1;
     var IS_DID_MOUNT = 2;
@@ -1758,4 +1764,4 @@ try{
     root.dispatchEvent(new root.CustomEvent('tbone_loaded'));
 } catch(e) {}
 
-}(this));
+}());

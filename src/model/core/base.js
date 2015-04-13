@@ -213,8 +213,8 @@ if (TBONE_DEBUG) {
     onLog(logconsole);
 }
 
+// Export for node:
 if (typeof module !== 'undefined') {
-    // Node-land
     module.exports = tbone;
 }
 
