@@ -1,4 +1,4 @@
-var React = root && root.React;
+var React = root && root.React || (typeof require !== 'undefined' && require('react'));
 if (React) {
     var IS_WILL_UPDATE = 1;
     var IS_DID_MOUNT = 2;

@@ -1,7 +1,7 @@
 var root = typeof window === 'undefined' ? {} : window;
-var _ = typeof require === 'undefined' ? root._ : require('lodash');
 var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? root.DEBUG : root.TBONE_DEBUG);
-var $ = root.$;
+var _ = typeof require === 'undefined' ? root._ : require('lodash');
+var $ = typeof require === 'undefined' ? root.$ : require('jquery');
 
 if (TBONE_DEBUG && !_) {
     console.error('TBone requires lodash or underscore. Found nothing at window._');
