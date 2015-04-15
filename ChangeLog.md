@@ -1,5 +1,9 @@
 ## TBone Change Log
 
+### 2.0.3
+
+- Fix React integration when used via browserify.
+
 ### 2.0.2
 
 - Fix issues that prevented using browserify to `require` tbone.
