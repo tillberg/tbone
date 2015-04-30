@@ -100,8 +100,33 @@ function recursiveDiff (self, evs, curr, prev, _exhaustive, depth, fireAll) {
     return changed;
 }
 
+function genModelDataProxy(parentModel, prop, childModel) {
+    return autorun({
+        fn: function() {
+            parentModel.query({
+                setModelData: true,
+            }, prop, childModel.query(''));
+        },
+        immediate: true,
+        detached: true,
+        priority: PRIORITY_HIGHEST - 1000,
+    });
+}
+
+function recursivelyDestroySubModelScopes(_model) {
+    if (_model) {
+        for (var k in _model) {
+            if (k === QUERY_SELF) {
+                _model[QUERY_SELF].scope.destroy();
+            } else {
+                recursivelyDestroySubModelScopes(_model[k]);
+            }
+        }
+    }
+}
+
 function recursivelyFreeze(obj) {
-    if (isNonQueryableFunction(obj) || _.isElement(obj)) {
+    if (isFunction(obj) || _.isElement(obj)) {
         throw 'Functions and DOM elements should not be set to TBone models.';
     }
     if (typeof obj === 'object' && obj !== null && !Object.isFrozen(obj)) {
@@ -135,7 +160,15 @@ function query () {
         }
     }
 
-    if (!prop && opts.dontGetData) {
+    // console.log('query', {
+    //     name: self.getName(),
+    //     opts: opts,
+    //     prop: prop,
+    //     value: value
+    // });
+
+    var queryModel = opts.dontGetData;
+    if (!prop && queryModel) {
         return self;
     }
 
@@ -155,25 +188,26 @@ function query () {
     var arg;
     var doSubQuery;
     var parentCallbackContexts = {};
+    var setModelData = opts.setModelData;
+    var isModelSet = isSet && !setModelData && isQueryable(value);
+    var models = [];
+    var _model = self.submodels;
     var events = isSet && self._events;
+    var subModel;
 
     while (true) {
-        if (isQueryable(_data)) {
+        subModel = _model && _model[QUERY_SELF] && _model[QUERY_SELF].model;
+        // Is there a way we could completely avoid sub-queries on reads?
+        // The trouble comes with indirectly-set models, which get written as _data
+        // instead of in the _model tree.
+        if (isSet && isQueryable(subModel)) {
             /**
              * To avoid duplicating the recentLookups code here, we set a flag and do
              * the sub-query after recording queries.
              *
-             * Always do the subquery if there are more args.
-             * If there are no more args...
-             * - and this is a set...
-             *   -        to a queryable: Don't sub-query.  Set property to new queryable.
-             *   -    to a non-queryable: Do the sub-query.  Push the value to the
-             *                            other model (don't overwrite the model).  This
-             *                            is kind of magical?
-             * - and this is a get...
-             *   -                always: Do the sub-query.
+             * Do a sub-query to a child model if there are more args remaining.
              */
-            doSubQuery = (args && args.length) || !(isSet && isQueryable(value));
+            doSubQuery = args && args.length;
             break;
         }
 
@@ -190,12 +224,7 @@ function query () {
              * property via query() so as to fire change events appropriately.
              */
             if (TBONE_DEBUG && _data != null) {
-                log(WARN, self, 'mkdir', 'while writing <%=prop%>, had to overwrite ' +
-                    'primitive value <%=primitive%> at <%=partial%>', {
-                        prop: prop,
-                        primitive: _data,
-                        partial: args.join('.')
-                    });
+                throw 'Writing to a sub-property of a primitive value is not allowed.';
             }
             /**
              * Decide whether to implicitly create an array or an object.
@@ -211,6 +240,18 @@ function query () {
         datas.push(_data);
 
         _data = _data != null ? _data[arg] : undefined;
+        if (_model) {
+            models.push(_model);
+            if (isSet) {
+                if (TBONE_DEBUG && _model[QUERY_SELF]) {
+                    throw 'Direct writes below a sub-model are not allowed. Write to the sub-model instead.';
+                }
+                if (isModelSet && !_model[arg]) {
+                    _model[arg] = {};
+                }
+            }
+            _model = _model[arg];
+        }
         if (events) {
             _.extend(parentCallbackContexts, events[QUERY_SELF] || EMPTY_OBJECT);
             events = events[arg];
@@ -229,27 +270,53 @@ function query () {
     }
 
     if (doSubQuery) {
-        return isSet ? _data.query(opts, args.join('.'), value) : _data.query(opts, args.join('.'));
+        return isSet ? subModel.query(opts, args.join('.'), value) : subModel.query(opts, args.join('.'));
     }
 
     if (isSet) {
-        if (TBONE_DEBUG && !self.disableFreeze) {
-            recursivelyFreeze(value);
+        if (isModelSet) {
+            // Skip the destroy/re-bind if the value to set is the same
+            // as the model already here.
+            if (value === subModel) {
+                return value;
+            }
+            var scopeWrap = {
+                '': {
+                    model: value,
+                    scope: genModelDataProxy(self, prop, value),
+                },
+            };
+            // console.log('recursivelyDestroySubModelScopes A', _model)
+            recursivelyDestroySubModelScopes(_model);
+            if (models.length) {
+                models[models.length - 1][props[props.length - 1]] = scopeWrap;
+            } else {
+                self.submodels = scopeWrap;
+            }
+        } else {
+            var enableFreeze = TBONE_DEBUG && !self.disableFreeze;
+            if (enableFreeze) {
+                recursivelyFreeze(value);
+            }
             // Walk up the object tree, cloning every object and patching in new
             // trees that include the new value in them:
             var last = value;
             for (var i = datas.length - 1; i >= 0; i--) {
                 var clone = _.clone(datas[i]);
                 clone[props[i]] = last;
-                Object.freeze(clone);
+                if (enableFreeze) {
+                    Object.freeze(clone);
+                }
                 last = clone;
             }
             self.attributes = last;
-        } else {
-            if (datas.length) {
-                datas[datas.length - 1][props[props.length - 1]] = value;
-            } else {
-                self.attributes = value;
+            if (!setModelData) {
+                // console.log('recursivelyDestroySubModelScopes B', _model)
+                recursivelyDestroySubModelScopes(_model);
+                // Clear the _model keys, too.
+                for (var k in _model) {
+                    delete _model[k];
+                }
             }
         }
 
@@ -266,12 +333,15 @@ function query () {
         }
 
         var searchExhaustively = !_.isEmpty(parentCallbackContexts);
+        // console.log('parentCallbackContexts', parentCallbackContexts);
+        // console.log('recursiveDiff', [events, _data, value, searchExhaustively, 0, opts.assumeChanged]);
         if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, opts.assumeChanged)) {
+            // console.log('found diff');
             _.each(parentCallbackContexts, function contextTriggerIter(context) {
                 context.trigger();
             });
         }
         return value;
     }
-    return _data;
+    return (queryModel && subModel) || _data;
 }

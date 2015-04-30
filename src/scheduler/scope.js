@@ -23,7 +23,11 @@ var scopeBase = {
      * Queue function execution in the scheduler
      */
     trigger: function scopeTrigger() {
-        queueExec(this);
+        if (this.immediate) {
+            this.execute();
+        } else {
+            queueExec(this);
+        }
     },
 
     /**
@@ -169,11 +173,20 @@ function autorun (opts) {
         // to execute first.
         priority: currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY,
         Name: opts.fn.name,
+        immediate: false,
+        detached: false,
+        deferExec: false,
+        parentScope: null,
+        onExecuteCb: null,
     }, opts, {
         fn: opts.fn.bind(context),
         subScopes: [],
         lookups: null,
     });
+
+    if (TBONE_DEBUG && scope.immediate && !scope.detached) {
+        throw 'Scopes with immediate=true must also set detached=true';
+    }
 
     if (context && context.onScopeExecute) {
         scope.onExecuteCb = context.onScopeExecute.bind(context, scope);

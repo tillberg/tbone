@@ -5,34 +5,35 @@ var _ = require('lodash');
 var base = tbone.models.base;
 
 exports['basic'] = function(test) {
+  var root = base.make();
   var me = base.make();
-  T('me', me);
-  T('me.prop', 42);
-  test.equal(T('me.prop'), 42);
+  root('me', me);
+  root('me.prop', 42);
+  test.equal(root('me.prop'), 42);
   test.equal(me.query('prop'), 42);
   test.equal(me.query('prop'), 42);
-  T('me', {
-    seven: 7
-  });
-  test.equal(T('me.prop'), undefined);
+  me.unset('prop');
+  root('me.seven', 7);
+  test.equal(root('me.prop'), undefined);
   test.equal(me.query('prop'), undefined);
-  test.equal(T('me.seven'), 7);
+  test.equal(root('me.seven'), 7);
   var other;
   var count1 = 0;
   var count2 = 0;
   T(function() {
-    other = T('me.other');
+    other = root('me.other');
     count1++;
   });
   T(function() {
-    T('me.other2');
+    root('me.other2');
     count2++;
   });
-  T('me.other', 10);
+  root('me.other', 10);
   test.equal(count1, 1);
   test.equal(count2, 1);
   test.equal(other, undefined);
   T.drain();
+  test.equal(me('other'), 10);
   test.equal(count1, 2);
   test.equal(count2, 1);
   test.equal(other, 10);
@@ -40,30 +41,29 @@ exports['basic'] = function(test) {
 };
 
 exports['subprop'] = function(test) {
+  var root = base.make();
   var me = base.make();
-  T('me', me);
-  T('me.sub.prop', 42);
-  test.equal(T('me.sub.prop'), 42);
+  root('me', me);
+  root('me.sub.prop', 42);
+  test.equal(root('me.sub.prop'), 42);
   test.equal(me.query('sub.prop'), 42);
   test.equal(me.query('sub').prop, 42);
   var other;
   var count1 = 0;
   var count2 = 0;
   T(function() {
-    other = T('me.sub2.prop2');
+    other = root('me.sub2.prop2');
     count1++;
   });
   T(function() {
-    T('me.sub2.prop3');
+    root('me.sub2.prop3');
     count2++;
   })
-  T('me.sub2.prop2', 12);
+  root('me.sub2.prop2', 12);
   test.equal(count1, 1);
   test.equal(count2, 1);
   test.equal(other, undefined);
   T.drain();
-  // count2 gets incremented even though prop3 doesn't change because
-  // backbone models don't support deep property binding.
   test.equal(count1, 2);
   test.equal(count2, 1);
   test.equal(other, 12);
@@ -71,38 +71,39 @@ exports['subprop'] = function(test) {
 };
 
 exports['parent detects subprop changes'] = function(test) {
+  var root = base.make();
   var me = base.make();
-  T('me', me);
+  root('me', me);
   (function() {
     var fired = 0;
     T(function() {
-      T('me');
+      root('me');
       fired++;
     });
-    T('me.age', 7);
+    root('me.age', 7);
     T.drain();
     test.equal(fired, 2);
   }());
   (function() {
     var fired = 0;
     T(function() {
-      T('me.name');
+      root('me.name');
       fired++;
     });
-    T('me.name.first', 'sally');
+    root('me.name.first', 'sally');
     T.drain();
     test.equal(fired, 2);
   }());
   (function() {
     var fired = 0;
     T(function() {
-      T('me');
-      T('me.age');
-      T('me.name');
+      root('me');
+      root('me.age');
+      root('me.name');
       fired++;
     });
-    T('me.age', 6);
-    T('me.name.last', 'smith');
+    root('me.age', 6);
+    root('me.name.last', 'smith');
     T.drain();
     test.equal(fired, 2);
   }());
@@ -110,21 +111,22 @@ exports['parent detects subprop changes'] = function(test) {
 };
 
 exports['shallow comparison on tree change'] = function(test) {
+  var root = base.make();
   var me = base.make();
-  T('me', me);
+  root('me', me);
   (function() {
     var fired = 0;
-    T('me.age', 7);
+    root('me.age', 7);
     T(function() {
-      T('me');
+      root('me');
       fired++;
     });
-    T('me', {
+    root('me', {
       age: 7
     });
     T.drain();
     test.equal(fired, 1);
-    T('me', {
+    root('me', {
       age: 8
     });
     T.drain();
@@ -132,17 +134,17 @@ exports['shallow comparison on tree change'] = function(test) {
   }());
   (function() {
     var fired = 0;
-    T('me.age', 7);
+    root('me.age', 7);
     T(function() {
-      T('me.age');
+      root('me.age');
       fired++;
     });
-    T('me', {
+    root('me', {
       age: 7
     });
     T.drain();
     test.equal(fired, 1);
-    T('me', {
+    root('me', {
       age: 8
     });
     T.drain();
@@ -152,27 +154,28 @@ exports['shallow comparison on tree change'] = function(test) {
 };
 
 exports['deep comparison on tree change'] = function(test) {
+  var root = base.make();
   var me = base.make();
-  T('me', me);
+  root('me', me);
   (function() {
     var fired1 = 0;
     var fired2 = 0;
     T(function() {
-      T('me.name');
+      root('me.name');
       fired1++;
     });
     T(function() {
-      T('me.name.last');
+      root('me.name.last');
       fired2++;
     });
-    T('me.name', {
+    root('me.name', {
       first: null,
       last: 0
     });
     T.drain();
     test.equal(fired1, 2);
     test.equal(fired2, 2);
-    T('me', {
+    root('me', {
       name: {
         first: 0,
         last: ''
@@ -181,11 +184,11 @@ exports['deep comparison on tree change'] = function(test) {
     T.drain();
     test.equal(fired1, 3);
     test.equal(fired2, 3);
-    T('me.name.first', 'bob');
+    root('me.name.first', 'bob');
     T.drain();
     test.equal(fired1, 4);
     test.equal(fired2, 3);
-    T('me.name', {
+    root('me.name', {
       first: 'sally',
       last: 'rogers'
     });
@@ -197,17 +200,18 @@ exports['deep comparison on tree change'] = function(test) {
 };
 
 exports['non-object root'] = function(test) {
+  var root = base.make();
   var me = base.make();
-  T('me', me);
+  root('me', me);
   me.query('', 42);
   test.equal(me.query(''), 42);
-  test.equal(T('me'), 42);
+  test.equal(root('me'), 42);
   // Writing a subproperty to the number will destroy the
   // number (with a console warning).
-  T('me.prop', 7);
-  test.ok(typeof T('me') === 'object');
-  test.equal(T('me').prop, 7);
-  test.equal(T('me.prop'), 7);
+  root('me.prop', 7);
+  test.ok(typeof root('me') === 'object');
+  test.equal(root('me').prop, 7);
+  test.equal(root('me.prop'), 7);
   test.done();
 };
 
@@ -362,18 +366,18 @@ exports['detects array length change'] = function(test) {
 };
 
 exports['binding to nested model property'] = function(test) {
-  var me = base.make();
+  var root = base.make();
   var you = base.make();
-  me.query('you', you);
+  root.query('you', you);
   you.query('prop', 7);
   var calls = 0;
   T(function() {
-    me.query('you.prop');
+    root.query('you.prop');
     calls++;
   });
   var calls2 = 0;
   T(function() {
-    me.query('you');
+    root.query('you');
     calls2++;
   });
   var calls3 = 0;
@@ -386,7 +390,7 @@ exports['binding to nested model property'] = function(test) {
     you.query('prop');
     calls4++;
   });
-  me.query('you.prop', 42);
+  root.query('you.prop', 42);
   T.drain();
   you.query('prop', 7);
   T.drain();
@@ -394,5 +398,28 @@ exports['binding to nested model property'] = function(test) {
   test.equal(calls2, 3);
   test.equal(calls3, 3);
   test.equal(calls4, 3);
+  test.done();
+};
+
+exports['model bindings overwrite each other'] = function(test) {
+  var me = base.make();
+  me('prop', 2);
+  me('other', 3);
+  me('model', function() {
+    return me('prop');
+  });
+  T.drain();
+  test.equal(me('model'), 2);
+  test.equal(me('').model, 2);
+  me('model', function() {
+    return me('other');
+  });
+  T.drain();
+  test.equal(me('model'), 3);
+  test.equal(me('').model, 3);
+  me('prop', 4);
+  T.drain();
+  test.equal(me('model'), 3);
+  test.equal(me('').model, 3);
   test.done();
 };

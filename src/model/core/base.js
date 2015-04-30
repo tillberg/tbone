@@ -41,6 +41,7 @@ var baseModel = {
         // Initialize the model instance
         instance.tboneid = undefined;
         instance.attributes = undefined;
+        instance.submodels = {};
         instance._events = {};
         instance._removeCallbacks = {};
         uniqueId(instance);
