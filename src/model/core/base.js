@@ -183,14 +183,7 @@ var baseModel = {
     },
 
     unset: function unset(prop) {
-        if (prop) {
-            var parts = prop.split('.');
-            var child = parts.pop();
-            var parent = parts.join('.');
-            this.query(parent, _.omit(this.readSilent(parent), child));
-        } else {
-            this.query('', undefined);
-        }
+        this.query({ unset: true }, prop, undefined);
     },
 
     increment: function increment(prop, value) {

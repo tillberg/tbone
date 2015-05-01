@@ -175,14 +175,16 @@ function drainQueue() {
     }
 }
 
-tbone.defer = function tboneDefer(_opts) {
+function tboneDefer(_opts) {
     var opts = _.extend({
         priority: PRIORITY_HIGHEST,
         detached: true,
         deferExec: true,
     }, isFunction(_opts) ? {fn: _opts} : _opts);
     autorun(opts);
-};
+}
+
+tbone.defer = tboneDefer;
 
 /**
  * Drain to the tbone drainQueue, executing all queued Scopes immediately.

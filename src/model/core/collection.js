@@ -32,32 +32,34 @@ var baseCollection = baseModel.extend({
          * initially.  In this case, we assign a temporary ID so that it gets
          * included when iterating over the collection.
          */
-        var removed;
-        function update() {
-            if (lastId != null) {
-                self.unset(lastId);
-                self.trigger(lastId);
-                delete self._removeCallbacks[lastId];
-            }
-            if (!removed) {
-                var id = child.queryId();
-                if (id == null) {
-                    id = '__unidentified' + (nextTempId++);
-                }
-                id = '#' + id;
-                self.query(id, child);
-                self.trigger(id);
-                self._removeCallbacks[id] = removeCallback;
-                lastId = id;
-            }
-        }
-        self.increment('size');
+        var scope;
         function removeCallback() {
             self.increment('size', -1);
-            removed = true;
-            update();
+            if (lastId != null) {
+                self.unset(lastId);
+            }
+            delete self._removeCallbacks[lastId];
+            scope.destroy();
         }
-        autorun(update);
+        function update() {
+            var id = child.queryId();
+            if (id == null) {
+                id = '__unidentified' + (nextTempId++);
+            }
+            id = '#' + id;
+            var prevId = lastId;
+            tboneDefer(function() {
+                if (prevId !== id && self.queryModel(prevId) === child) {
+                    self.unset(prevId);
+                }
+                self.query(id, child);
+            });
+            delete self._removeCallbacks[lastId];
+            self._removeCallbacks[id] = removeCallback;
+            lastId = id;
+        }
+        self.increment('size');
+        scope = autorun(update);
     },
 
     /**
@@ -70,9 +72,9 @@ var baseCollection = baseModel.extend({
      * Remove a model by ID or by model instance.
      */
     remove: function remove(modelOrId) {
-        modelOrId = '#' + (isQueryable(modelOrId) ? modelOrId.queryId() : modelOrId);
-        if (this._removeCallbacks[modelOrId]) {
-            this._removeCallbacks[modelOrId]();
+        var id = '#' + (isQueryable(modelOrId) ? modelOrId.queryId() : modelOrId);
+        if (this._removeCallbacks[id]) {
+            this._removeCallbacks[id]();
         }
     }
 });

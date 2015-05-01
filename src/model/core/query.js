@@ -189,6 +189,7 @@ function query () {
     var doSubQuery;
     var parentCallbackContexts = {};
     var setModelData = opts.setModelData;
+    var isUnset = opts.unset;
     var isModelSet = isSet && !setModelData && isQueryable(value);
     var models = [];
     var _model = self.submodels;
@@ -200,14 +201,14 @@ function query () {
         // Is there a way we could completely avoid sub-queries on reads?
         // The trouble comes with indirectly-set models, which get written as _data
         // instead of in the _model tree.
-        if (isSet && isQueryable(subModel)) {
+        if ((isSet || queryModel) && isQueryable(subModel)) {
             /**
              * To avoid duplicating the recentLookups code here, we set a flag and do
              * the sub-query after recording queries.
              *
              * Do a sub-query to a child model if there are more args remaining.
              */
-            doSubQuery = args && args.length;
+            doSubQuery = args.length;
             break;
         }
 
@@ -263,7 +264,7 @@ function query () {
         if (!recentLookups[id]) {
             recentLookups[id] = {
                 obj: self,
-                props: {}
+                props: {},
             };
         }
         recentLookups[id].props[props.join('.')] = _data;
@@ -304,6 +305,9 @@ function query () {
             for (var i = datas.length - 1; i >= 0; i--) {
                 var clone = _.clone(datas[i]);
                 clone[props[i]] = last;
+                if (isUnset && i === datas.length - 1) {
+                    delete clone[props[i]];
+                }
                 if (enableFreeze) {
                     Object.freeze(clone);
                 }
@@ -343,5 +347,5 @@ function query () {
         }
         return value;
     }
-    return (queryModel && subModel) || _data;
+    return queryModel ? subModel : _data;
 }

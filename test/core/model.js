@@ -423,3 +423,22 @@ exports['model bindings overwrite each other'] = function(test) {
   test.equal(me('').model, 3);
   test.done();
 };
+
+exports['unset'] = function(test) {
+  var me = base.make();
+  var other = base.make();
+  other('sub', 4);
+  me('other', other);
+  me('prop', 7);
+  test.equal(_.keys(me('')).length, 2);
+  test.equal(me('other.sub'), 4);
+  test.strictEqual(me.queryModel('other'), other);
+  me.unset('prop');
+  // The key must actually be removed from the parent object:
+  test.equal(_.keys(me('')).length, 1);
+  // And we must not disturb child models of the parent:
+  other('sub', 5);
+  test.equal(me('other.sub'), 5);
+  test.strictEqual(me.queryModel('other'), other);
+  test.done();
+};

@@ -2,15 +2,17 @@ var T = require('../tbone').make();
 var tbone = T;
 var _ = require('lodash');
 
+var base = T.models.base;
+
 exports['tbone id queries'] = function(test) {
   var coll = tbone.collections.base.make();
-  var me = tbone.models.base.make();
+  var me = base.make();
   me('coll', coll);
   coll.add({
     id: 7,
     name: 'bob'
   });
-  var model2 = tbone.models.base.make();
+  var model2 = base.make();
   model2.query('', {
     id: 2,
     name: 'susan'
@@ -20,6 +22,7 @@ exports['tbone id queries'] = function(test) {
     id: 42,
     name: 'sally'
   });
+  T.drain();
   test.equal(me('coll.#2.name'), 'susan');
   var name42;
   T(function() {
@@ -39,18 +42,19 @@ exports['tbone id queries'] = function(test) {
   T.drain();
   test.equal(len, 3);
   test.equal(name42, 'polly');
-  me('coll.#42', {
+  var numberFortyTwo = me.queryModel('coll.#42');
+  numberFortyTwo.query('', {
     id: 0,
     name: 'robert'
   });
   test.equal(name42, 'polly');
   T.drain();
-  test.equal(name42, undefined);
+  test.strictEqual(name42, undefined);
   test.equal(name0, 'robert');
 
   // Test adding an unidentified model, then setting its ID
   var count = _.keys(me('coll')).length;
-  var john = tbone.models.base.make();
+  var john = base.make();
   john('name', 'john');
   coll.add(john);
   T.drain();
@@ -85,7 +89,7 @@ exports['tbone id queries'] = function(test) {
 exports['async model'] = function(test) {
   test.expect(3);
 
-  var src = tbone.make();
+  var src = base.make();
   src('prop', 42);
   var me = tbone.models.async.make(function(cb) {
     var val = src('prop');
@@ -113,7 +117,7 @@ exports['async model'] = function(test) {
 
 exports['async model abort'] = function(test) {
   test.expect(1);
-  var src = tbone.make();
+  var src = base.make();
   src('prop', 42);
   var me = tbone.models.async.make(function(cb) {
     src('prop');
@@ -132,7 +136,7 @@ exports['async model abort'] = function(test) {
 
 exports['async model with rolling update'] = function(test) {
   var callbacks = [];
-  var me = tbone.make();
+  var me = base.make();
   var model = tbone.models.async.make({
     state: function(cb) {
       me('prop');
@@ -189,21 +193,37 @@ function failAfterTimeout(test, timeout) {
 }
 
 exports['ajax model stuff'] = function(test) {
-  test.expect(5);
-  var me = ajaxBase.make({
-    successData: { hello: 'world' },
+  test.expect(10);
+  var root = base.make();
+  var one = ajaxBase.make({
+    successData: { one: 1 },
   });
+  var two = ajaxBase.make({
+    successData: { two: 2 },
+  });
+  var three = ajaxBase.make({
+    successData: { three: 3 },
+  });
+  root('one', one);
+  root('two', two);
+  root('three', three);
   var firstRun = true;
+  T.drain();
+  test.equal(one.sleeping, true);
+  test.equal(two.sleeping, true);
+  test.equal(three.sleeping, true);
   T({
     fn: function() {
       if (firstRun) {
-        test.equal(me('hello'), undefined);
-        test.equal(me.sleeping, true);
+        test.equal(one('one'), undefined);
+        test.equal(root('two.two'), undefined);
         firstRun = false;
       } else {
-        test.equal(me('hello'), 'world');
-        test.equal(me().hello, 'world');
-        test.equal(me.sleeping, false);
+        test.equal(one('one'), 1);
+        test.equal(root('two.two'), 2);
+        test.equal(one.sleeping, false);
+        test.equal(two.sleeping, false);
+        test.equal(three.sleeping, true);
         test.done();
       }
     },
@@ -235,24 +255,24 @@ exports['ajax hold while url is null'] = function(test) {
 };
 
 exports['wake with circular dependencies'] = function(test) {
-  var me = T.make();
-  me('bound1', tbone.models.bound.make({
+  var me = base.make();
+  var bound1 = tbone.models.bound.make({
     state: function() {
       return {
         prop: me('bound2.prop'),
       };
     },
     sleepEnabled: false,
-  }));
-  me('bound2', tbone.models.bound.make({
+  });
+  var bound2 = tbone.models.bound.make({
     state: function() {
       return {
         prop: me('bound3.prop'),
       };
     },
     sleepEnabled: true,
-  }));
-  me('bound3', tbone.models.bound.make({
+  });
+  var bound3 = tbone.models.bound.make({
     state: function() {
       return {
         prop: 'hello',
@@ -260,13 +280,17 @@ exports['wake with circular dependencies'] = function(test) {
       };
     },
     sleepEnabled: true,
-  }));
-  me('bound4', tbone.models.bound.make({
+  });
+  var bound4 = tbone.models.bound.make({
     state: function() {
       return 'hi';
     },
     sleepEnabled: true,
-  }))
+  });
+  me('bound1', bound1);
+  me('bound2', bound2);
+  me('bound3', bound3);
+  me('bound4', bound4);
   me('firstprop', function() {
     return me('bound1.prop');
   });
@@ -286,9 +310,13 @@ exports['wake with circular dependencies'] = function(test) {
     isView: true,
   });
   T.drain();
-  test.equal(me.queryModel('bound1').sleeping, false);
-  test.equal(me.queryModel('bound2').sleeping, false);
-  test.equal(me.queryModel('bound3').sleeping, false);
+  test.strictEqual(me.queryModel('bound1'), bound1);
+  test.strictEqual(me.queryModel('bound2'), bound2);
+  test.strictEqual(me.queryModel('bound3'), bound3);
+  test.strictEqual(me.queryModel('bound4'), bound4);
+  test.equal(bound1.sleeping, false);
+  test.equal(bound2.sleeping, false);
+  test.equal(bound3.sleeping, false);
   test.equal(me('firstprop'), 'hello');
   test.done();
 };
