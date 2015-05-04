@@ -3,6 +3,8 @@ var tbone = T;
 var assert = require('assert');
 var _ = require('lodash');
 
+var base = tbone.models.base;
+
 T('lights', function() {
   return {
     count: 4,
@@ -167,19 +169,28 @@ exports['set w/ function'] = function(test) {
   test.done();
 };
 
-exports['fire change event when adding a model'] = function(test) {
-  var count = 0;
-  T(function() {
-    T('mysub.prop');
-    count++;
+exports['do not fire unnecessary change events when adding a model'] = function(test) {
+  var me = base.make();
+  var count1 = 0;
+  var count2 = 0;
+  me(function() {
+    me('mysub.prop');
+    count1++;
   });
-  T('mysub', function() {
-    return {
-      'else': 4
-    };
+  me(function() {
+    me('mysub.else');
+    count2++;
   });
+  me('mysub', tbone.models.bound.make({
+    state: function() {
+      return {
+        'else': 4
+      };
+    }
+  }));
   T.drain();
-  test.equal(count, 2);
+  test.eq(count1, 1);
+  test.eq(count2, 2);
   test.done();
 };
 
@@ -629,7 +640,7 @@ exports['bound model sleeping'] = function(test) {
   test.equal(bound.sleeping, true, 'bound should be sleeping initially');
   var bound2 = T.bound({
     state: function() {
-      return { bound: bound() };
+      return { bound: bound('') };
     },
     sleepEnabled: true,
   });
@@ -814,21 +825,25 @@ exports['recursiveDiff handling of model changes'] = function(test) {
     me('other');
     count2++;
   });
-  test.equal(count1, 1);
-  test.equal(count2, 1);
+  test.eq(me(''), undefined);
+  test.eq(count1, 1);
+  test.eq(count2, 1);
   me('other', me2);
   T.drain();
-  test.equal(count1, 2);
-  test.equal(count2, 2);
+  test.deepEqual(me(''), { other: undefined });
+  test.eq(count1, 2);
+  test.eq(count2, 1);
   me('other', me2);
   T.drain();
-  test.equal(count1, 2);
-  test.equal(count2, 2);
-  // XXX This won't quite work the way it'd ideally work (now, maybe ever?):
+  test.eq(count1, 2);
+  test.eq(count2, 1);
+  // XXX This isn't quite the way this would *ideally* work, but this
+  // is the behavior that we expect currently:
   me('', { other: me2 });
   T.drain();
-  // test.equal(count1, 2);
-  // test.equal(count2, 2);
+  test.eq(count1, 3);
+  test.eq(count2, 2);
+  test.eq(me('other'), me2);
   test.done();
 };
 

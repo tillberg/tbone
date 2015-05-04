@@ -26,6 +26,7 @@ gulp.task('clean', function (cb) {
 
 var coreFiles = [
   'src/init.js',
+  'src/model/core/sleep.js',
   'src/model/core/query.js',
   'src/model/core/base.js',
   'src/scheduler/timer.js',

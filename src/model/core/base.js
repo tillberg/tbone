@@ -2,15 +2,6 @@
  * model/core/base.js
  */
 
-function ensureArray(v) {
-    return _.isArray(v) ? v : [];
-}
-
-function splitQueryString(_prop) {
-    var prop = _prop ? _prop.replace('__self__', '') : '';
-    return prop ? prop.split('.') : [];
-}
-
 var boundModel;
 
 /**
@@ -42,7 +33,10 @@ var baseModel = {
         instance.tboneid = undefined;
         instance.attributes = undefined;
         instance.submodels = {};
-        instance._events = {};
+        instance._events = {
+            submodels: {},
+            attributes: {},
+        };
         instance._removeCallbacks = {};
         uniqueId(instance);
         instance.initialize();
@@ -192,7 +186,27 @@ var baseModel = {
         this.query(prop, newval);
     },
 
-    wake: noop,
+    wake: function wake(woken) {
+        // While base models don't need to be woken themselves, they
+        // need to wake up any bound submodels that they may be holding.
+        var self = this;
+        var myId = uniqueId(self);
+        if (!woken[myId]) {
+            woken[myId] = true;
+            var todo = [ self.submodels ];
+            var next;
+            while (!!(next = todo.pop())) {
+                for (var k in next) {
+                    var curr = next[k];
+                    if (k === QUERY_SELF) {
+                        curr.model.wake(woken);
+                    } else {
+                        todo.push(curr);
+                    }
+                }
+            }
+        }
+    },
 };
 
 var tbone = baseModel.make({ Name: 'tbone' });
@@ -202,7 +216,6 @@ tbone.priority = priority;
 
 if (TBONE_DEBUG) {
     tbone.watchLog = watchLog;
-    tbone.getListeners = getListeners;
     tbone.onLog = onLog;
     onLog(logconsole);
 }

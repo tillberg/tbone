@@ -192,7 +192,7 @@ function failAfterTimeout(test, timeout) {
   };
 }
 
-exports['ajax model stuff'] = function(test) {
+exports['ajax model sleep'] = function(test) {
   test.expect(10);
   var root = base.make();
   var one = ajaxBase.make({
@@ -213,7 +213,7 @@ exports['ajax model stuff'] = function(test) {
   test.equal(two.sleeping, true);
   test.equal(three.sleeping, true);
   T({
-    fn: function() {
+    fn: function ajaxModelSleepFn() {
       if (firstRun) {
         test.equal(one('one'), undefined);
         test.equal(root('two.two'), undefined);

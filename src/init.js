@@ -60,8 +60,25 @@ function isNonQueryableFunction(x) {
     return isFunction(x) && !isQueryable(x);
 }
 
+function ensureArray(v) {
+    return _.isArray(v) ? v : [];
+}
+
+function splitQueryString(_prop) {
+    var prop = _prop ? _prop.replace('__self__', '') : '';
+    return prop ? prop.split('.') : [];
+}
+
 var EMPTY_OBJECT = {};
 Object.freeze(EMPTY_OBJECT);
+
+/**
+ * If you want to select the root, you can either pass __self__ or just an empty
+ * string; __self__ is converted to an empty string and this "flag" is used to
+ * check for whether we are selecting either.
+ * @const
+ */
+var QUERY_SELF = '';
 
 /**
  * Use to test whether a string is a number literal.
@@ -152,73 +169,4 @@ function logconsole (level, context, event, msg, data, moredata) {
 
 function onLog (cb) {
     logCallbacks.push(cb);
-}
-
-/**
- * Returns the list of unique listeners attached to the specified model/view.
- * @param  {Queryable} self
- * @return {Array.<Queryable|View|Scope>} array of listeners
- */
-function getListeners (self) {
-    var listeners = [];
-    var stack = [ self._events ];
-    var next, callbacks, k;
-    while (!!(next = stack.pop())) {
-        for (k in next) {
-            if (k === '') {
-                callbacks = next[''];
-                for (var contextId in callbacks) {
-                    listeners.push(callbacks[contextId]);
-                }
-            } else {
-                stack.push(next[k]);
-            }
-        }
-    }
-    return _.uniq(listeners);
-}
-
-/**
- * Returns true if there is a view that is listening (directly or indirectly)
- * to this model.  Useful for determining whether the current model should
- * be updated (if a model is updated in the forest and nobody is there to
- * hear it, then why update it in the first place?)
- * @param  {Queryable}  self
- * @return {Boolean}
- */
-function hasViewListener (self) {
-    var todo = [ self ];
-    var usedModels = [ self ];
-    var next;
-    while (!!(next = todo.pop())) {
-        var listeners = getListeners(next);
-        for (var i = 0; i < listeners.length; i++) {
-            var listener = listeners[i];
-            while (listener && !(listener.isView || listener.isModel)) {
-                // The listener context is the model or view to whom the scope belongs.
-                // Here, we care about that model/view, not the view's or model's scope
-                // or that scope's descendent scopes. Walk up the scope tree to the parent
-                // scope or to the scope's context. The target is to find the first model
-                // or view in the tree.
-                listener = listener.parentScope || listener.context;
-            }
-            // listener might be undefined right now if this listener is not part of a
-            // view or model (i.e. it is an independent scope created by tbone.autorun).
-            if (listener) {
-                if (listener.isView) {
-                    // We found a view that depends on the original model!
-                    return true;
-                }
-                // listener could also have been a scope with a context that was neither
-                // a model nor a view.
-                if (listener.isModel) {
-                    if (usedModels.indexOf(listener) === -1) {
-                        todo.push(listener);
-                        usedModels.push(listener);
-                    }
-                }
-            }
-        }
-    }
-    return false;
 }

@@ -1,13 +1,5 @@
 
 /**
- * If you want to select the root, you can either pass __self__ or just an empty
- * string; __self__ is converted to an empty string and this "flag" is used to
- * check for whether we are selecting either.
- * @const
- */
-var QUERY_SELF = '';
-
-/**
  * @const
  */
 var MAX_RECURSIVE_DIFF_DEPTH = 16;
@@ -91,8 +83,8 @@ function recursiveDiff (self, evs, curr, prev, _exhaustive, depth, fireAll) {
             }
         }
     }
-    if (changed) {
-        var contexts = evs[QUERY_SELF] || EMPTY_OBJECT;
+    if (changed && evs[QUERY_SELF]) {
+        var contexts = evs[QUERY_SELF];
         for (var contextId in contexts) {
             contexts[contextId].trigger();
         }
@@ -107,6 +99,8 @@ function genModelDataProxy(parentModel, prop, childModel) {
                 setModelData: true,
             }, prop, childModel.query(''));
         },
+        context: parentModel,
+        contextScoping: prop,
         immediate: true,
         detached: true,
         priority: PRIORITY_HIGHEST - 1000,
@@ -167,10 +161,7 @@ function query () {
     //     value: value
     // });
 
-    var queryModel = opts.dontGetData;
-    if (!prop && queryModel) {
-        return self;
-    }
+    var assumeChanged = opts.assumeChanged;
 
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
@@ -191,13 +182,16 @@ function query () {
     var setModelData = opts.setModelData;
     var isUnset = opts.unset;
     var isModelSet = isSet && !setModelData && isQueryable(value);
+    var queryModel = isModelSet || opts.dontGetData;
     var models = [];
     var _model = self.submodels;
-    var events = isSet && self._events;
+    var eventsBaseProp = queryModel ? 'submodels' : 'attributes';
+    var events = isSet && self._events[eventsBaseProp];
     var subModel;
 
     while (true) {
         subModel = _model && _model[QUERY_SELF] && _model[QUERY_SELF].model;
+
         // Is there a way we could completely avoid sub-queries on reads?
         // The trouble comes with indirectly-set models, which get written as _data
         // instead of in the _model tree.
@@ -254,7 +248,9 @@ function query () {
             _model = _model[arg];
         }
         if (events) {
-            _.extend(parentCallbackContexts, events[QUERY_SELF] || EMPTY_OBJECT);
+            if (!isModelSet) {
+                _.extend(parentCallbackContexts, events[QUERY_SELF] || EMPTY_OBJECT);
+            }
             events = events[arg];
         }
     }
@@ -267,7 +263,10 @@ function query () {
                 props: {},
             };
         }
-        recentLookups[id].props[props.join('.')] = _data;
+        var propsStr = props.join('.');
+        propsStr = eventsBaseProp + (propsStr ? '.' : '') + propsStr;
+        // console.log('binding ' + propsStr);
+        recentLookups[id].props[propsStr] = _data;
     }
 
     if (doSubQuery) {
@@ -281,6 +280,7 @@ function query () {
             if (value === subModel) {
                 return value;
             }
+            assumeChanged = true;
             var scopeWrap = {
                 '': {
                     model: value,
@@ -339,7 +339,7 @@ function query () {
         var searchExhaustively = !_.isEmpty(parentCallbackContexts);
         // console.log('parentCallbackContexts', parentCallbackContexts);
         // console.log('recursiveDiff', [events, _data, value, searchExhaustively, 0, opts.assumeChanged]);
-        if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, opts.assumeChanged)) {
+        if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, assumeChanged)) {
             // console.log('found diff');
             _.each(parentCallbackContexts, function contextTriggerIter(context) {
                 context.trigger();

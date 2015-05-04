@@ -34,24 +34,26 @@ boundModel = models.bound = baseModel.extend({
      */
     wake: function wake(woken) {
         var self = this;
-        if (self.scope) {
-            // Wake up this model if it was sleeping
-            if (self.sleeping) {
-                self.sleeping = false;
-                self.reset();
-            }
-
-            /**
-             * Wake up models that depend directly on this model that have not already
-             * been woken up.
-             */
-            _.each(self.scope.lookups, function wakeIter(lookup) {
-                var bindable = lookup.obj;
-                if (bindable && !woken[uniqueId(bindable)]) {
-                    woken[uniqueId(bindable)] = true;
-                    bindable.wake(woken);
+        var myId = uniqueId(self);
+        if (!woken[myId]) {
+            woken[myId] = true;
+            if (self.scope) {
+                // Wake up this model if it was sleeping
+                if (self.sleeping) {
+                    self.sleeping = false;
+                    self.reset();
                 }
-            });
+
+                /**
+                 * Wake up models that depend directly on this model that have not already
+                 * been woken up.
+                 */
+                _.each(self.scope.lookups, function wakeIter(lookup) {
+                    if (lookup.obj) {
+                        lookup.obj.wake(woken);
+                    }
+                });
+            }
         }
     },
 

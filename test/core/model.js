@@ -226,16 +226,6 @@ exports['invocation'] = function(test) {
   test.done();
 };
 
-exports['self-reference'] = function(test) {
-  var me = base.make();
-  me.query('prop', 42);
-  test.equal(me.attributes.prop, 42);
-  test.ok(me.query({dontGetData: true}, ''));
-  test.ok(me.query({dontGetData: true}, '').attributes);
-  test.equal(me.query({dontGetData: true}, '').attributes.prop, 42);
-  test.done();
-};
-
 exports['toggle'] = function(test) {
   var me = base.make();
   me.query('prop', false);
@@ -440,5 +430,66 @@ exports['unset'] = function(test) {
   other('sub', 5);
   test.equal(me('other.sub'), 5);
   test.strictEqual(me.queryModel('other'), other);
+  test.done();
+};
+
+exports['queryModel binding at root'] = function(test) {
+  var root = base.make();
+  var me = base.make();
+  var you = base.make();
+  var model;
+  T(function() {
+    model = root.queryModel('');
+  });
+  test.eq(model, undefined);
+  root('', me);
+  test.eq(model, undefined);
+  T.drain();
+  test.eq(root.queryModel(''), me);
+  test.eq(model, me);
+  root('', you);
+  test.eq(model, me);
+  T.drain();
+  test.eq(root.queryModel(''), you);
+  test.eq(model, you);
+  test.done();
+};
+
+exports['queryModel binding'] = function(test) {
+  var root = base.make();
+  var me = base.make();
+  var you = base.make();
+  var model;
+  T(function() {
+    model = root.queryModel('model');
+  });
+  test.eq(model, undefined);
+  root('model', me);
+  test.eq(model, undefined);
+  T.drain();
+  test.eq(model, me);
+  root('model', you);
+  test.eq(model, me);
+  T.drain();
+  test.eq(model, you);
+  test.done();
+};
+
+exports['no events fire when changing to model but not data'] = function(test) {
+  var root = base.make();
+  var me = base.make();
+  var you = base.make();
+  me('prop', 42);
+  you('prop', 42);
+  root('model', me);
+  var count = 0;
+  T(function() {
+    test.eq(root('model.prop'), 42);
+    count++;
+  });
+  T.drain();
+  root('model', you);
+  T.drain();
+  test.eq(count, 1);
   test.done();
 };
