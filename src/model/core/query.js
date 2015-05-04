@@ -154,13 +154,6 @@ function query () {
         }
     }
 
-    // console.log('query', {
-    //     name: self.getName(),
-    //     opts: opts,
-    //     prop: prop,
-    //     value: value
-    // });
-
     var assumeChanged = opts.assumeChanged;
 
     /**

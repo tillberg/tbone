@@ -66,12 +66,12 @@ models.ajax = asyncModel.extend({
     parse: _.identity,
 
     /**
-     * By default, async models will use $.ajax to fetch data; override this
-     * with something else if desired.
+     * This function is called to fetch data inside the `state` function above.
+     * By default, we look for a `$.ajax` to be shared via the global object,
+     * and the call signature matches that of `JQuery.ajax`. You can override
+     * this to handle requests another way.
      */
-    ajax: function ajax() {
-        return $.ajax.apply($, arguments);
-    },
+    ajax: root.$ && root.$.ajax,
 
     preFetch: function preFetch() {
         this.unset();
