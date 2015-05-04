@@ -99,9 +99,9 @@ function updateIsReady () {
         isReadyTimer = setTimeout(function _updateIsReady() {
             var numInFlight = _.keys(inflight).length;
             metrics.query('isReady', _.isEmpty(inflight) && !drainQueueTimer);
-            metrics.query('ajax.modelsInFlight', _.clone(inflight));
             metrics.query('ajax.isReady', numInFlight === 0);
             metrics.query('ajax.numInFlight', numInFlight);
+            metrics.query('ajax.urlsInFlight', _.pluck(inflight, 'fetchedUrl'));
             isReadyTimer = null;
         }, 0);
     }
