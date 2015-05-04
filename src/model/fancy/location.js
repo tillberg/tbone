@@ -5,7 +5,7 @@
 function changePathGen (method) {
     return function changePath(path) {
         root.history[method + 'State'](EMPTY_OBJECT, '', path);
-        $(root).trigger(method + 'state');
+        window.dispatchEvent(new root.Event(method + 'state'));
     };
 }
 
@@ -32,7 +32,10 @@ models.location = baseModel.extend({
                 recentlyChanged = true;
             }
         }
-        $(root).bind('hashchange popstate pushstate replacestate', update);
+        window.addEventListener('hashchange', update);
+        window.addEventListener('popstate', update);
+        window.addEventListener('pushstate', update);
+        window.addEventListener('replacestate', update);
         update();
 
         autorun(function initializeAutorun() {
