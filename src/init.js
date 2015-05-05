@@ -1,5 +1,5 @@
 var root = typeof window === 'undefined' ? {} : window;
-var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? root.DEBUG : root.TBONE_DEBUG);
+var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? (root.DEBUG == null ? true : root.DEBUG) : root.TBONE_DEBUG);
 var _ = typeof require === 'undefined' ? root._ : require('lodash');
 
 if (TBONE_DEBUG && !_) {
