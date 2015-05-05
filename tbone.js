@@ -4,7 +4,6 @@
 var root = typeof window === 'undefined' ? {} : window;
 var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? root.DEBUG : root.TBONE_DEBUG);
 var _ = typeof require === 'undefined' ? root._ : require('lodash');
-var $ = typeof require === 'undefined' ? root.$ : require('jquery');
 
 if (TBONE_DEBUG && !_) {
     console.error('TBone requires lodash or underscore. Found nothing at window._');
@@ -63,8 +62,25 @@ function isNonQueryableFunction(x) {
     return isFunction(x) && !isQueryable(x);
 }
 
+function ensureArray(v) {
+    return _.isArray(v) ? v : [];
+}
+
+function splitQueryString(_prop) {
+    var prop = _prop ? _prop.replace('__self__', '') : '';
+    return prop ? prop.split('.') : [];
+}
+
 var EMPTY_OBJECT = {};
 Object.freeze(EMPTY_OBJECT);
+
+/**
+ * If you want to select the root, you can either pass __self__ or just an empty
+ * string; __self__ is converted to an empty string and this "flag" is used to
+ * check for whether we are selecting either.
+ * @const
+ */
+var QUERY_SELF = '';
 
 /**
  * Use to test whether a string is a number literal.
@@ -157,29 +173,6 @@ function onLog (cb) {
     logCallbacks.push(cb);
 }
 
-/**
- * Returns the list of unique listeners attached to the specified model/view.
- * @param  {Queryable} self
- * @return {Array.<Queryable|View|Scope>} array of listeners
- */
-function getListeners (self) {
-    var listeners = [];
-    var stack = [ self._events ];
-    var next, callbacks, k;
-    while (!!(next = stack.pop())) {
-        for (k in next) {
-            if (k === '') {
-                callbacks = next[''];
-                for (var contextId in callbacks) {
-                    listeners.push(callbacks[contextId]);
-                }
-            } else {
-                stack.push(next[k]);
-            }
-        }
-    }
-    return _.uniq(listeners);
-}
 
 /**
  * Returns true if there is a view that is listening (directly or indirectly)
@@ -190,50 +183,54 @@ function getListeners (self) {
  * @return {Boolean}
  */
 function hasViewListener (self) {
-    var todo = [ self ];
-    var usedModels = [ self ];
+    // console.log('hasViewListener', self.getName());
+    var todo = [ self._events ];
+    var used = [];
     var next;
     while (!!(next = todo.pop())) {
-        var listeners = getListeners(next);
-        for (var i = 0; i < listeners.length; i++) {
-            var listener = listeners[i];
-            while (listener && !(listener.isView || listener.isModel)) {
-                // The listener context is the model or view to whom the scope belongs.
-                // Here, we care about that model/view, not the view's or model's scope
-                // or that scope's descendent scopes. Walk up the scope tree to the parent
-                // scope or to the scope's context. The target is to find the first model
-                // or view in the tree.
-                listener = listener.parentScope || listener.context;
-            }
-            // listener might be undefined right now if this listener is not part of a
-            // view or model (i.e. it is an independent scope created by tbone.autorun).
-            if (listener) {
-                if (listener.isView) {
-                    // We found a view that depends on the original model!
-                    return true;
-                }
-                // listener could also have been a scope with a context that was neither
-                // a model nor a view.
-                if (listener.isModel) {
-                    if (usedModels.indexOf(listener) === -1) {
-                        todo.push(listener);
-                        usedModels.push(listener);
+        if (used.indexOf(next) !== -1) {
+            continue;
+        }
+        used.push(next);
+        for (var k in next) {
+            var curr = next[k];
+            if (k === QUERY_SELF) {
+                for (var id in curr) {
+                    var listener = curr[id];
+                    while (listener) {
+                        if (listener.isView) {
+                            // console.log('found view listener');
+                            return true;
+                        }
+                        if (listener.contextScoping) {
+                            // console.log('found scoped reference (' + listener.contextScoping + ')');
+                            var props = splitQueryString(listener.contextScoping);
+                            var ev = listener.context._events.attributes;
+                            for (var i = 0; ev && i < props.length; i++) {
+                                ev = ev[props[i]];
+                            }
+                            if (ev) {
+                                todo.push(ev);
+                            }
+                            break;
+                        }
+                        if (listener.context && listener.context.isModel) {
+                            // console.log('found model');
+                            todo.push(listener.context._events);
+                            break;
+                        }
+                        listener = listener.parentScope;
                     }
                 }
+            } else {
+                todo.push(curr);
             }
         }
     }
+    // console.log('no view listener');
     return false;
 }
 
-
-/**
- * If you want to select the root, you can either pass __self__ or just an empty
- * string; __self__ is converted to an empty string and this "flag" is used to
- * check for whether we are selecting either.
- * @const
- */
-var QUERY_SELF = '';
 
 /**
  * @const
@@ -319,8 +316,8 @@ function recursiveDiff (self, evs, curr, prev, _exhaustive, depth, fireAll) {
             }
         }
     }
-    if (changed) {
-        var contexts = evs[QUERY_SELF] || EMPTY_OBJECT;
+    if (changed && evs[QUERY_SELF]) {
+        var contexts = evs[QUERY_SELF];
         for (var contextId in contexts) {
             contexts[contextId].trigger();
         }
@@ -328,8 +325,35 @@ function recursiveDiff (self, evs, curr, prev, _exhaustive, depth, fireAll) {
     return changed;
 }
 
+function genModelDataProxy(parentModel, prop, childModel) {
+    return autorun({
+        fn: function() {
+            parentModel.query({
+                setModelData: true,
+            }, prop, childModel.query(''));
+        },
+        context: parentModel,
+        contextScoping: prop,
+        immediate: true,
+        detached: true,
+        priority: PRIORITY_HIGHEST - 1000,
+    });
+}
+
+function recursivelyDestroySubModelScopes(_model) {
+    if (_model) {
+        for (var k in _model) {
+            if (k === QUERY_SELF) {
+                _model[QUERY_SELF].scope.destroy();
+            } else {
+                recursivelyDestroySubModelScopes(_model[k]);
+            }
+        }
+    }
+}
+
 function recursivelyFreeze(obj) {
-    if (isNonQueryableFunction(obj) || _.isElement(obj)) {
+    if (isFunction(obj) || _.isElement(obj)) {
         throw 'Functions and DOM elements should not be set to TBone models.';
     }
     if (typeof obj === 'object' && obj !== null && !Object.isFrozen(obj)) {
@@ -363,9 +387,7 @@ function query () {
         }
     }
 
-    if (!prop && opts.dontGetData) {
-        return self;
-    }
+    var assumeChanged = opts.assumeChanged;
 
     /**
      * Remove a trailing dot and __self__ references, if any, from the prop.
@@ -383,25 +405,30 @@ function query () {
     var arg;
     var doSubQuery;
     var parentCallbackContexts = {};
-    var events = isSet && self._events;
+    var setModelData = opts.setModelData;
+    var isUnset = opts.unset;
+    var isModelSet = isSet && !setModelData && isQueryable(value);
+    var queryModel = isModelSet || opts.dontGetData;
+    var models = [];
+    var _model = self.submodels;
+    var eventsBaseProp = queryModel ? 'submodels' : 'attributes';
+    var events = isSet && self._events[eventsBaseProp];
+    var subModel;
 
     while (true) {
-        if (isQueryable(_data)) {
+        subModel = _model && _model[QUERY_SELF] && _model[QUERY_SELF].model;
+
+        // Is there a way we could completely avoid sub-queries on reads?
+        // The trouble comes with indirectly-set models, which get written as _data
+        // instead of in the _model tree.
+        if ((isSet || queryModel) && isQueryable(subModel)) {
             /**
              * To avoid duplicating the recentLookups code here, we set a flag and do
              * the sub-query after recording queries.
              *
-             * Always do the subquery if there are more args.
-             * If there are no more args...
-             * - and this is a set...
-             *   -        to a queryable: Don't sub-query.  Set property to new queryable.
-             *   -    to a non-queryable: Do the sub-query.  Push the value to the
-             *                            other model (don't overwrite the model).  This
-             *                            is kind of magical?
-             * - and this is a get...
-             *   -                always: Do the sub-query.
+             * Do a sub-query to a child model if there are more args remaining.
              */
-            doSubQuery = (args && args.length) || !(isSet && isQueryable(value));
+            doSubQuery = args.length;
             break;
         }
 
@@ -418,12 +445,7 @@ function query () {
              * property via query() so as to fire change events appropriately.
              */
             if (TBONE_DEBUG && _data != null) {
-                log(WARN, self, 'mkdir', 'while writing <%=prop%>, had to overwrite ' +
-                    'primitive value <%=primitive%> at <%=partial%>', {
-                        prop: prop,
-                        primitive: _data,
-                        partial: args.join('.')
-                    });
+                throw 'Writing to a sub-property of a primitive value is not allowed.';
             }
             /**
              * Decide whether to implicitly create an array or an object.
@@ -439,8 +461,22 @@ function query () {
         datas.push(_data);
 
         _data = _data != null ? _data[arg] : undefined;
+        if (_model) {
+            models.push(_model);
+            if (isSet) {
+                if (TBONE_DEBUG && _model[QUERY_SELF]) {
+                    throw 'Direct writes below a sub-model are not allowed. Write to the sub-model instead.';
+                }
+                if (isModelSet && !_model[arg]) {
+                    _model[arg] = {};
+                }
+            }
+            _model = _model[arg];
+        }
         if (events) {
-            _.extend(parentCallbackContexts, events[QUERY_SELF] || EMPTY_OBJECT);
+            if (!isModelSet) {
+                _.extend(parentCallbackContexts, events[QUERY_SELF] || EMPTY_OBJECT);
+            }
             events = events[arg];
         }
     }
@@ -450,34 +486,67 @@ function query () {
         if (!recentLookups[id]) {
             recentLookups[id] = {
                 obj: self,
-                props: {}
+                props: {},
             };
         }
-        recentLookups[id].props[props.join('.')] = _data;
+        var propsStr = props.join('.');
+        propsStr = eventsBaseProp + (propsStr ? '.' : '') + propsStr;
+        // console.log('binding ' + propsStr);
+        recentLookups[id].props[propsStr] = _data;
     }
 
     if (doSubQuery) {
-        return isSet ? _data.query(opts, args.join('.'), value) : _data.query(opts, args.join('.'));
+        return isSet ? subModel.query(opts, args.join('.'), value) : subModel.query(opts, args.join('.'));
     }
 
     if (isSet) {
-        if (TBONE_DEBUG && !self.disableFreeze) {
-            recursivelyFreeze(value);
+        if (isModelSet) {
+            // Skip the destroy/re-bind if the value to set is the same
+            // as the model already here.
+            if (value === subModel) {
+                return value;
+            }
+            assumeChanged = true;
+            var scopeWrap = {
+                '': {
+                    model: value,
+                    scope: genModelDataProxy(self, prop, value),
+                },
+            };
+            // console.log('recursivelyDestroySubModelScopes A', _model)
+            recursivelyDestroySubModelScopes(_model);
+            if (models.length) {
+                models[models.length - 1][props[props.length - 1]] = scopeWrap;
+            } else {
+                self.submodels = scopeWrap;
+            }
+        } else {
+            var enableFreeze = TBONE_DEBUG && !self.disableFreeze;
+            if (enableFreeze) {
+                recursivelyFreeze(value);
+            }
             // Walk up the object tree, cloning every object and patching in new
             // trees that include the new value in them:
             var last = value;
             for (var i = datas.length - 1; i >= 0; i--) {
                 var clone = _.clone(datas[i]);
                 clone[props[i]] = last;
-                Object.freeze(clone);
+                if (isUnset && i === datas.length - 1) {
+                    delete clone[props[i]];
+                }
+                if (enableFreeze) {
+                    Object.freeze(clone);
+                }
                 last = clone;
             }
             self.attributes = last;
-        } else {
-            if (datas.length) {
-                datas[datas.length - 1][props[props.length - 1]] = value;
-            } else {
-                self.attributes = value;
+            if (!setModelData) {
+                // console.log('recursivelyDestroySubModelScopes B', _model)
+                recursivelyDestroySubModelScopes(_model);
+                // Clear the _model keys, too.
+                for (var k in _model) {
+                    delete _model[k];
+                }
             }
         }
 
@@ -494,28 +563,22 @@ function query () {
         }
 
         var searchExhaustively = !_.isEmpty(parentCallbackContexts);
-        if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, opts.assumeChanged)) {
+        // console.log('parentCallbackContexts', parentCallbackContexts);
+        // console.log('recursiveDiff', [events, _data, value, searchExhaustively, 0, opts.assumeChanged]);
+        if (recursiveDiff(self, events, _data, value, searchExhaustively, 0, assumeChanged)) {
+            // console.log('found diff');
             _.each(parentCallbackContexts, function contextTriggerIter(context) {
                 context.trigger();
             });
         }
         return value;
     }
-    return _data;
+    return queryModel ? subModel : _data;
 }
 
 /**
  * model/core/base.js
  */
-
-function ensureArray(v) {
-    return _.isArray(v) ? v : [];
-}
-
-function splitQueryString(_prop) {
-    var prop = _prop ? _prop.replace('__self__', '') : '';
-    return prop ? prop.split('.') : [];
-}
 
 var boundModel;
 
@@ -547,7 +610,11 @@ var baseModel = {
         // Initialize the model instance
         instance.tboneid = undefined;
         instance.attributes = undefined;
-        instance._events = {};
+        instance.submodels = {};
+        instance._events = {
+            submodels: {},
+            attributes: {},
+        };
         instance._removeCallbacks = {};
         uniqueId(instance);
         instance.initialize();
@@ -688,14 +755,7 @@ var baseModel = {
     },
 
     unset: function unset(prop) {
-        if (prop) {
-            var parts = prop.split('.');
-            var child = parts.pop();
-            var parent = parts.join('.');
-            this.query(parent, _.omit(this.readSilent(parent), child));
-        } else {
-            this.query('', undefined);
-        }
+        this.query({ unset: true }, prop, undefined);
     },
 
     increment: function increment(prop, value) {
@@ -704,7 +764,27 @@ var baseModel = {
         this.query(prop, newval);
     },
 
-    wake: noop,
+    wake: function wake(woken) {
+        // While base models don't need to be woken themselves, they
+        // need to wake up any bound submodels that they may be holding.
+        var self = this;
+        var myId = uniqueId(self);
+        if (!woken[myId]) {
+            woken[myId] = true;
+            var todo = [ self.submodels ];
+            var next;
+            while (!!(next = todo.pop())) {
+                for (var k in next) {
+                    var curr = next[k];
+                    if (k === QUERY_SELF) {
+                        curr.model.wake(woken);
+                    } else {
+                        todo.push(curr);
+                    }
+                }
+            }
+        }
+    },
 };
 
 var tbone = baseModel.make({ Name: 'tbone' });
@@ -714,7 +794,6 @@ tbone.priority = priority;
 
 if (TBONE_DEBUG) {
     tbone.watchLog = watchLog;
-    tbone.getListeners = getListeners;
     tbone.onLog = onLog;
     onLog(logconsole);
 }
@@ -810,7 +889,11 @@ var scopeBase = {
      * Queue function execution in the scheduler
      */
     trigger: function scopeTrigger() {
-        queueExec(this);
+        if (this.immediate) {
+            this.execute();
+        } else {
+            queueExec(this);
+        }
     },
 
     /**
@@ -956,11 +1039,20 @@ function autorun (opts) {
         // to execute first.
         priority: currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY,
         Name: opts.fn.name,
+        immediate: false,
+        detached: false,
+        deferExec: false,
+        parentScope: null,
+        onExecuteCb: null,
     }, opts, {
         fn: opts.fn.bind(context),
         subScopes: [],
         lookups: null,
     });
+
+    if (TBONE_DEBUG && scope.immediate && !scope.detached) {
+        throw 'Scopes with immediate=true must also set detached=true';
+    }
 
     if (context && context.onScopeExecute) {
         scope.onExecuteCb = context.onScopeExecute.bind(context, scope);
@@ -1087,9 +1179,9 @@ function updateIsReady () {
         isReadyTimer = setTimeout(function _updateIsReady() {
             var numInFlight = _.keys(inflight).length;
             metrics.query('isReady', _.isEmpty(inflight) && !drainQueueTimer);
-            metrics.query('ajax.modelsInFlight', _.clone(inflight));
             metrics.query('ajax.isReady', numInFlight === 0);
             metrics.query('ajax.numInFlight', numInFlight);
+            metrics.query('ajax.urlsInFlight', _.pluck(inflight, 'fetchedUrl'));
             isReadyTimer = null;
         }, 0);
     }
@@ -1163,14 +1255,16 @@ function drainQueue() {
     }
 }
 
-tbone.defer = function tboneDefer(_opts) {
+function tboneDefer(_opts) {
     var opts = _.extend({
         priority: PRIORITY_HIGHEST,
         detached: true,
         deferExec: true,
     }, isFunction(_opts) ? {fn: _opts} : _opts);
     autorun(opts);
-};
+}
+
+tbone.defer = tboneDefer;
 
 /**
  * Drain to the tbone drainQueue, executing all queued Scopes immediately.
@@ -1231,24 +1325,26 @@ boundModel = models.bound = baseModel.extend({
      */
     wake: function wake(woken) {
         var self = this;
-        if (self.scope) {
-            // Wake up this model if it was sleeping
-            if (self.sleeping) {
-                self.sleeping = false;
-                self.reset();
-            }
-
-            /**
-             * Wake up models that depend directly on this model that have not already
-             * been woken up.
-             */
-            _.each(self.scope.lookups, function wakeIter(lookup) {
-                var bindable = lookup.obj;
-                if (bindable && !woken[uniqueId(bindable)]) {
-                    woken[uniqueId(bindable)] = true;
-                    bindable.wake(woken);
+        var myId = uniqueId(self);
+        if (!woken[myId]) {
+            woken[myId] = true;
+            if (self.scope) {
+                // Wake up this model if it was sleeping
+                if (self.sleeping) {
+                    self.sleeping = false;
+                    self.reset();
                 }
-            });
+
+                /**
+                 * Wake up models that depend directly on this model that have not already
+                 * been woken up.
+                 */
+                _.each(self.scope.lookups, function wakeIter(lookup) {
+                    if (lookup.obj) {
+                        lookup.obj.wake(woken);
+                    }
+                });
+            }
         }
     },
 
@@ -1416,32 +1512,34 @@ var baseCollection = baseModel.extend({
          * initially.  In this case, we assign a temporary ID so that it gets
          * included when iterating over the collection.
          */
-        var removed;
-        function update() {
-            if (lastId != null) {
-                self.unset(lastId);
-                self.trigger(lastId);
-                delete self._removeCallbacks[lastId];
-            }
-            if (!removed) {
-                var id = child.queryId();
-                if (id == null) {
-                    id = '__unidentified' + (nextTempId++);
-                }
-                id = '#' + id;
-                self.query(id, child);
-                self.trigger(id);
-                self._removeCallbacks[id] = removeCallback;
-                lastId = id;
-            }
-        }
-        self.increment('size');
+        var scope;
         function removeCallback() {
             self.increment('size', -1);
-            removed = true;
-            update();
+            if (lastId != null) {
+                self.unset(lastId);
+            }
+            delete self._removeCallbacks[lastId];
+            scope.destroy();
         }
-        autorun(update);
+        function update() {
+            var id = child.queryId();
+            if (id == null) {
+                id = '__unidentified' + (nextTempId++);
+            }
+            id = '#' + id;
+            var prevId = lastId;
+            tboneDefer(function() {
+                if (prevId !== id && self.queryModel(prevId) === child) {
+                    self.unset(prevId);
+                }
+                self.query(id, child);
+            });
+            delete self._removeCallbacks[lastId];
+            self._removeCallbacks[id] = removeCallback;
+            lastId = id;
+        }
+        self.increment('size');
+        scope = autorun(update);
     },
 
     /**
@@ -1454,9 +1552,9 @@ var baseCollection = baseModel.extend({
      * Remove a model by ID or by model instance.
      */
     remove: function remove(modelOrId) {
-        modelOrId = '#' + (isQueryable(modelOrId) ? modelOrId.queryId() : modelOrId);
-        if (this._removeCallbacks[modelOrId]) {
-            this._removeCallbacks[modelOrId]();
+        var id = '#' + (isQueryable(modelOrId) ? modelOrId.queryId() : modelOrId);
+        if (this._removeCallbacks[id]) {
+            this._removeCallbacks[id]();
         }
     }
 });
@@ -1533,12 +1631,12 @@ models.ajax = asyncModel.extend({
     parse: _.identity,
 
     /**
-     * By default, async models will use $.ajax to fetch data; override this
-     * with something else if desired.
+     * This function is called to fetch data inside the `state` function above.
+     * By default, we look for a `$.ajax` to be shared via the global object,
+     * and the call signature matches that of `JQuery.ajax`. You can override
+     * this to handle requests another way.
      */
-    ajax: function ajax() {
-        return $.ajax.apply($, arguments);
-    },
+    ajax: root.$ && root.$.ajax,
 
     preFetch: function preFetch() {
         this.unset();
@@ -1590,7 +1688,7 @@ models.localStorage = baseModel.extend({
 function changePathGen (method) {
     return function changePath(path) {
         root.history[method + 'State'](EMPTY_OBJECT, '', path);
-        $(root).trigger(method + 'state');
+        window.dispatchEvent(new root.Event(method + 'state'));
     };
 }
 
@@ -1617,7 +1715,10 @@ models.location = baseModel.extend({
                 recentlyChanged = true;
             }
         }
-        $(root).bind('hashchange popstate pushstate replacestate', update);
+        window.addEventListener('hashchange', update);
+        window.addEventListener('popstate', update);
+        window.addEventListener('pushstate', update);
+        window.addEventListener('replacestate', update);
         update();
 
         autorun(function initializeAutorun() {
