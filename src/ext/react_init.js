@@ -1,5 +1,5 @@
-var React = root && root.React || (typeof require !== 'undefined' && require('react'));
-if (React) {
+tbone.patchReact = function tbonePatchReact(React) {
+
     var IS_WILL_UPDATE = 1;
     var IS_DID_MOUNT = 2;
     var IS_DID_UPDATE = 3;
@@ -99,4 +99,4 @@ if (React) {
 
         return origCreateClass(opts);
     };
-}
+};
