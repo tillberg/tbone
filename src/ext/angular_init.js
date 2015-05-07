@@ -30,7 +30,7 @@ function getTData ($scope, create) {
         angTData[id] = {
             bindings: {},
             scopes: [],
-            digestScope: new Scope(doDigest, $scope, BASE_PRIORITY_VIEW)
+            digestRunlet: new Runlet(doDigest, $scope, BASE_PRIORITY_VIEW)
         };
     }
     return angTData[id];
@@ -40,17 +40,17 @@ var angular = root.angular;
 if (angular) {
     var scopesToDigest = [];
     var scopeDigestTimer;
-    var queueScopeDigest = function ($scope) {
+    var queueRunletDigest = function ($scope) {
         if (!scopeDigestTimer) {
-            scopeDigestTimer = setTimeout(digestScopes, 0);
+            scopeDigestTimer = setTimeout(digestRunlets, 0);
         }
         scopesToDigest.push($scope);
     };
 
     angular
         .module('tbone', [])
-        .run(['$rootScope', function ($rootScope) {
-            $rootScope['$tbind'] = function (dest, src, opts) {
+        .run(['$rootRunlet', function ($rootRunlet) {
+            $rootRunlet['$tbind'] = function (dest, src, opts) {
                 var $scope = this;
                 var recentlyChanged = RECENTLY_CHANGED_NONE;
                 if (!opts) { opts = {}; }
@@ -58,12 +58,12 @@ if (angular) {
                 var tdata = getTData($scope, true);
 
                 // Create a TBone scope to propagate TBone model changes to the Angular $scope.
-                var tscope = this.$trun(function () {
+                var runlet = this.$trun(function () {
                     if (recentlyChanged !== RECENTLY_CHANGED_ANGULAR) {
                         $scope[dest] = T(src);
                         // console.log('src ' + src + ' is', $scope[dest]);
                         recentlyChanged = RECENTLY_CHANGED_TBONE;
-                        tdata.digestScope.trigger();
+                        tdata.digestRunlet.trigger();
                     }
                     recentlyChanged = RECENTLY_CHANGED_NONE;
                 }, BASE_PRIORITY_VIEW);
@@ -80,43 +80,43 @@ if (angular) {
                     });
                 }
                 tdata.bindings[dest] = {
-                    tscope: tscope,
+                    runlet: runlet,
                     deregister: deregister || noop
                 };
             };
 
-            $rootScope['$tbind2'] = function (dest, src, opts) {
+            $rootRunlet['$tbind2'] = function (dest, src, opts) {
                 return this['$tbind'](dest, src, _.extend({}, opts, { twoWay: true }));
             };
 
-            $rootScope['$tunbind'] = function (dest) {
+            $rootRunlet['$tunbind'] = function (dest) {
                 // console.log('$tunbinding ' + dest);
                 var bindings = getTData(this).bindings;
                 var binding = bindings[dest];
-                binding.tscope.destroy();
+                binding.runlet.destroy();
                 binding.deregister();
                 delete bindings[dest];
             };
 
-            $rootScope['$trun'] = function (fn, priority) {
-                var tscope = T(fn, priority);
-                tscope.isView = true; // it's almost true
-                getTData(this, true).scopes.push(tscope);
-                return tscope;
+            $rootRunlet['$trun'] = function (fn, priority) {
+                var runlet = T(fn, priority);
+                runlet.isView = true; // it's almost true
+                getTData(this, true).scopes.push(runlet);
+                return runlet;
             };
 
-            var origDestroy = $rootScope['$destroy'];
-            $rootScope['$destroy'] = function () {
+            var origDestroy = $rootRunlet['$destroy'];
+            $rootRunlet['$destroy'] = function () {
                 var self = this;
                 var tdata = getTData(self);
                 if (tdata) {
                     _.each(_.keys(tdata.bindings), function (key) {
                         self['$tunbind'](key);
                     });
-                    _.each(_.keys(tdata.tscopes), function (tscope) {
-                        tscope.destroy();
+                    _.each(_.keys(tdata.runlets), function (runlet) {
+                        runlet.destroy();
                     });
-                    tdata.digestScope.destroy();
+                    tdata.digestRunlet.destroy();
                     delete angTData[self['$id']];
                 }
                 return origDestroy.apply(self, arguments);

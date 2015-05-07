@@ -44,7 +44,7 @@ function hasViewListener (self) {
                             todo.push(listener.context._events);
                             break;
                         }
-                        listener = listener.parentScope;
+                        listener = listener.parentRunlet;
                     }
                 }
             } else {

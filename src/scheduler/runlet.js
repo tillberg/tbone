@@ -1,28 +1,28 @@
 /**
- * scheduler/scope.js
+ * scheduler/runlet.js
  */
 
 /**
- * currentExecutingScope globally tracks the current executing scope, so that subscopes
+ * currentExecutingRunlet globally tracks the current executing runlet, so that subrunlets
  * created during its execution (i.e. by tbone.autorun) can register themselves as
- * subscopes of the parent (this is important for recursive destruction of scopes).
+ * subrunlets of the parent (this is important for recursive destruction of runlets).
  */
-var currentExecutingScope;
+var currentExecutingRunlet;
 
 var recentLookups;
 
-var scopeBase = {
+var runletBase = {
 
     /**
-     * Used to identify that an object is a Scope
+     * Used to identify that an object is a Runlet
      * @type {Boolean}
      */
-    isScope: true,
+    isRunlet: true,
 
     /**
      * Queue function execution in the scheduler
      */
-    trigger: function scopeTrigger() {
+    trigger: function runletTrigger() {
         if (this.immediate) {
             this.execute();
         } else {
@@ -36,7 +36,7 @@ var scopeBase = {
      * those values change.  Each execution re-tracks and re-binds all data sources; the
      * actual sources bound on each execution may differ depending on what is looked up.
      */
-    execute: function scopeExecute() {
+    execute: function runletExecute() {
         var self = this;
         var myTimer;
         if (TBONE_DEBUG) {
@@ -44,18 +44,18 @@ var scopeBase = {
         }
 
         self.unbindAll();
-        self.destroySubScopes();
-        // Save our parent's lookups and subscopes.  It's like pushing our own values
+        self.destroySubRunlets();
+        // Save our parent's lookups and subrunlets.  It's like pushing our own values
         // onto the top of each stack.
         var oldLookups = recentLookups;
         self.lookups = recentLookups = {};
-        var parentScope = currentExecutingScope;
-        currentExecutingScope = self;
+        var parentRunlet = currentExecutingRunlet;
+        currentExecutingRunlet = self;
         tbone.isExecuting = true;
 
         // ** Call the payload function **
         // This function must be synchronous.  Anything that is looked up using
-        // tbone.lookup before this function returns (that is not inside a subscope)
+        // tbone.lookup before this function returns (that is not inside a subrunlet)
         // will get bound below.
         try {
             self.fn();
@@ -77,11 +77,11 @@ var scopeBase = {
                 self.onExecuteCb();
             }
 
-            // Pop our own lookups and parent scope off the stack, restoring them to
+            // Pop our own lookups and parent runlet off the stack, restoring them to
             // the values we saved above.
             recentLookups = oldLookups;
-            currentExecutingScope = parentScope;
-            tbone.isExecuting = !!currentExecutingScope;
+            currentExecutingRunlet = parentRunlet;
+            tbone.isExecuting = !!currentExecutingRunlet;
 
             if (TBONE_DEBUG) {
                 var executionTimeMs = myTimer.done();
@@ -101,9 +101,9 @@ var scopeBase = {
 
     /**
      * For each model which we've bound, tell it to unbind all events where this
-     * scope is the context of the binding.
+     * runlet is the context of the binding.
      */
-    unbindAll: function scopeUnbindAll() {
+    unbindAll: function runletUnbindAll() {
         var self = this;
         if (self.lookups) {
             for (var objId in self.lookups) {
@@ -119,26 +119,26 @@ var scopeBase = {
     },
 
     /**
-     * Destroy any execution scopes that were creation during execution of this function.
+     * Destroy any execution runlets that were creation during execution of this function.
      */
-    destroySubScopes: function scopeDestroySubScopes() {
+    destroySubRunlets: function runletDestroySubRunlets() {
         var self = this;
-        for (var i in self.subScopes) {
-            self.subScopes[i].destroy();
+        for (var i in self.subRunlets) {
+            self.subRunlets[i].destroy();
         }
-        self.subScopes = [];
+        self.subRunlets = [];
     },
 
     /**
-     * Destroy this scope.  Which means to unbind everything, destroy scopes recursively,
+     * Destroy this runlet.  Which means to unbind everything, destroy runlets recursively,
      * and ignore any execute calls which may already be queued in the scheduler.
      */
-    destroy: function scopeDestroy() {
+    destroy: function runletDestroy() {
         var self = this;
-        self.parentScope = null;
+        self.parentRunlet = null;
         self.unbindAll();
-        self.destroySubScopes();
-        // Prevent execution even if this scope is already queued to run:
+        self.destroySubRunlets();
+        // Prevent execution even if this runlet is already queued to run:
         self.execute = noop;
     },
 };
@@ -158,7 +158,7 @@ var scopeBase = {
  * @param  {number}      priority  Scheduling priority: higher goes sooner
  * @param  {Object}      context   Context to pass on invocation
  * @param  {string}      name      Name for debugging purposes
- * @return {Scope}                 A new Scope created to wrap this function
+ * @return {Runlet}                A new Runlet created to wrap this function
  */
 function autorun (opts) {
     if (typeof opts === 'function') {
@@ -166,48 +166,48 @@ function autorun (opts) {
     }
 
     var context = opts.context;
-    var scope = _.extend({}, scopeBase, {
+    var runlet = _.extend({}, runletBase, {
         // Default priority and name if not specified.  Priority is important in
-        // preventing unnecessary refreshes of views/subscopes that may be slated
+        // preventing unnecessary refreshes of views/subrunlets that may be slated
         // for destruction by a parent; the parent should have priority so as
         // to execute first.
-        priority: currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY,
+        priority: currentExecutingRunlet ? currentExecutingRunlet.priority - 1 : DEFAULT_AUTORUN_PRIORITY,
         Name: opts.fn.name,
         immediate: false,
         detached: false,
         deferExec: false,
-        parentScope: null,
+        parentRunlet: null,
         onExecuteCb: null,
     }, opts, {
         fn: opts.fn.bind(context),
-        subScopes: [],
+        subRunlets: [],
         lookups: null,
     });
 
-    if (TBONE_DEBUG && scope.immediate && !scope.detached) {
-        throw 'Scopes with immediate=true must also set detached=true';
+    if (TBONE_DEBUG && runlet.immediate && !runlet.detached) {
+        throw 'Runlets with immediate=true must also set detached=true';
     }
 
-    if (context && context.onScopeExecute) {
-        scope.onExecuteCb = context.onScopeExecute.bind(context, scope);
+    if (context && context.onRunletExecute) {
+        runlet.onExecuteCb = context.onRunletExecute.bind(context, runlet);
     }
 
-    // If this is a subscope, add it to its parent's list of subscopes, and add a reference
-    // to the parent scope.
-    if (!scope.detached && currentExecutingScope) {
-        currentExecutingScope.subScopes.push(scope);
-        scope.parentScope = currentExecutingScope;
+    // If this is a subrunlet, add it to its parent's list of subrunlets, and add a reference
+    // to the parent runlet.
+    if (!runlet.detached && currentExecutingRunlet) {
+        currentExecutingRunlet.subRunlets.push(runlet);
+        runlet.parentRunlet = currentExecutingRunlet;
     }
 
-    if (scope.deferExec) {
-        // Queue the scope for execution
-        scope.trigger();
+    if (runlet.deferExec) {
+        // Queue the runlet for execution
+        runlet.trigger();
     } else {
         // Run the associated function (and bind associated models)
-        scope.execute();
+        runlet.execute();
     }
 
-    // Return the scope object. Many consumers use the destroy method
-    // to kill the scope and all its bindings.
-    return scope;
+    // Return the runlet object. Many consumers use the destroy method
+    // to kill the runlet and all its bindings.
+    return runlet;
 }

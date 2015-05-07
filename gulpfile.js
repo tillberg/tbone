@@ -31,7 +31,7 @@ var coreFiles = [
   'src/model/core/base.js',
   'src/scheduler/timer.js',
   'src/scheduler/autorun.js',
-  'src/scheduler/scope.js',
+  'src/scheduler/runlet.js',
   'src/scheduler/drainqueue.js',
   'src/model/core/bound.js',
 ];

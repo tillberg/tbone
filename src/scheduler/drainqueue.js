@@ -5,7 +5,7 @@
 var nextId = 1;
 /**
  * Generate and return a unique identifier which we attach to an object.
- * The object is typically a view, model, or scope, and is used to compare
+ * The object is typically a view, model, or runlet, and is used to compare
  * object references for equality using a hash Object for efficiency.
  * @param  {Object} obj Object to get id from ()
  * @return {string}     Unique ID assigned to this object
@@ -18,8 +18,8 @@ function uniqueId(obj) {
 }
 
 /**
- * List of Scopes to be executed immediately.
- * @type {Array.<Scope>}
+ * List of Runlets to be executed immediately.
+ * @type {Array.<Runlet>}
  */
 var schedulerQueue = [];
 
@@ -30,15 +30,15 @@ var schedulerQueue = [];
 var dirty;
 
 /**
- * Hash map of all the current Scope uniqueIds that are already
+ * Hash map of all the current Runlet uniqueIds that are already
  * scheduled for immediate execution.
  * @type {Object.<string, Boolean>}
  */
-var scopesQueued = {};
+var runletsQueued = {};
 
 /**
- * Pop the highest priority Scope from the schedulerQueue.
- * @return {Scope} Scope to be executed next
+ * Pop the highest priority Runlet from the schedulerQueue.
+ * @return {Runlet} Runlet to be executed next
  */
 function pop() {
     /**
@@ -108,21 +108,21 @@ function updateIsReady () {
 }
 
 /**
- * Queue the specified Scope for execution if it is not already queued.
- * @param  {Scope}   scope
+ * Queue the specified Runlet for execution if it is not already queued.
+ * @param  {Runlet}   runlet
  */
-function queueExec (scope) {
-    var contextId = uniqueId(scope);
-    if (!scopesQueued[contextId]) {
-        scopesQueued[contextId] = true;
+function queueExec (runlet) {
+    var contextId = uniqueId(runlet);
+    if (!runletsQueued[contextId]) {
+        runletsQueued[contextId] = true;
 
         /**
-         * Push the scope onto the queue of scopes to be executed immediately.
+         * Push the runlet onto the queue of runlets to be executed immediately.
          */
-        schedulerQueue.push(scope);
+        schedulerQueue.push(runlet);
 
         /**
-         * Mark the queue as dirty; the priority of the scope we just added
+         * Mark the queue as dirty; the priority of the runlet we just added
          * is not immediately reflected in the queue order.
          */
         dirty = true;
@@ -140,27 +140,27 @@ function queueExec (scope) {
 var frozen = false;
 
 /**
- * Drain the Scope execution queue, in priority order.
+ * Drain the Runlet execution queue, in priority order.
  */
 function drainQueue() {
     drainQueueTimer = null;
     if (schedulerQueue.length) {
         var queueDrainStartTime = now();
-        var scope;
+        var runlet;
         drainQueueTimer = _.defer(drainQueue);
         var remaining = 5000;
         // console.log('drain start');
-        while (!(TBONE_DEBUG && frozen) && --remaining && (scope = pop())) {
+        while (!(TBONE_DEBUG && frozen) && --remaining && (runlet = pop())) {
             /**
-             * Update the scopesQueued map so that this Scope may be requeued.
+             * Update the runletsQueued map so that this Runlet may be requeued.
              */
-            delete scopesQueued[uniqueId(scope)];
+            delete runletsQueued[uniqueId(runlet)];
 
             /**
-             * Execute the scope, and in turn, the wrapped function.
+             * Execute the runlet, and in turn, the wrapped function.
              */
-            // console.log('exec scope ' + scope.priority + ' ' + tbone.getName(scope));
-            scope.execute();
+            // console.log('exec runlet ' + runlet.priority + ' ' + tbone.getName(runlet));
+            runlet.execute();
         }
         // console.log('drain end');
         if (TBONE_DEBUG) {
@@ -187,7 +187,7 @@ function tboneDefer(_opts) {
 tbone.defer = tboneDefer;
 
 /**
- * Drain to the tbone drainQueue, executing all queued Scopes immediately.
+ * Drain to the tbone drainQueue, executing all queued Runlets immediately.
  * This is useful both for testing and MAYBE also for optimizing responsiveness by
  * draining at the end of a keyboard / mouse event handler.
  */

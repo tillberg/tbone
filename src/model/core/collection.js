@@ -32,14 +32,14 @@ var baseCollection = baseModel.extend({
          * initially.  In this case, we assign a temporary ID so that it gets
          * included when iterating over the collection.
          */
-        var scope;
+        var runlet;
         function removeCallback() {
             self.increment('size', -1);
             if (lastId != null) {
                 self.unset(lastId);
             }
             delete self._removeCallbacks[lastId];
-            scope.destroy();
+            runlet.destroy();
         }
         function update() {
             var id = child.queryId();
@@ -59,7 +59,7 @@ var baseCollection = baseModel.extend({
             lastId = id;
         }
         self.increment('size');
-        scope = autorun(update);
+        runlet = autorun(update);
     },
 
     /**

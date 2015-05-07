@@ -665,8 +665,8 @@ exports['bound model sleeping'] = function(test) {
 
 exports['autorun js error handling'] = function(test) {
   // autorun should not intercept JS errors -- they should break all the way
-  // out past scope.execute and drainqueue -- but we should still continue to
-  // execute other scopes after a setTimeout.
+  // out past runlet.execute and drainqueue -- but we should still continue to
+  // execute other runlets after a setTimeout.
   // expect( 7 );
   var me = tbone.make();
   me('prop', 10);
@@ -721,20 +721,20 @@ exports['autorun js error handling'] = function(test) {
   check();
 };
 
-exports['autorun scope destruction'] = function(test) {
+exports['autorun runlet destruction'] = function(test) {
   var me = T.make();
   var bound = T.bound(function () {
     return me('sub.count');
   });
-  var scope1;
-  var scope2;
-  var scope3;
+  var runlet1;
+  var runlet2;
+  var runlet3;
   var count;
   var count2;
-  scope1 = T(function() {
-    scope2 = T({
+  runlet1 = T(function() {
+    runlet2 = T({
       fn: function() {
-        scope3 = T(function() {
+        runlet3 = T(function() {
           count = me('sub.count');
         });
         count2 = bound('');
@@ -742,25 +742,25 @@ exports['autorun scope destruction'] = function(test) {
       detached: true,
     });
   });
-  test.equal(scope1.parentScope, undefined);
-  test.equal(scope2.parentScope, undefined);
-  test.equal(scope3.parentScope, scope2);
+  test.equal(runlet1.parentRunlet, undefined);
+  test.equal(runlet2.parentRunlet, undefined);
+  test.equal(runlet3.parentRunlet, runlet2);
   test.equal(count, undefined);
   me.increment('sub.count');
   T.drain();
   test.equal(count, 1);
   test.equal(count2, 1);
-  scope1.destroy();
-  // scope 2 and 3 should not be affected by destroying scope1:
+  runlet1.destroy();
+  // runlet 2 and 3 should not be affected by destroying runlet1:
   me.increment('sub.count');
   T.drain();
   test.equal(count, 2);
   test.equal(count2, 2);
-  test.equal(scope3.parentScope, scope2);
+  test.equal(runlet3.parentRunlet, runlet2);
   me.increment('sub.count');
-  // scope3 should be destroyed recursively when scope2 is destroyed:
-  scope2.destroy();
-  test.equal(scope3.parentScope, undefined);
+  // runlet3 should be destroyed recursively when runlet2 is destroyed:
+  runlet2.destroy();
+  test.equal(runlet3.parentRunlet, undefined);
   T.drain();
   test.equal(count, 2);
   test.equal(count2, 2);
@@ -768,27 +768,27 @@ exports['autorun scope destruction'] = function(test) {
 };
 
 exports['autorun priority'] = function(test) {
-  var scope1;
-  var scope2;
-  var scope3;
-  scope1 = T(function() {
-    scope2 = T(function() {
-      scope3 = T(function() {});
+  var runlet1;
+  var runlet2;
+  var runlet3;
+  runlet1 = T(function() {
+    runlet2 = T(function() {
+      runlet3 = T(function() {});
     });
   });
-  test.equal(scope1.priority, 4000); // a.k.a. DEFAULT_AUTORUN_PRIORITY
-  test.equal(scope2.priority, 3999);
-  test.equal(scope3.priority, 3998);
-  var scope4;
-  var scope5;
-  scope4 = T({
+  test.equal(runlet1.priority, 4000); // a.k.a. DEFAULT_AUTORUN_PRIORITY
+  test.equal(runlet2.priority, 3999);
+  test.equal(runlet3.priority, 3998);
+  var runlet4;
+  var runlet5;
+  runlet4 = T({
     fn: function() {
-      scope5 = T(function() {});
+      runlet5 = T(function() {});
     },
     priority: tbone.priority.highest,
   });
-  test.equal(scope4.priority, tbone.priority.highest);
-  test.equal(scope5.priority, tbone.priority.highest - 1);
+  test.equal(runlet4.priority, tbone.priority.highest);
+  test.equal(runlet5.priority, tbone.priority.highest - 1);
   test.done();
 };
 
@@ -796,19 +796,19 @@ exports['getName'] = function(test) {
   var me = T.bound(function fn1() {});
   test.equal(T.getName(me), 'fn1');
   test.equal(me.getName(), 'fn1');
-  var scope1;
-  var scope2;
-  var scope3;
-  scope1 = T(function fn2() {
-    scope2 = T(function() {
-      scope3 = T(function() {});
+  var runlet1;
+  var runlet2;
+  var runlet3;
+  runlet1 = T(function fn2() {
+    runlet2 = T(function() {
+      runlet3 = T(function() {});
     });
   });
-  test.equal(T.getName(scope1), 'fn2');
-  test.equal(T.getName(scope2), 'fn2+');
-  test.equal(T.getName(scope3), 'fn2++');
-  var scope4 = T(function() {});
-  test.equal(T.getName(scope4), 'na-' + scope4.tboneid);
+  test.equal(T.getName(runlet1), 'fn2');
+  test.equal(T.getName(runlet2), 'fn2+');
+  test.equal(T.getName(runlet3), 'fn2++');
+  var runlet4 = T(function() {});
+  test.equal(T.getName(runlet4), 'na-' + runlet4.tboneid);
   test.done();
 };
 

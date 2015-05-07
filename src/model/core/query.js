@@ -107,13 +107,13 @@ function genModelDataProxy(parentModel, prop, childModel) {
     });
 }
 
-function recursivelyDestroySubModelScopes(_model) {
+function recursivelyDestroySubModelRunlets(_model) {
     if (_model) {
         for (var k in _model) {
             if (k === QUERY_SELF) {
-                _model[QUERY_SELF].scope.destroy();
+                _model[QUERY_SELF].runlet.destroy();
             } else {
-                recursivelyDestroySubModelScopes(_model[k]);
+                recursivelyDestroySubModelRunlets(_model[k]);
             }
         }
     }
@@ -274,18 +274,18 @@ function query () {
                 return value;
             }
             assumeChanged = true;
-            var scopeWrap = {
+            var runletWrap = {
                 '': {
                     model: value,
-                    scope: genModelDataProxy(self, prop, value),
+                    runlet: genModelDataProxy(self, prop, value),
                 },
             };
-            // console.log('recursivelyDestroySubModelScopes A', _model)
-            recursivelyDestroySubModelScopes(_model);
+            // console.log('recursivelyDestroySubModelRunlets A', _model)
+            recursivelyDestroySubModelRunlets(_model);
             if (models.length) {
-                models[models.length - 1][props[props.length - 1]] = scopeWrap;
+                models[models.length - 1][props[props.length - 1]] = runletWrap;
             } else {
-                self.submodels = scopeWrap;
+                self.submodels = runletWrap;
             }
         } else {
             var enableFreeze = TBONE_DEBUG && !self.disableFreeze;
@@ -308,8 +308,8 @@ function query () {
             }
             self.attributes = last;
             if (!setModelData) {
-                // console.log('recursivelyDestroySubModelScopes B', _model)
-                recursivelyDestroySubModelScopes(_model);
+                // console.log('recursivelyDestroySubModelRunlets B', _model)
+                recursivelyDestroySubModelRunlets(_model);
                 // Clear the _model keys, too.
                 for (var k in _model) {
                     delete _model[k];
@@ -324,8 +324,8 @@ function query () {
             if (!value.Name) {
                 value.Name = prop;
             }
-            if (value.scope && !value.scope.Name) {
-                value.scope.Name = 'model_' + prop;
+            if (value.runlet && !value.runlet.Name) {
+                value.runlet.Name = 'model_' + prop;
             }
         }
 

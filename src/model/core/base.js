@@ -141,7 +141,7 @@ var baseModel = {
         if (obj.Name) {
             return obj.Name;
         }
-        var parent = obj.context || obj.parentScope;
+        var parent = obj.context || obj.parentRunlet;
         if (parent) {
             return this.getName(parent) + '+';
         }

@@ -14,7 +14,7 @@ boundModel = models.bound = baseModel.extend({
          * is loaded but before anything else gets updated.  We can't do that with setTimeout
          * or _.defer because that could possibly fire after drainQueue.
          */
-        self.scope = autorun({
+        self.runlet = autorun({
             fn: self.update,
             priority: self.priority,
             context: self,
@@ -37,7 +37,7 @@ boundModel = models.bound = baseModel.extend({
         var myId = uniqueId(self);
         if (!woken[myId]) {
             woken[myId] = true;
-            if (self.scope) {
+            if (self.runlet) {
                 // Wake up this model if it was sleeping
                 if (self.sleeping) {
                     self.sleeping = false;
@@ -48,7 +48,7 @@ boundModel = models.bound = baseModel.extend({
                  * Wake up models that depend directly on this model that have not already
                  * been woken up.
                  */
-                _.each(self.scope.lookups, function wakeIter(lookup) {
+                _.each(self.runlet.lookups, function wakeIter(lookup) {
                     if (lookup.obj) {
                         lookup.obj.wake(woken);
                     }
@@ -57,9 +57,9 @@ boundModel = models.bound = baseModel.extend({
         }
     },
 
-    onScopeExecute: function onScopeExecute(scope) {
+    onRunletExecute: function onRunletExecute(runlet) {
         if (TBONE_DEBUG) {
-            log(INFO, this, 'lookups', scope.lookups);
+            log(INFO, this, 'lookups', runlet.lookups);
         }
     },
 
@@ -89,19 +89,19 @@ boundModel = models.bound = baseModel.extend({
     },
 
     /**
-     * Triggers scope re-execution.
+     * Triggers runlet re-execution.
      */
     reset: function reset() {
-        if (this.scope) {
-            this.scope.trigger();
+        if (this.runlet) {
+            this.runlet.trigger();
         }
     },
 
     destroy: function destroy() {
         var self = this;
-        if (self.scope) {
-            self.scope.destroy();
-            self.scope = null;
+        if (self.runlet) {
+            self.runlet.destroy();
+            self.runlet = null;
         }
         self.unset(QUERY_SELF);
     },

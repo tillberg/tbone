@@ -129,7 +129,7 @@ function log () {
  * Log an event.  The event is piped to the JS console if the level is less than or equal to the
  * matched maximum log level based on the logLevels configuration above.
  * @param  {Number}                                    level   Log level: 1=error, 2=warn, 3=info, 4=verbose
- * @param  {string|Backbone.Model|Backbone.View|Scope} context What is logging this event
+ * @param  {string|Backbone.Model|Backbone.View|Runlet} context What is logging this event
  * @param  {string}                                    event   Short event type string
  * @param  {string|Object}                             msg     Message string with tokens that will be
  *                                                             rendered from data.  Or just relevant data.
@@ -140,7 +140,7 @@ function logconsole (level, context, event, msg, data, moredata) {
     var type = (_.isString(context) ? context :
                 context.isModel ? 'model' :
                 context.isView ? 'view' :
-                context.isScope ? 'scope' : '??');
+                context.isRunlet ? 'runlet' : '??');
     var threshold = Math.max(logLevels.context[name] || 0,
                              logLevels.event[event] || 0,
                              logLevels.type[type] || 0) || logLevels.base;

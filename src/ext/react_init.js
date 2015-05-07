@@ -17,17 +17,17 @@ tbone.patchReact = function tbonePatchReact(React) {
             });
         }
 
-        function destroyTScopes(inst, key) {
-            var scopes = inst.__tbone__[key];
-            for (var i in scopes) {
-                scopes[i].destroy();
+        function destroyTRunlets(inst, key) {
+            var runlets = inst.__tbone__[key];
+            for (var i in runlets) {
+                runlets[i].destroy();
             }
             inst.__tbone__[key] = [];
         }
         function doUpdate (inst) {
             if (!inst.hasUpdateQueued) {
                 inst.__tbone__.hasUpdateQueued = 1;
-                destroyTScopes(inst, 'render');
+                destroyTRunlets(inst, 'render');
                 if (inst.isMounted()) {
                     // console.log('update queued for ' + inst._currentElement.type.displayName);
                     inst.forceUpdate();
@@ -41,11 +41,10 @@ tbone.patchReact = function tbonePatchReact(React) {
                 var self = this;
                 var args = arguments;
                 if (special === IS_WILL_UPDATE) {
-                    destroyTScopes(self, 'render');
+                    destroyTRunlets(self, 'render');
                     self.__tbone__.hasUpdateQueued = 0;
                 }
                 var rval;
-                var tscope;
                 var isDidMount = special == IS_DID_MOUNT;
                 var isPostRender = special === IS_DID_UPDATE || isDidMount;
                 if (origFn) {
@@ -85,8 +84,8 @@ tbone.patchReact = function tbonePatchReact(React) {
                 }
             },
             componentWillUnmount: function tboneComponentWillUnmountWrapper() {
-                destroyTScopes(this, 'mount');
-                destroyTScopes(this, 'render');
+                destroyTRunlets(this, 'mount');
+                destroyTRunlets(this, 'render');
                 if (origOpts.componentWillUnmount) {
                     return origOpts.componentWillUnmount.apply(this, arguments);
                 }
