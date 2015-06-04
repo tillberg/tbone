@@ -2,7 +2,7 @@
 (function tboneWrap(){
 
 var root = typeof window === 'undefined' ? {} : window;
-var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? root.DEBUG : root.TBONE_DEBUG);
+var TBONE_DEBUG = !!(root.TBONE_DEBUG == null ? (root.DEBUG == null ? true : root.DEBUG) : root.TBONE_DEBUG);
 var _ = typeof require === 'undefined' ? root._ : require('lodash');
 
 if (TBONE_DEBUG && !_) {
@@ -132,7 +132,7 @@ function log () {
  * Log an event.  The event is piped to the JS console if the level is less than or equal to the
  * matched maximum log level based on the logLevels configuration above.
  * @param  {Number}                                    level   Log level: 1=error, 2=warn, 3=info, 4=verbose
- * @param  {string|Backbone.Model|Backbone.View|Scope} context What is logging this event
+ * @param  {string|Backbone.Model|Backbone.View|Runlet} context What is logging this event
  * @param  {string}                                    event   Short event type string
  * @param  {string|Object}                             msg     Message string with tokens that will be
  *                                                             rendered from data.  Or just relevant data.
@@ -143,7 +143,7 @@ function logconsole (level, context, event, msg, data, moredata) {
     var type = (_.isString(context) ? context :
                 context.isModel ? 'model' :
                 context.isView ? 'view' :
-                context.isScope ? 'scope' : '??');
+                context.isRunlet ? 'runlet' : '??');
     var threshold = Math.max(logLevels.context[name] || 0,
                              logLevels.event[event] || 0,
                              logLevels.type[type] || 0) || logLevels.base;
@@ -219,7 +219,7 @@ function hasViewListener (self) {
                             todo.push(listener.context._events);
                             break;
                         }
-                        listener = listener.parentScope;
+                        listener = listener.parentRunlet;
                     }
                 }
             } else {
@@ -340,13 +340,13 @@ function genModelDataProxy(parentModel, prop, childModel) {
     });
 }
 
-function recursivelyDestroySubModelScopes(_model) {
+function recursivelyDestroySubModelRunlets(_model) {
     if (_model) {
         for (var k in _model) {
             if (k === QUERY_SELF) {
-                _model[QUERY_SELF].scope.destroy();
+                _model[QUERY_SELF].runlet.destroy();
             } else {
-                recursivelyDestroySubModelScopes(_model[k]);
+                recursivelyDestroySubModelRunlets(_model[k]);
             }
         }
     }
@@ -507,18 +507,18 @@ function query () {
                 return value;
             }
             assumeChanged = true;
-            var scopeWrap = {
+            var runletWrap = {
                 '': {
                     model: value,
-                    scope: genModelDataProxy(self, prop, value),
+                    runlet: genModelDataProxy(self, prop, value),
                 },
             };
-            // console.log('recursivelyDestroySubModelScopes A', _model)
-            recursivelyDestroySubModelScopes(_model);
+            // console.log('recursivelyDestroySubModelRunlets A', _model)
+            recursivelyDestroySubModelRunlets(_model);
             if (models.length) {
-                models[models.length - 1][props[props.length - 1]] = scopeWrap;
+                models[models.length - 1][props[props.length - 1]] = runletWrap;
             } else {
-                self.submodels = scopeWrap;
+                self.submodels = runletWrap;
             }
         } else {
             var enableFreeze = TBONE_DEBUG && !self.disableFreeze;
@@ -541,8 +541,8 @@ function query () {
             }
             self.attributes = last;
             if (!setModelData) {
-                // console.log('recursivelyDestroySubModelScopes B', _model)
-                recursivelyDestroySubModelScopes(_model);
+                // console.log('recursivelyDestroySubModelRunlets B', _model)
+                recursivelyDestroySubModelRunlets(_model);
                 // Clear the _model keys, too.
                 for (var k in _model) {
                     delete _model[k];
@@ -557,8 +557,8 @@ function query () {
             if (!value.Name) {
                 value.Name = prop;
             }
-            if (value.scope && !value.scope.Name) {
-                value.scope.Name = 'model_' + prop;
+            if (value.runlet && !value.runlet.Name) {
+                value.runlet.Name = 'model_' + prop;
             }
         }
 
@@ -719,7 +719,7 @@ var baseModel = {
         if (obj.Name) {
             return obj.Name;
         }
-        var parent = obj.context || obj.parentScope;
+        var parent = obj.context || obj.parentRunlet;
         if (parent) {
             return this.getName(parent) + '+';
         }
@@ -865,30 +865,30 @@ function timer() {
 var timers = [];
 
 /**
- * scheduler/scope.js
+ * scheduler/runlet.js
  */
 
 /**
- * currentExecutingScope globally tracks the current executing scope, so that subscopes
+ * currentExecutingRunlet globally tracks the current executing runlet, so that subrunlets
  * created during its execution (i.e. by tbone.autorun) can register themselves as
- * subscopes of the parent (this is important for recursive destruction of scopes).
+ * subrunlets of the parent (this is important for recursive destruction of runlets).
  */
-var currentExecutingScope;
+var currentExecutingRunlet;
 
 var recentLookups;
 
-var scopeBase = {
+var runletBase = {
 
     /**
-     * Used to identify that an object is a Scope
+     * Used to identify that an object is a Runlet
      * @type {Boolean}
      */
-    isScope: true,
+    isRunlet: true,
 
     /**
      * Queue function execution in the scheduler
      */
-    trigger: function scopeTrigger() {
+    trigger: function runletTrigger() {
         if (this.immediate) {
             this.execute();
         } else {
@@ -902,7 +902,7 @@ var scopeBase = {
      * those values change.  Each execution re-tracks and re-binds all data sources; the
      * actual sources bound on each execution may differ depending on what is looked up.
      */
-    execute: function scopeExecute() {
+    execute: function runletExecute() {
         var self = this;
         var myTimer;
         if (TBONE_DEBUG) {
@@ -910,18 +910,18 @@ var scopeBase = {
         }
 
         self.unbindAll();
-        self.destroySubScopes();
-        // Save our parent's lookups and subscopes.  It's like pushing our own values
+        self.destroySubRunlets();
+        // Save our parent's lookups and subrunlets.  It's like pushing our own values
         // onto the top of each stack.
         var oldLookups = recentLookups;
         self.lookups = recentLookups = {};
-        var parentScope = currentExecutingScope;
-        currentExecutingScope = self;
+        var parentRunlet = currentExecutingRunlet;
+        currentExecutingRunlet = self;
         tbone.isExecuting = true;
 
         // ** Call the payload function **
         // This function must be synchronous.  Anything that is looked up using
-        // tbone.lookup before this function returns (that is not inside a subscope)
+        // tbone.lookup before this function returns (that is not inside a subrunlet)
         // will get bound below.
         try {
             self.fn();
@@ -943,11 +943,11 @@ var scopeBase = {
                 self.onExecuteCb();
             }
 
-            // Pop our own lookups and parent scope off the stack, restoring them to
+            // Pop our own lookups and parent runlet off the stack, restoring them to
             // the values we saved above.
             recentLookups = oldLookups;
-            currentExecutingScope = parentScope;
-            tbone.isExecuting = !!currentExecutingScope;
+            currentExecutingRunlet = parentRunlet;
+            tbone.isExecuting = !!currentExecutingRunlet;
 
             if (TBONE_DEBUG) {
                 var executionTimeMs = myTimer.done();
@@ -967,9 +967,9 @@ var scopeBase = {
 
     /**
      * For each model which we've bound, tell it to unbind all events where this
-     * scope is the context of the binding.
+     * runlet is the context of the binding.
      */
-    unbindAll: function scopeUnbindAll() {
+    unbindAll: function runletUnbindAll() {
         var self = this;
         if (self.lookups) {
             for (var objId in self.lookups) {
@@ -985,26 +985,26 @@ var scopeBase = {
     },
 
     /**
-     * Destroy any execution scopes that were creation during execution of this function.
+     * Destroy any execution runlets that were creation during execution of this function.
      */
-    destroySubScopes: function scopeDestroySubScopes() {
+    destroySubRunlets: function runletDestroySubRunlets() {
         var self = this;
-        for (var i in self.subScopes) {
-            self.subScopes[i].destroy();
+        for (var i in self.subRunlets) {
+            self.subRunlets[i].destroy();
         }
-        self.subScopes = [];
+        self.subRunlets = [];
     },
 
     /**
-     * Destroy this scope.  Which means to unbind everything, destroy scopes recursively,
+     * Destroy this runlet.  Which means to unbind everything, destroy runlets recursively,
      * and ignore any execute calls which may already be queued in the scheduler.
      */
-    destroy: function scopeDestroy() {
+    destroy: function runletDestroy() {
         var self = this;
-        self.parentScope = null;
+        self.parentRunlet = null;
         self.unbindAll();
-        self.destroySubScopes();
-        // Prevent execution even if this scope is already queued to run:
+        self.destroySubRunlets();
+        // Prevent execution even if this runlet is already queued to run:
         self.execute = noop;
     },
 };
@@ -1024,7 +1024,7 @@ var scopeBase = {
  * @param  {number}      priority  Scheduling priority: higher goes sooner
  * @param  {Object}      context   Context to pass on invocation
  * @param  {string}      name      Name for debugging purposes
- * @return {Scope}                 A new Scope created to wrap this function
+ * @return {Runlet}                A new Runlet created to wrap this function
  */
 function autorun (opts) {
     if (typeof opts === 'function') {
@@ -1032,50 +1032,50 @@ function autorun (opts) {
     }
 
     var context = opts.context;
-    var scope = _.extend({}, scopeBase, {
+    var runlet = _.extend({}, runletBase, {
         // Default priority and name if not specified.  Priority is important in
-        // preventing unnecessary refreshes of views/subscopes that may be slated
+        // preventing unnecessary refreshes of views/subrunlets that may be slated
         // for destruction by a parent; the parent should have priority so as
         // to execute first.
-        priority: currentExecutingScope ? currentExecutingScope.priority - 1 : DEFAULT_AUTORUN_PRIORITY,
+        priority: currentExecutingRunlet ? currentExecutingRunlet.priority - 1 : DEFAULT_AUTORUN_PRIORITY,
         Name: opts.fn.name,
         immediate: false,
         detached: false,
         deferExec: false,
-        parentScope: null,
+        parentRunlet: null,
         onExecuteCb: null,
     }, opts, {
         fn: opts.fn.bind(context),
-        subScopes: [],
+        subRunlets: [],
         lookups: null,
     });
 
-    if (TBONE_DEBUG && scope.immediate && !scope.detached) {
-        throw 'Scopes with immediate=true must also set detached=true';
+    if (TBONE_DEBUG && runlet.immediate && !runlet.detached) {
+        throw 'Runlets with immediate=true must also set detached=true';
     }
 
-    if (context && context.onScopeExecute) {
-        scope.onExecuteCb = context.onScopeExecute.bind(context, scope);
+    if (context && context.onRunletExecute) {
+        runlet.onExecuteCb = context.onRunletExecute.bind(context, runlet);
     }
 
-    // If this is a subscope, add it to its parent's list of subscopes, and add a reference
-    // to the parent scope.
-    if (!scope.detached && currentExecutingScope) {
-        currentExecutingScope.subScopes.push(scope);
-        scope.parentScope = currentExecutingScope;
+    // If this is a subrunlet, add it to its parent's list of subrunlets, and add a reference
+    // to the parent runlet.
+    if (!runlet.detached && currentExecutingRunlet) {
+        currentExecutingRunlet.subRunlets.push(runlet);
+        runlet.parentRunlet = currentExecutingRunlet;
     }
 
-    if (scope.deferExec) {
-        // Queue the scope for execution
-        scope.trigger();
+    if (runlet.deferExec) {
+        // Queue the runlet for execution
+        runlet.trigger();
     } else {
         // Run the associated function (and bind associated models)
-        scope.execute();
+        runlet.execute();
     }
 
-    // Return the scope object. Many consumers use the destroy method
-    // to kill the scope and all its bindings.
-    return scope;
+    // Return the runlet object. Many consumers use the destroy method
+    // to kill the runlet and all its bindings.
+    return runlet;
 }
 
 /**
@@ -1085,7 +1085,7 @@ function autorun (opts) {
 var nextId = 1;
 /**
  * Generate and return a unique identifier which we attach to an object.
- * The object is typically a view, model, or scope, and is used to compare
+ * The object is typically a view, model, or runlet, and is used to compare
  * object references for equality using a hash Object for efficiency.
  * @param  {Object} obj Object to get id from ()
  * @return {string}     Unique ID assigned to this object
@@ -1098,8 +1098,8 @@ function uniqueId(obj) {
 }
 
 /**
- * List of Scopes to be executed immediately.
- * @type {Array.<Scope>}
+ * List of Runlets to be executed immediately.
+ * @type {Array.<Runlet>}
  */
 var schedulerQueue = [];
 
@@ -1110,15 +1110,15 @@ var schedulerQueue = [];
 var dirty;
 
 /**
- * Hash map of all the current Scope uniqueIds that are already
+ * Hash map of all the current Runlet uniqueIds that are already
  * scheduled for immediate execution.
  * @type {Object.<string, Boolean>}
  */
-var scopesQueued = {};
+var runletsQueued = {};
 
 /**
- * Pop the highest priority Scope from the schedulerQueue.
- * @return {Scope} Scope to be executed next
+ * Pop the highest priority Runlet from the schedulerQueue.
+ * @return {Runlet} Runlet to be executed next
  */
 function pop() {
     /**
@@ -1188,21 +1188,21 @@ function updateIsReady () {
 }
 
 /**
- * Queue the specified Scope for execution if it is not already queued.
- * @param  {Scope}   scope
+ * Queue the specified Runlet for execution if it is not already queued.
+ * @param  {Runlet}   runlet
  */
-function queueExec (scope) {
-    var contextId = uniqueId(scope);
-    if (!scopesQueued[contextId]) {
-        scopesQueued[contextId] = true;
+function queueExec (runlet) {
+    var contextId = uniqueId(runlet);
+    if (!runletsQueued[contextId]) {
+        runletsQueued[contextId] = true;
 
         /**
-         * Push the scope onto the queue of scopes to be executed immediately.
+         * Push the runlet onto the queue of runlets to be executed immediately.
          */
-        schedulerQueue.push(scope);
+        schedulerQueue.push(runlet);
 
         /**
-         * Mark the queue as dirty; the priority of the scope we just added
+         * Mark the queue as dirty; the priority of the runlet we just added
          * is not immediately reflected in the queue order.
          */
         dirty = true;
@@ -1220,27 +1220,27 @@ function queueExec (scope) {
 var frozen = false;
 
 /**
- * Drain the Scope execution queue, in priority order.
+ * Drain the Runlet execution queue, in priority order.
  */
 function drainQueue() {
     drainQueueTimer = null;
     if (schedulerQueue.length) {
         var queueDrainStartTime = now();
-        var scope;
+        var runlet;
         drainQueueTimer = _.defer(drainQueue);
         var remaining = 5000;
         // console.log('drain start');
-        while (!(TBONE_DEBUG && frozen) && --remaining && (scope = pop())) {
+        while (!(TBONE_DEBUG && frozen) && --remaining && (runlet = pop())) {
             /**
-             * Update the scopesQueued map so that this Scope may be requeued.
+             * Update the runletsQueued map so that this Runlet may be requeued.
              */
-            delete scopesQueued[uniqueId(scope)];
+            delete runletsQueued[uniqueId(runlet)];
 
             /**
-             * Execute the scope, and in turn, the wrapped function.
+             * Execute the runlet, and in turn, the wrapped function.
              */
-            // console.log('exec scope ' + scope.priority + ' ' + tbone.getName(scope));
-            scope.execute();
+            // console.log('exec runlet ' + runlet.priority + ' ' + tbone.getName(runlet));
+            runlet.execute();
         }
         // console.log('drain end');
         if (TBONE_DEBUG) {
@@ -1267,7 +1267,7 @@ function tboneDefer(_opts) {
 tbone.defer = tboneDefer;
 
 /**
- * Drain to the tbone drainQueue, executing all queued Scopes immediately.
+ * Drain to the tbone drainQueue, executing all queued Runlets immediately.
  * This is useful both for testing and MAYBE also for optimizing responsiveness by
  * draining at the end of a keyboard / mouse event handler.
  */
@@ -1305,7 +1305,7 @@ boundModel = models.bound = baseModel.extend({
          * is loaded but before anything else gets updated.  We can't do that with setTimeout
          * or _.defer because that could possibly fire after drainQueue.
          */
-        self.scope = autorun({
+        self.runlet = autorun({
             fn: self.update,
             priority: self.priority,
             context: self,
@@ -1328,7 +1328,7 @@ boundModel = models.bound = baseModel.extend({
         var myId = uniqueId(self);
         if (!woken[myId]) {
             woken[myId] = true;
-            if (self.scope) {
+            if (self.runlet) {
                 // Wake up this model if it was sleeping
                 if (self.sleeping) {
                     self.sleeping = false;
@@ -1339,7 +1339,7 @@ boundModel = models.bound = baseModel.extend({
                  * Wake up models that depend directly on this model that have not already
                  * been woken up.
                  */
-                _.each(self.scope.lookups, function wakeIter(lookup) {
+                _.each(self.runlet.lookups, function wakeIter(lookup) {
                     if (lookup.obj) {
                         lookup.obj.wake(woken);
                     }
@@ -1348,9 +1348,9 @@ boundModel = models.bound = baseModel.extend({
         }
     },
 
-    onScopeExecute: function onScopeExecute(scope) {
+    onRunletExecute: function onRunletExecute(runlet) {
         if (TBONE_DEBUG) {
-            log(INFO, this, 'lookups', scope.lookups);
+            log(INFO, this, 'lookups', runlet.lookups);
         }
     },
 
@@ -1380,19 +1380,19 @@ boundModel = models.bound = baseModel.extend({
     },
 
     /**
-     * Triggers scope re-execution.
+     * Triggers runlet re-execution.
      */
     reset: function reset() {
-        if (this.scope) {
-            this.scope.trigger();
+        if (this.runlet) {
+            this.runlet.trigger();
         }
     },
 
     destroy: function destroy() {
         var self = this;
-        if (self.scope) {
-            self.scope.destroy();
-            self.scope = null;
+        if (self.runlet) {
+            self.runlet.destroy();
+            self.runlet = null;
         }
         self.unset(QUERY_SELF);
     },
@@ -1512,14 +1512,14 @@ var baseCollection = baseModel.extend({
          * initially.  In this case, we assign a temporary ID so that it gets
          * included when iterating over the collection.
          */
-        var scope;
+        var runlet;
         function removeCallback() {
             self.increment('size', -1);
             if (lastId != null) {
                 self.unset(lastId);
             }
             delete self._removeCallbacks[lastId];
-            scope.destroy();
+            runlet.destroy();
         }
         function update() {
             var id = child.queryId();
@@ -1539,7 +1539,7 @@ var baseCollection = baseModel.extend({
             lastId = id;
         }
         self.increment('size');
-        scope = autorun(update);
+        runlet = autorun(update);
     },
 
     /**
@@ -1756,8 +1756,8 @@ collections.localStorage = baseCollection.extend({
     }
 });
 
-var React = root && root.React || (typeof require !== 'undefined' && require('react'));
-if (React) {
+tbone.patchReact = function tbonePatchReact(React) {
+
     var IS_WILL_UPDATE = 1;
     var IS_DID_MOUNT = 2;
     var IS_DID_UPDATE = 3;
@@ -1775,17 +1775,17 @@ if (React) {
             });
         }
 
-        function destroyTScopes(inst, key) {
-            var scopes = inst.__tbone__[key];
-            for (var i in scopes) {
-                scopes[i].destroy();
+        function destroyTRunlets(inst, key) {
+            var runlets = inst.__tbone__[key];
+            for (var i in runlets) {
+                runlets[i].destroy();
             }
             inst.__tbone__[key] = [];
         }
         function doUpdate (inst) {
             if (!inst.hasUpdateQueued) {
                 inst.__tbone__.hasUpdateQueued = 1;
-                destroyTScopes(inst, 'render');
+                destroyTRunlets(inst, 'render');
                 if (inst.isMounted()) {
                     // console.log('update queued for ' + inst._currentElement.type.displayName);
                     inst.forceUpdate();
@@ -1799,11 +1799,10 @@ if (React) {
                 var self = this;
                 var args = arguments;
                 if (special === IS_WILL_UPDATE) {
-                    destroyTScopes(self, 'render');
+                    destroyTRunlets(self, 'render');
                     self.__tbone__.hasUpdateQueued = 0;
                 }
                 var rval;
-                var tscope;
                 var isDidMount = special == IS_DID_MOUNT;
                 var isPostRender = special === IS_DID_UPDATE || isDidMount;
                 if (origFn) {
@@ -1843,8 +1842,8 @@ if (React) {
                 }
             },
             componentWillUnmount: function tboneComponentWillUnmountWrapper() {
-                destroyTScopes(this, 'mount');
-                destroyTScopes(this, 'render');
+                destroyTRunlets(this, 'mount');
+                destroyTRunlets(this, 'render');
                 if (origOpts.componentWillUnmount) {
                     return origOpts.componentWillUnmount.apply(this, arguments);
                 }
@@ -1857,7 +1856,7 @@ if (React) {
 
         return origCreateClass(opts);
     };
-}
+};
 
 // This is used by BBVis to hook into the base model/collection/view
 // before they are modified.  You can, too.
