@@ -1,5 +1,27 @@
 ## TBone Change Log
 
+### 3.0.0
+
+- Breaking change: (#16) Sub-models now propagate their values
+  continuously to the parent model. A separate structure maintains a
+  record of the (hidden) sub-model hierarchy within the parent model,
+  but it is no longer necessary to perform sub-queries into
+  sub-models in order to fetch their data. It is now sufficient to
+  simply query the root of the parent model, i.e. `parent.query('')`,
+  in order to get all the data for it and its children. More details
+  can be found at https://github.com/appneta/tbone/issues/16.
+- You must now call `tbone.patchReact` to patch React with TBone
+  instrumentation.
+- DEBUG mode is now on by default in the non-minified source.
+- "Scope" objects have been renamed to "Runlets" for clarity. "Scope"
+  was overused and ambiguous, even within the TBone source.
+- We no longer explicitly depend on JQuery except for the default
+  `ajax` function implementation for ajax models, which we pull
+  from `window.$.ajax` if available.
+- `T.metrics('ajax.modelsInFlight')` has been removed (due to #16),
+  and `T.metrics('ajax.urlsInFlight')` has been added to fill in
+  the typical use case for the former.
+
 ### 2.0.3
 
 - Fix React integration when used via browserify.
