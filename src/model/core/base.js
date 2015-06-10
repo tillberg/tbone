@@ -186,6 +186,21 @@ var baseModel = {
         this.query(prop, newval);
     },
 
+    destroySubmodels: function() {
+        function recurse(_model) {
+            for (var k in _model) {
+                if (k === QUERY_SELF) {
+                    var runletWrap = _model[QUERY_SELF];
+                    runletWrap.model.destroy();
+                    runletWrap.runlet.destroy();
+                } else {
+                    recurse(_model[k]);
+                }
+            }
+        }
+        recurse(this.submodels);
+    },
+
     wake: function wake(woken) {
         // While base models don't need to be woken themselves, they
         // need to wake up any bound submodels that they may be holding.
